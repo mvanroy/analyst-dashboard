@@ -242,27 +242,26 @@ def _kv(items):
     )
 
 
-# bull / bear / neutral icons (inherit colour via fill:currentColor)
-_BEAR_SVG = (
-    '<svg class="bias-ico" viewBox="0 0 40 40" width="30" height="30" fill="currentColor">'
-    '<circle cx="11" cy="12" r="5.5"/><circle cx="29" cy="12" r="5.5"/>'
-    '<ellipse cx="20" cy="22" rx="12.5" ry="11.5"/>'
-    '<ellipse cx="20" cy="26.5" rx="5.5" ry="4.2" fill="rgba(0,0,0,.32)"/>'
-    '<circle cx="20" cy="23.5" r="1.7" fill="rgba(0,0,0,.55)"/>'
-    '<circle cx="14.5" cy="19.5" r="1.3" fill="rgba(0,0,0,.45)"/>'
-    '<circle cx="25.5" cy="19.5" r="1.3" fill="rgba(0,0,0,.45)"/></svg>'
-)
-_BULL_SVG = (
-    '<svg class="bias-ico" viewBox="0 0 40 40" width="30" height="30" fill="currentColor">'
-    '<path d="M9 16 C2 12 2 5 6 4 C6 9 9 12 13 15 Z"/>'
-    '<path d="M31 16 C38 12 38 5 34 4 C34 9 31 12 27 15 Z"/>'
-    '<ellipse cx="20" cy="22" rx="11.5" ry="11.5"/>'
-    '<ellipse cx="20" cy="27" rx="6" ry="4.5" fill="rgba(0,0,0,.3)"/>'
-    '<circle cx="17" cy="27" r="1.1" fill="rgba(0,0,0,.5)"/>'
-    '<circle cx="23" cy="27" r="1.1" fill="rgba(0,0,0,.5)"/>'
-    '<circle cx="15" cy="20" r="1.3" fill="rgba(0,0,0,.45)"/>'
-    '<circle cx="25" cy="20" r="1.3" fill="rgba(0,0,0,.45)"/></svg>'
-)
+# bull / bear icons loaded from assets; forced to inherit colour via
+# fill:currentColor so they match the bias word (green bull / red bear).
+def _load_icon(filename, size=32):
+    path = os.path.join(os.path.dirname(__file__), "assets", filename)
+    try:
+        with open(path, "r") as f:
+            svg = f.read().strip()
+    except OSError:
+        return ""
+    svg = svg.replace('id="Icons"', "")
+    svg = svg.replace(
+        "<svg ",
+        f'<svg class="bias-ico" fill="currentColor" width="{size}" height="{size}" ',
+        1,
+    )
+    return svg
+
+
+_BULL_SVG = _load_icon("bull-market.svg")
+_BEAR_SVG = _load_icon("bear-market.svg")
 _NEU_SVG = (
     '<svg class="bias-ico" viewBox="0 0 40 40" width="30" height="30" fill="currentColor">'
     '<rect x="8" y="18" width="24" height="5" rx="2.5"/></svg>'
