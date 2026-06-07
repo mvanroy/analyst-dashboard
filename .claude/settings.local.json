@@ -45,7 +45,8 @@
       "Bash(.venv/bin/python -m py_compile app.py pages/1_Analyst_Dashboard.py dashboard.py)",
       "Bash(.venv/bin/python -c \"import json,dashboard; d=dashboard.load_analysis\\('HYPEUSDT'\\); print\\('loaded:', d['symbol'], '| keys:', len\\(d\\)\\)\")",
       "Bash(git add *)",
-      "Bash(git commit -q -m ' *)"
+      "Bash(git commit -q -m ' *)",
+      "Bash(.venv/bin/python -m py_compile dashboard.py)"
     ]
   }
 }

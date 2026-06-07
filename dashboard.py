@@ -244,24 +244,30 @@ def _kv(items):
 
 # bull / bear icons loaded from assets; forced to inherit colour via
 # fill:currentColor so they match the bias word (green bull / red bear).
-def _load_icon(filename, size=32):
+def _load_icon(filename, keep_index=None, viewbox="0 0 60 60", size=32):
+    """Load an SVG asset. If keep_index is set, keep only that <path> (used to
+    drop the trend-arrow path and keep just the animal)."""
     path = os.path.join(os.path.dirname(__file__), "assets", filename)
     try:
         with open(path, "r") as f:
             svg = f.read().strip()
     except OSError:
         return ""
-    svg = svg.replace('id="Icons"', "")
-    svg = svg.replace(
-        "<svg ",
-        f'<svg class="bias-ico" fill="currentColor" width="{size}" height="{size}" ',
-        1,
+    paths = re.findall(r"<path[^>]*?/>", svg)
+    if keep_index is not None and 0 <= keep_index < len(paths):
+        inner = paths[keep_index]
+    else:
+        inner = "".join(paths)
+    return (
+        f'<svg class="bias-ico" fill="currentColor" width="{size}" height="{size}" '
+        f'viewBox="{viewbox}" xmlns="http://www.w3.org/2000/svg">{inner}</svg>'
     )
-    return svg
 
 
-_BULL_SVG = _load_icon("bull-market.svg")
-_BEAR_SVG = _load_icon("bear-market.svg")
+# bull animal is the 1st path, bear animal is the 2nd (the other path is the
+# arrow). viewBox is cropped to each animal's bbox so it fills the icon.
+_BULL_SVG = _load_icon("bull-market.svg", keep_index=0, viewbox="-1 19 62 42", size=34)
+_BEAR_SVG = _load_icon("bear-market.svg", keep_index=1, viewbox="-1 23 62 38", size=34)
 _NEU_SVG = (
     '<svg class="bias-ico" viewBox="0 0 40 40" width="30" height="30" fill="currentColor">'
     '<rect x="8" y="18" width="24" height="5" rx="2.5"/></svg>'
