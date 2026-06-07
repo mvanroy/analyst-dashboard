@@ -197,15 +197,22 @@ def _trade_plan(tp):
     for r in tp.get("rows", []):
         tone = r.get("tone")
         vcls = tone if tone in ("bull", "bear", "blue") else ""
-        note = f'<span class="tpnote">{_e(r.get("note"))}</span>' if r.get("note") else ""
+        note = f'<span class="tpnote">({_e(r.get("note"))})</span>' if r.get("note") else ""
         rrv = rr_map.get((r.get("label", "") or "").strip().lower())
-        rrbox = f'<div class="rrbox">{_e(rrv)}</div>' if rrv else ""
+        rrbox = (
+            f'<div class="rrbox"><span class="rrlab">RR</span> {_e(rrv)}</div>'
+            if rrv else ""
+        )
         rows += (
-            f'<div class="tprow"><div class="tplab">{_e(r.get("label"))}</div>'
+            f'<div class="tprow"><div class="tplab {vcls}">{_e(r.get("label"))}</div>'
             f'<div class="tpval {vcls}">{_e(r.get("value"))} {note}</div>'
             f"{rrbox}</div>"
         )
-    return f'<div class="tpdir">{_e(tp.get("direction"))}</div>' + rows
+    head = (
+        '<div class="tphead"><div class="dtitle">Trade Plan</div>'
+        f'<div class="tpdir">{_e(tp.get("direction"))}</div></div>'
+    )
+    return head + rows
 
 
 def _levels(kl):
@@ -322,7 +329,7 @@ def _header(d):
     )
     # grid: row1 = price+bias | meta strip (spans 2) ;
     #       row2 = setup | trade plan | what-changes-my-mind
-    tradeplan = _card("Trade Plan", _trade_plan(d.get("trade_plan", {})), "ga-trade")
+    tradeplan = _card("", _trade_plan(d.get("trade_plan", {})), "ga-trade")
     wcmm = _card("What Changes My Mind?", _wcmm(d.get("what_changes_my_mind", {})), "ga-wcmm")
     return (
         '<div class="dhead">'
@@ -448,13 +455,17 @@ _CSS = """
 .setval{color:#dfe3e8;} .setval.blue{color:#4c8dff;font-weight:700;}
 
 /* trade plan */
-.tpdir{display:inline-block;background:rgba(76,141,255,.12);color:#4c8dff;border:1px solid rgba(76,141,255,.4);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;margin-bottom:10px;}
+.tphead{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.tphead .dtitle{margin-bottom:0;}
+.tpdir{display:inline-block;background:rgba(76,141,255,.12);color:#4c8dff;border:1px solid rgba(76,141,255,.4);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;}
 .tprow{display:flex;gap:10px;align-items:center;padding:4px 0;}
 .tplab{flex:0 0 74px;color:#8b94a0;font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;line-height:1.3;}
+.tplab.bull{color:#0ecb81;} .tplab.bear{color:#f6465d;} .tplab.blue{color:#4c8dff;}
 .tpval{flex:1;font-size:12px;font-weight:700;color:#dfe3e8;line-height:1.35;}
 .tpval.bull{color:#0ecb81;} .tpval.bear{color:#f6465d;} .tpval.blue{color:#4c8dff;}
 .tpnote{color:#8b94a0;font-weight:500;font-size:10px;}
 .rrbox{flex:0 0 auto;background:#11151b;border:1px solid #2a323c;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:800;color:#4c8dff;white-space:nowrap;}
+.rrlab{color:#8b94a0;font-weight:700;}
 
 /* levels */
 .lvgrid{display:flex;gap:14px;}
@@ -470,8 +481,8 @@ _CSS = """
 .wtit{font-weight:800;font-size:12px;}
 .wcol.bull .wtit{color:#0ecb81;} .wcol.bear .wtit{color:#f6465d;}
 .wsub{font-size:9.5px;color:#8b94a0;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
-.wchecks{margin:0;padding-left:15px;font-size:11px;color:#cdd3da;}
-.wchecks li{margin-bottom:3px;}
+.wchecks{margin:0;padding-left:15px;color:#cdd3da;}
+.wchecks li{margin-bottom:4px;font-size:12px;line-height:1.45;}
 .wres{margin-top:8px;font-size:10.5px;color:#aab2bd;border-top:1px solid #232a33;padding-top:6px;}
 
 /* probability */
