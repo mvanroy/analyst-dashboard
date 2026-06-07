@@ -46,6 +46,12 @@ st.markdown(
       /* we surface page navigation as an in-page list (top-left), so hide the
          default sidebar page-nav */
       [data-testid="stSidebarNav"] {display: none;}
+      /* lay the page-nav links out horizontally (a row, not a stack) */
+      .st-key-topnav {flex-direction: row !important; gap: 1.1rem; align-items: center;}
+      .st-key-topnav [data-testid="stElementContainer"] {width: auto !important;}
+      .st-key-topnav [data-testid="stMarkdownContainer"] p {
+        width: auto !important; overflow: visible !important;
+        text-overflow: clip !important; white-space: nowrap;}
       footer {display: none;}
       .block-container {padding-top: 1.6rem; padding-bottom: 1rem; max-width: 100%;}
       .orion-brand {display: flex; align-items: center; gap: .7rem;}
@@ -823,10 +829,11 @@ except Exception as exc:
 ICONS = icon_map(tuple(df["symbol"]))
 
 # ---------------- top bar: page nav (left) + live clocks (right) ----------------
-navc, clockc = st.columns([1, 3])
+navc, clockc = st.columns([1, 2.5])
 with navc:
-    st.page_link("app.py", label="Market Scanner", icon="📡")
-    st.page_link("pages/1_Analyst_Dashboard.py", label="Analyst Dashboard", icon="📊")
+    _nav = st.container(key="topnav")
+    _nav.page_link("app.py", label="Market Scanner")
+    _nav.page_link("pages/1_Analyst_Dashboard.py", label="Analyst Dashboard")
 with clockc:
     render_clocks()
 
