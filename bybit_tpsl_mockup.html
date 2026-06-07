@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bybit Partial TP/SL — Diagram</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  body { background:#0b0e11; color:#eaecef; padding:28px; display:flex; gap:34px; align-items:flex-start; }
+  .col { display:flex; flex-direction:column; align-items:center; }
+  .caption { font-size:13px; color:#848e9c; margin-bottom:12px; letter-spacing:.2px; }
+  .caption b { color:#f0b90b; }
+  .phone { width:360px; background:#161a1e; border:1px solid #2b3139; border-radius:22px; overflow:hidden; box-shadow:0 10px 40px rgba(0,0,0,.5); }
+  .sheet-head { padding:16px 18px; border-bottom:1px solid #2b3139; display:flex; justify-content:space-between; align-items:center; }
+  .sheet-head h2 { font-size:16px; font-weight:600; }
+  .sheet-head .x { color:#848e9c; font-size:18px; }
+  .pad { padding:16px 18px; }
+
+  /* position card */
+  .poscard { background:#1e2329; border-radius:10px; padding:14px; margin-bottom:14px; }
+  .row { display:flex; justify-content:space-between; font-size:13px; margin:6px 0; }
+  .row .k { color:#848e9c; }
+  .green { color:#0ecb81; }
+  .red { color:#f6465d; }
+  .tpsl-btn { margin-top:10px; border:1px solid #f0b90b; color:#f0b90b; border-radius:8px; text-align:center; padding:9px; font-size:13px; font-weight:600; position:relative; }
+
+  /* toggle */
+  .toggle { display:flex; background:#0b0e11; border-radius:9px; padding:4px; margin-bottom:18px; }
+  .toggle div { flex:1; text-align:center; padding:9px; font-size:13px; border-radius:7px; color:#848e9c; }
+  .toggle .active { background:#2b3139; color:#f0b90b; font-weight:600; }
+
+  .label { font-size:12px; color:#848e9c; margin:14px 0 6px; }
+  .tprow { display:flex; gap:8px; margin-bottom:9px; align-items:center; }
+  .field { flex:1; background:#0b0e11; border:1px solid #2b3139; border-radius:8px; padding:10px; font-size:13px; }
+  .field .sub { color:#5e6673; font-size:10px; display:block; margin-bottom:2px; }
+  .field .val { color:#eaecef; }
+  .tag { font-size:10px; padding:2px 7px; border-radius:5px; background:#2b3139; color:#848e9c; white-space:nowrap; }
+  .addtp { border:1px dashed #f0b90b; color:#f0b90b; border-radius:8px; text-align:center; padding:9px; font-size:13px; margin:4px 0 16px; }
+  .slrow .field { border-color:#5a2a30; }
+  .confirm { background:#f0b90b; color:#0b0e11; text-align:center; padding:13px; border-radius:9px; font-weight:700; font-size:14px; margin-top:6px; }
+
+  /* callout badges */
+  .badge { display:inline-flex; width:20px; height:20px; border-radius:50%; background:#f0b90b; color:#0b0e11; font-size:12px; font-weight:700; align-items:center; justify-content:center; margin-right:7px; vertical-align:middle; }
+  .note { font-size:12px; color:#b7bdc6; margin-top:7px; line-height:1.5; max-width:360px; }
+  .note .badge { margin:0 4px 0 0; }
+  .arrow { color:#f0b90b; font-size:22px; align-self:center; margin-top:200px; }
+</style>
+</head>
+<body>
+  <!-- STEP 1 -->
+  <div class="col">
+    <div class="caption">STEP 1 — On your <b>open position</b>, tap TP/SL</div>
+    <div class="phone">
+      <div class="sheet-head"><h2>Positions</h2><span class="x">⋯</span></div>
+      <div class="pad">
+        <div class="poscard">
+          <div class="row"><span class="k">OPNUSDT Perp · <span class="green">Long 3x</span></span><span class="green">+$0.00</span></div>
+          <div class="row"><span class="k">Size</span><span>251 OPN</span></div>
+          <div class="row"><span class="k">Entry Price</span><span>0.1779</span></div>
+          <div class="row"><span class="k">Liq. Price</span><span class="red">0.1186</span></div>
+          <div class="tpsl-btn"><span class="badge">1</span>TP/SL</div>
+        </div>
+        <div class="note">Tap the <b>TP/SL</b> button on the position itself — not the one in the order ticket.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="arrow">➜</div>
+
+  <!-- STEP 2 -->
+  <div class="col">
+    <div class="caption">STEP 2 — Switch to <b>Partial Position</b>, add 3 TPs</div>
+    <div class="phone">
+      <div class="sheet-head"><h2>TP/SL</h2><span class="x">✕</span></div>
+      <div class="pad">
+        <div class="toggle">
+          <div>Full Position</div>
+          <div class="active"><span class="badge">2</span>Partial Position</div>
+        </div>
+
+        <div class="label">TAKE PROFIT <span class="badge" style="float:right">3</span></div>
+
+        <div class="tprow">
+          <div class="field"><span class="sub">TP1 Price</span><span class="val">0.1964</span></div>
+          <div class="field"><span class="sub">Qty</span><span class="val">84 OPN</span></div>
+          <span class="tag">⅓ · 50% Fib</span>
+        </div>
+        <div class="tprow">
+          <div class="field"><span class="sub">TP2 Price</span><span class="val">0.2147</span></div>
+          <div class="field"><span class="sub">Qty</span><span class="val">84 OPN</span></div>
+          <span class="tag">⅓ · 38.2% Fib</span>
+        </div>
+        <div class="tprow">
+          <div class="field"><span class="sub">TP3 Price</span><span class="val">0.2738</span></div>
+          <div class="field"><span class="sub">Qty</span><span class="val">83 OPN</span></div>
+          <span class="tag">⅓ · pole high</span>
+        </div>
+        <div class="addtp">+ Add Take Profit</div>
+
+        <div class="label">STOP LOSS <span class="badge" style="float:right">4</span></div>
+        <div class="tprow slrow">
+          <div class="field"><span class="sub">SL Price (full size)</span><span class="red">0.1500</span></div>
+          <div class="field"><span class="sub">Qty</span><span class="val">251 OPN</span></div>
+          <span class="tag">−$7 risk</span>
+        </div>
+
+        <div class="confirm"><span class="badge" style="background:#0b0e11;color:#f0b90b">5</span>Confirm</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

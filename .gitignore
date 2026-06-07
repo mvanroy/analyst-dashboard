@@ -1,0 +1,14 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Virtual environment (regenerate from requirements.txt)
+.venv/
+venv/
+
+# OS
+.DS_Store
+
+# Streamlit
+.streamlit/secrets.toml
