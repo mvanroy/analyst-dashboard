@@ -40,7 +40,8 @@
       "mcp__tradingview__data_get_trades",
       "mcp__tradingview__pine_set_source",
       "mcp__tradingview__chart_get_visible_range",
-      "mcp__tradingview__data_get_pine_lines"
+      "mcp__tradingview__data_get_pine_lines",
+      "Bash(.venv/bin/python -m py_compile app.py pages/1_Analyst_Dashboard.py)"
     ]
   }
 }
