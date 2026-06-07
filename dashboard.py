@@ -320,23 +320,36 @@ def _header(d):
     return f'<div class="dhead">{leftcol}{metastrip}</div>'
 
 
+_PRICE_RE = re.compile(r"\$\d[\d,]*(?:\.\d+)?(?:\s*[-–]\s*\$?\d[\d,]*(?:\.\d+)?)*")
+
+
 def _setup_box(d):
     setup = d.get("setup", {})
+    # colour price levels by TRADE direction (not market bias): long -> green,
+    # short -> red.
+    direction = (d.get("trade_plan", {}).get("direction") or "").lower()
+    num_cls = "numred" if "short" in direction else "numgreen"
 
-    def row(label, value, cls=""):
+    def hl(text):
+        esc = _e(text)
+        return _PRICE_RE.sub(
+            lambda m: f'<span class="num {num_cls}">{m.group(0)}</span>', esc
+        )
+
+    def row(label, value_html, cls=""):
         return (
             f'<div class="srow"><div class="slab">{_e(label)}</div>'
-            f'<div class="sval {cls}">{_e(value)}</div></div>'
+            f'<div class="sval {cls}">{value_html}</div></div>'
         )
 
     return (
         '<div class="setupbox">'
         '<div class="dtitle">Setup Classification</div>'
         '<div class="setup-grid">'
-        + row("Setup Type", setup.get("type"), "blue")
-        + row("Thesis", setup.get("thesis"))
-        + row("Not", setup.get("not"))
-        + row("Most Likely Failure Scenario", d.get("failure_scenario"))
+        + row("Setup Type", _e(setup.get("type")), "blue")
+        + row("Thesis", hl(setup.get("thesis")))
+        + row("Not", _e(setup.get("not")))
+        + row("Most Likely Failure Scenario", hl(d.get("failure_scenario")))
         + "</div></div>"
     )
 
@@ -363,6 +376,9 @@ _CSS = """
 .slab{flex:0 0 86px;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:#8b94a0;line-height:1.4;}
 .sval{flex:1;font-size:12px;color:#cdd3da;line-height:1.5;}
 .sval.blue{color:#4c8dff;font-weight:700;}
+.num{font-weight:600;}
+.numgreen{color:#0ecb81;}
+.numred{color:#f6465d;}
 .hprice-col{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;}
 .hbias-col{flex:1;padding:12px 14px;border-left:1px solid #1e242c;display:flex;flex-direction:column;justify-content:center;text-align:center;}
 .bias-ico{transform:scaleX(-1);flex:0 0 auto;}
