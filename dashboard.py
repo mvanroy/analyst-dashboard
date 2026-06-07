@@ -336,7 +336,7 @@ def _setup_box(d):
         + row("Setup Type", setup.get("type"), "blue")
         + row("Thesis", setup.get("thesis"))
         + row("Not", setup.get("not"))
-        + row("Most Likely Failure Scenario", d.get("failure_scenario"), "fail")
+        + row("Most Likely Failure Scenario", d.get("failure_scenario"))
         + "</div></div>"
     )
 
@@ -363,7 +363,6 @@ _CSS = """
 .slab{flex:0 0 86px;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:#8b94a0;line-height:1.4;}
 .sval{flex:1;font-size:12px;color:#cdd3da;line-height:1.5;}
 .sval.blue{color:#4c8dff;font-weight:700;}
-.sval.fail{color:#f0b9c1;}
 .hprice-col{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;}
 .hbias-col{flex:1;padding:12px 14px;border-left:1px solid #1e242c;display:flex;flex-direction:column;justify-content:center;text-align:center;}
 .bias-ico{transform:scaleX(-1);flex:0 0 auto;}
