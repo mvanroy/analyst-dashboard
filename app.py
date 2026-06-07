@@ -43,6 +43,9 @@ st.markdown(
       /* the default Streamlit header is a 60px opaque bar pinned on top of the
          page (z-index ~999990); it was covering the top of our headings, so hide it */
       [data-testid="stHeader"] {display: none;}
+      /* we surface page navigation as an in-page list (top-left), so hide the
+         default sidebar page-nav */
+      [data-testid="stSidebarNav"] {display: none;}
       footer {display: none;}
       .block-container {padding-top: 1.6rem; padding-bottom: 1rem; max-width: 100%;}
       .orion-brand {display: flex; align-items: center; gap: .7rem;}
@@ -819,8 +822,13 @@ except Exception as exc:
 
 ICONS = icon_map(tuple(df["symbol"]))
 
-# ---------------- live session clocks, pinned top-right ----------------
-render_clocks()
+# ---------------- top bar: page nav (left) + live clocks (right) ----------------
+navc, clockc = st.columns([1, 3])
+with navc:
+    st.page_link("app.py", label="Market Scanner", icon="📡")
+    st.page_link("pages/1_Analyst_Dashboard.py", label="Analyst Dashboard", icon="📊")
+with clockc:
+    render_clocks()
 
 # ---------------- header: logo + refresh (left) + shortlist (right) ----------------
 left, right = st.columns([1, 3])

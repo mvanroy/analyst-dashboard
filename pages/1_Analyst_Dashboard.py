@@ -11,6 +11,18 @@ import streamlit as st
 
 st.set_page_config(page_title="Analyst Dashboard", page_icon="📊", layout="wide")
 
+# Surface page navigation as an in-page list (top-left); hide the sidebar nav.
+st.markdown(
+    "<style>[data-testid='stSidebarNav']{display:none;}"
+    "[data-testid='stHeader']{display:none;}"
+    ".block-container{padding-top:1.6rem;}</style>",
+    unsafe_allow_html=True,
+)
+navc = st.columns([1, 3])[0]
+with navc:
+    st.page_link("app.py", label="Market Scanner", icon="📡")
+    st.page_link("pages/1_Analyst_Dashboard.py", label="Analyst Dashboard", icon="📊")
+
 st.title("📊 Analyst Dashboard")
 
 st.caption(
