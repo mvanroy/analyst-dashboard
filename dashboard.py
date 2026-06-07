@@ -470,8 +470,8 @@ def render(d):
     setup_html = (
         f'<div class="setrow"><span class="setlab">Setup Type</span><br>'
         f'<span class="setval blue">{_e(setup.get("type"))}</span></div>'
-        f'<div class="setrow"><span class="setlab">Why</span><br>'
-        f'<span class="setval">{_e(setup.get("why"))}</span></div>'
+        f'<div class="setrow"><span class="setlab">Thesis</span><br>'
+        f'<span class="setval">{_e(setup.get("thesis"))}</span></div>'
         f'<div class="setrow"><span class="setlab">Not</span><br>'
         f'<span class="setval">{_e(setup.get("not"))}</span></div>'
     )
