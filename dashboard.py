@@ -280,7 +280,7 @@ def _header(d):
         f'<div class="hbq">({_e(d.get("bias_qualifier"))})</div>'
         "</div>"
     )
-    return f'<div class="dhead">{main}{metastrip}{biasbox}</div>'
+    return f'<div class="dhead">{main}{biasbox}{metastrip}</div>'
 
 
 # ----------------------------------------------------------------- CSS
