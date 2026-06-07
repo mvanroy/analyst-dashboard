@@ -137,8 +137,8 @@
       {"label": "Entry Zone", "value": "$57.50 - $58.50", "note": "Current ~$58.11", "tone": "bull"},
       {"label": "Stop Loss", "value": "< $55.40", "note": "Invalidation", "tone": "bear"},
       {"label": "Risk", "value": "~$2.60 per HYPE", "note": ""},
-      {"label": "Target 1", "value": "$61.00 - $62.00", "note": "Primary / Mean + Supply", "tone": "bull"},
-      {"label": "Target 2", "value": "$63.70+", "note": "Stretch Target", "tone": "bull"}
+      {"label": "Target 1", "value": "$61.00 - $62.00", "note": "Primary / Mean + Supply", "tone": "blue"},
+      {"label": "Target 2", "value": "$63.70+", "note": "Stretch Target", "tone": "blue"}
     ],
     "rr": [
       {"label": "To Target 1", "value": "~1 : 1.3"},

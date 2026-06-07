@@ -187,21 +187,25 @@ def _wcmm(w):
 
 
 def _trade_plan(tp):
+    # map "To Target 1" -> Target 1 row so the R:R sits inline on that row
+    rr_map = {}
+    for x in tp.get("rr", []):
+        key = (x.get("label", "") or "").replace("To ", "").strip().lower()
+        rr_map[key] = x.get("value")
+
     rows = ""
     for r in tp.get("rows", []):
-        tone = _cls(r.get("tone"))
+        tone = r.get("tone")
+        vcls = tone if tone in ("bull", "bear", "blue") else ""
         note = f'<span class="tpnote">{_e(r.get("note"))}</span>' if r.get("note") else ""
+        rrv = rr_map.get((r.get("label", "") or "").strip().lower())
+        rrbox = f'<div class="rrbox">{_e(rrv)}</div>' if rrv else ""
         rows += (
-            f'<div class="tprow"><span class="tpl">{_e(r.get("label"))}</span>'
-            f'<span class="tpv {tone}">{_e(r.get("value"))} {note}</span></div>'
+            f'<div class="tprow"><div class="tplab">{_e(r.get("label"))}</div>'
+            f'<div class="tpval {vcls}">{_e(r.get("value"))} {note}</div>'
+            f"{rrbox}</div>"
         )
-    rr = ""
-    for x in tp.get("rr", []):
-        rr += f'<div class="rrbox"><div class="rrl">{_e(x.get("label"))}</div><div class="rrv">{_e(x.get("value"))}</div></div>'
-    return (
-        f'<div class="tpdir">{_e(tp.get("direction"))}</div>'
-        + rows + f'<div class="rrwrap">{rr}</div>'
-    )
+    return f'<div class="tpdir">{_e(tp.get("direction"))}</div>' + rows
 
 
 def _levels(kl):
@@ -444,15 +448,13 @@ _CSS = """
 .setval{color:#dfe3e8;} .setval.blue{color:#4c8dff;font-weight:700;}
 
 /* trade plan */
-.tpdir{display:inline-block;background:rgba(76,141,255,.12);color:#4c8dff;border:1px solid rgba(76,141,255,.4);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;margin-bottom:9px;}
-.tprow{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;border-bottom:1px solid #161b21;font-size:12px;}
-.tpl{color:#8b94a0;font-size:10px;letter-spacing:.05em;text-transform:uppercase;}
-.tpv{font-weight:700;text-align:right;}
+.tpdir{display:inline-block;background:rgba(76,141,255,.12);color:#4c8dff;border:1px solid rgba(76,141,255,.4);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;margin-bottom:10px;}
+.tprow{display:flex;gap:10px;align-items:center;padding:4px 0;}
+.tplab{flex:0 0 74px;color:#8b94a0;font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;line-height:1.3;}
+.tpval{flex:1;font-size:12px;font-weight:700;color:#dfe3e8;line-height:1.35;}
+.tpval.bull{color:#0ecb81;} .tpval.bear{color:#f6465d;} .tpval.blue{color:#4c8dff;}
 .tpnote{color:#8b94a0;font-weight:500;font-size:10px;}
-.rrwrap{display:flex;gap:8px;margin-top:9px;}
-.rrbox{flex:1;background:#11151b;border:1px solid #232a33;border-radius:7px;padding:7px;text-align:center;}
-.rrl{font-size:9px;color:#8b94a0;text-transform:uppercase;letter-spacing:.05em;}
-.rrv{font-size:15px;font-weight:800;color:#4c8dff;margin-top:2px;}
+.rrbox{flex:0 0 auto;background:#11151b;border:1px solid #2a323c;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:800;color:#4c8dff;white-space:nowrap;}
 
 /* levels */
 .lvgrid{display:flex;gap:14px;}
