@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "framework_version": "v1",
+  "symbol": "HYPE/USDT",
+  "contract": "PERP",
+  "generated_at": "2025-05-24T14:35:00Z",
+  "data_sources": ["sample/manual — HYPE reference analysis"],
+
+  "price": "$58.11",
+  "change_pct_24h": 1.82,
+  "headline": "Mid-bounce off $55.45 low",
+
+  "market_bias": "BEARISH",
+  "bias_qualifier": "TRANSITIONAL",
+
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H",
+    "analysis_time": "May 24, 2025 14:35 UTC",
+    "market_regime": "TRANSITIONAL",
+    "current_phase": "Countertrend Bounce"
+  },
+
+  "snapshot": [
+    {"label": "Current Price", "value": "$58.11"},
+    {"label": "24H High", "value": "$59.20"},
+    {"label": "24H Low", "value": "$55.45", "tone": "bear"},
+    {"label": "24H Volume", "value": "8.7M"},
+    {"label": "Market Cap", "value": "—"},
+    {"label": "Funding Rate", "value": "N/A"},
+    {"label": "Open Interest", "value": "N/A"}
+  ],
+
+  "daily": {
+    "lean": "BEARISH",
+    "count": "3 Bearish / 2 Neutral / 0 Bullish",
+    "factors": [
+      {"factor": "Structure", "reading": "LH + LL", "evidence": "Double top at $75.8/$75.6, broke rising HL sequence, made LL at $55.45", "call": "Bearish"},
+      {"factor": "20 EMA", "reading": "$60.7", "evidence": "Price $58.1 is below the 20 EMA", "call": "Bearish"},
+      {"factor": "50 EMA", "reading": "$53.6", "evidence": "Price above the 50 EMA; 20>50 stack", "call": "Neutral"},
+      {"factor": "AVWAP (cycle low 44.2)", "reading": "~$61.0", "evidence": "Price below AVWAP", "call": "Bearish"},
+      {"factor": "RSI regime", "reading": "49.7", "evidence": "Fell from ~70 to midline; not bullish, not yet bearish", "call": "Neutral"},
+      {"factor": "Volume trend", "reading": "Expanding", "evidence": "Two highest-volume daily bars (14.4M, 15.7M) were down days; bounce light", "call": "Bearish"}
+    ]
+  },
+
+  "h4": {
+    "lean": "BEARISH",
+    "count": "3 Bearish / 2 Neutral / 0 Bullish",
+    "factors": [
+      {"factor": "Structure", "reading": "LH/LL, bounce", "evidence": "Downtrend intact; bouncing off 55.45 but no break of structure yet", "call": "Bearish"},
+      {"factor": "20 EMA", "reading": "$61.7", "evidence": "Price $58.1 below", "call": "Bearish"},
+      {"factor": "AVWAP (from $75.8 top)", "reading": "~$66", "evidence": "Price well below", "call": "Bearish"},
+      {"factor": "Momentum (RSI 14)", "reading": "37.4, rising", "evidence": "Below 50 but rising off oversold with bullish divergence (LL price, HL RSI)", "call": "Neutral"},
+      {"factor": "Volume", "reading": "Selling dried up", "evidence": "Down-volume contracted into low (1.3M to 0.6M); bounce modest (~1M)", "call": "Neutral"}
+    ]
+  },
+
+  "setup": {
+    "type": "Bullish Divergence Reversal (Countertrend)",
+    "why": "Bounce off major support with 4H bullish RSI divergence (LL in price / HL in RSI) after a liquidity sweep and reclaim. Countertrend within a bearish structure.",
+    "not": "Trend Continuation (structure broken) or a clean Pullback (double-top breakdown)."
+  },
+
+  "key_stats": [
+    {"label": "Setup Quality", "score": 5, "out_of": 10},
+    {"label": "Reward-to-Risk Quality", "score": 6, "out_of": 10},
+    {"label": "Probability", "score": 5, "out_of": 10},
+    {"label": "Confidence", "text": "Moderate"}
+  ],
+
+  "scorecard": {
+    "bearish_pressure": 68,
+    "bullish_pressure": 32,
+    "factors": [
+      {"factor": "Daily Structure", "call": "Bearish"},
+      {"factor": "Daily EMA Position", "call": "Neutral"},
+      {"factor": "Daily AVWAP Position", "call": "Bearish"},
+      {"factor": "Daily RSI Regime", "call": "Neutral"},
+      {"factor": "Daily Volume Trend", "call": "Bearish"},
+      {"factor": "4H Structure", "call": "Bearish"},
+      {"factor": "4H EMA Position", "call": "Bearish"},
+      {"factor": "4H AVWAP Position", "call": "Bearish"},
+      {"factor": "4H Momentum", "call": "Neutral"},
+      {"factor": "4H Volume", "call": "Neutral"}
+    ],
+    "count": {"bullish": 0, "neutral": 4, "bearish": 6}
+  },
+
+  "evidence_matrix": [
+    {"factor": "Daily Structure", "timeframe": "Daily", "reading": "LH + LL (double-top breakdown)", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Daily AVWAP Position", "timeframe": "Daily", "reading": "Price $58.1 < AVWAP ~$61", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Daily Volume Trend", "timeframe": "Daily", "reading": "Expanding on declines (14.4M, 15.7M)", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Daily RSI", "timeframe": "Daily", "reading": "49.7 (midline)", "interpretation": "Neutral", "impact": "flat", "weight": "Medium"},
+    {"factor": "Daily EMA Position", "timeframe": "Daily", "reading": "Below 20 EMA, above 50 EMA", "interpretation": "Neutral", "impact": "flat", "weight": "Medium"},
+    {"factor": "4H RSI Divergence", "timeframe": "4H", "reading": "Bullish divergence (LL price / HL RSI)", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Liquidity Sweep", "timeframe": "4H", "reading": "Swept < $56 then reclaimed", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Volume Exhaustion", "timeframe": "4H", "reading": "Down-volume contracted into low", "interpretation": "Bullish", "impact": "up", "weight": "Medium"},
+    {"factor": "HVN Overhead (VP)", "timeframe": "4H", "reading": "HVN $57-61 overhead", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "AVWAP Reclaim Status", "timeframe": "Daily + 4H", "reading": "Below daily (~$61) & 4H (~$66)", "interpretation": "Neutral", "impact": "flat", "weight": "Medium"},
+    {"factor": "Support Confluence", "timeframe": "Daily + 4H", "reading": "0.618 daily (~$56.3) + $54-55 demand + 50 EMA", "interpretation": "Bullish", "impact": "up", "weight": "High"}
+  ],
+
+  "analyst_summary": [
+    "The market remains structurally bearish with six bearish factors and no bullish higher-timeframe factors.",
+    "The current move appears to be a countertrend RSI-divergence bounce originating from major confluence support.",
+    "While the liquidity sweep and momentum divergence support a tactical long, the setup remains unconfirmed until price reclaims $61-62 and closes above the 4H 20 EMA."
+  ],
+  "bottom_line": "This is a countertrend / mean-reversion reversal attempt — not trend-following. Treat as a tactical play, not a position swing, until confirmation occurs.",
+
+  "what_changes_my_mind": {
+    "bullish_upgrade": {
+      "title": "Bullish Upgrade",
+      "subtitle": "Invalidates Bearish Bias",
+      "checks": [
+        "4H close > $61",
+        "Reclaim 4H 20 EMA ($61.7)",
+        "Volume expansion on upside",
+        "Reclaim daily AVWAP (~$61)"
+      ],
+      "result": "Bias upgrades from Bearish to Neutral / Bullish Transitional."
+    },
+    "bearish_confirmation": {
+      "title": "Bearish Confirmation",
+      "subtitle": "Thesis Invalidated",
+      "checks": [
+        "Rejects at $61-$62 (supply / means)",
+        "Volume expands down",
+        "4H close below $55.40 (sweep low)"
+      ],
+      "result": "Bias reasserts bearish. Continuation toward $53.6 and potentially $51.0."
+    }
+  },
+
+  "trade_plan": {
+    "direction": "Countertrend Long",
+    "rows": [
+      {"label": "Entry Zone", "value": "$57.50 - $58.50", "note": "Current ~$58.11", "tone": "bull"},
+      {"label": "Stop Loss", "value": "< $55.40", "note": "Invalidation", "tone": "bear"},
+      {"label": "Risk", "value": "~$2.60 per HYPE", "note": ""},
+      {"label": "Target 1", "value": "$61.00 - $62.00", "note": "Primary / Mean + Supply", "tone": "bull"},
+      {"label": "Target 2", "value": "$63.70+", "note": "Stretch Target", "tone": "bull"}
+    ],
+    "rr": [
+      {"label": "To Target 1", "value": "~1.3 : 1"},
+      {"label": "To Target 2", "value": "~3.0 : 1+"}
+    ]
+  },
+
+  "key_levels": {
+    "resistance": [
+      {"price": "$63.70", "label": "PR Upper-2"},
+      {"price": "$61.70", "label": "4H 20 EMA"},
+      {"price": "$61.30", "label": "PR Upper-1"},
+      {"price": "$61.00", "label": "Daily AVWAP"},
+      {"price": "$60.00", "label": "Daily 0.50 Fib"}
+    ],
+    "support": [
+      {"price": "$56.30", "label": "Daily 0.618 Fib"},
+      {"price": "$55.40", "label": "Sweep Low / Invalidation"},
+      {"price": "$54.00 - $55.00", "label": "Prior Demand Zone"},
+      {"price": "$53.60", "label": "Daily 50 EMA"},
+      {"price": "$51.00", "label": "Daily 0.786 Fib"},
+      {"price": "$50.70", "label": "PR Lower-1"}
+    ]
+  },
+
+  "probability_distribution": [
+    {"scenario": "Bullish Reversal (Breaks $61+)", "pct": 30, "tone": "bull"},
+    {"scenario": "Range / Chop ($55-$61)", "pct": 40, "tone": "neutral"},
+    {"scenario": "Bearish Continuation (Breaks $55.4)", "pct": 30, "tone": "bear"}
+  ],
+
+  "failure_scenario": "Bounce stalls into the $58-61 HVN/EMA/AVWAP supply, gets rejected, bearish bias reasserts, and price makes a lower low below $55.4 toward the daily 50 EMA ($53.6) / 0.786 fib ($51.0) / PR Lower-1 ($50.7).",
+
+  "additional_data": [
+    {"label": "Open Interest", "value": "N/A"},
+    {"label": "Funding Rate", "value": "N/A"},
+    {"label": "CVD", "value": "N/A"},
+    {"label": "Volume Profile", "value": "Partial (HVN $57-61)"},
+    {"label": "VWAP / AVWAP", "value": "Below (Not Reclaimed)"}
+  ],
+
+  "conclusion": "Countertrend / Mean-Reversion Reversal Attempt — explicitly not trend-following."
+}

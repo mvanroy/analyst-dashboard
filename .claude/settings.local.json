@@ -41,7 +41,11 @@
       "mcp__tradingview__pine_set_source",
       "mcp__tradingview__chart_get_visible_range",
       "mcp__tradingview__data_get_pine_lines",
-      "Bash(.venv/bin/python -m py_compile app.py pages/1_Analyst_Dashboard.py)"
+      "Bash(.venv/bin/python -m py_compile app.py pages/1_Analyst_Dashboard.py)",
+      "Bash(.venv/bin/python -m py_compile app.py pages/1_Analyst_Dashboard.py dashboard.py)",
+      "Bash(.venv/bin/python -c \"import json,dashboard; d=dashboard.load_analysis\\('HYPEUSDT'\\); print\\('loaded:', d['symbol'], '| keys:', len\\(d\\)\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit -q -m ' *)"
     ]
   }
 }
