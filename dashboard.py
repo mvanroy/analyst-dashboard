@@ -330,8 +330,6 @@ _CSS = """
 .hmain{flex:1 1 320px;background:#0e1116;border:1px solid #1e242c;border-radius:10px;display:flex;overflow:hidden;}
 .hprice-col{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;}
 .hbias-col{flex:1;padding:12px 14px;border-left:1px solid #1e242c;display:flex;flex-direction:column;justify-content:center;text-align:center;}
-.hbias-col.bear{background:rgba(246,70,93,.07);}
-.hbias-col.bull{background:rgba(14,203,129,.07);}
 .bias-ico{vertical-align:middle;margin-right:5px;}
 .hsym{font-size:16px;font-weight:800;letter-spacing:.02em;}
 .hperp{font-size:10px;color:#8b94a0;border:1px solid #2a323c;border-radius:4px;padding:1px 5px;vertical-align:middle;margin-left:4px;}
