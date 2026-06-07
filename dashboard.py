@@ -316,7 +316,31 @@ def _header(d):
         + cell("Current Phase", meta.get("current_phase"), "blue")
         + "</div>"
     )
-    return f'<div class="dhead">{main}{metastrip}</div>'
+    leftcol = f'<div class="dhead-left">{main}{_setup_box(d)}</div>'
+    return f'<div class="dhead">{leftcol}{metastrip}</div>'
+
+
+def _setup_box(d):
+    setup = d.get("setup", {})
+    stats = [s for s in d.get("key_stats", []) if "score" in s]
+    rows = ""
+    for s in stats:
+        rows += (
+            f'<div class="statrow"><span class="statl">{_e(s["label"])}</span>'
+            f'<span>{_stars(s["score"], s.get("out_of", 10))}'
+            f'<span class="statn">{_e(s["score"])}/{_e(s.get("out_of", 10))}</span></span></div>'
+        )
+    return (
+        '<div class="setupbox">'
+        '<div class="dtitle">Setup Classification</div>'
+        f'<div class="setup-type">{_e(setup.get("type"))}</div>'
+        '<div class="setup-lab">Thesis</div>'
+        f'<div class="setup-thesis">{_e(setup.get("thesis"))}</div>'
+        f'<div class="setup-metrics">{rows}</div>'
+        '<div class="setup-lab">Most Likely Failure Scenario</div>'
+        f'<div class="setup-fail">{_e(d.get("failure_scenario"))}</div>'
+        "</div>"
+    )
 
 
 # ----------------------------------------------------------------- CSS
@@ -332,8 +356,15 @@ _CSS = """
 @media(max-width:760px){.dbody{column-count:1;}}
 
 /* header */
-.dhead{display:flex;gap:12px;align-items:stretch;margin-bottom:14px;flex-wrap:wrap;}
-.hmain{flex:1 1 320px;background:#0e1116;border:1px solid #1e242c;border-radius:10px;display:flex;overflow:hidden;}
+.dhead{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;}
+.dhead-left{flex:1 1 320px;display:flex;flex-direction:column;gap:12px;}
+.hmain{background:#0e1116;border:1px solid #1e242c;border-radius:10px;display:flex;overflow:hidden;}
+.setupbox{background:#0e1116;border:1px solid #1e242c;border-radius:10px;padding:12px 14px;}
+.setup-type{color:#4c8dff;font-weight:800;font-size:14px;margin-bottom:8px;line-height:1.3;}
+.setup-lab{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:#8b94a0;margin-top:9px;}
+.setup-thesis{font-size:12px;color:#cdd3da;line-height:1.5;margin-top:3px;}
+.setup-metrics{margin:6px 0 2px;}
+.setup-fail{font-size:11.5px;color:#f0b9c1;line-height:1.5;margin-top:3px;}
 .hprice-col{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;}
 .hbias-col{flex:1;padding:12px 14px;border-left:1px solid #1e242c;display:flex;flex-direction:column;justify-content:center;text-align:center;}
 .bias-ico{transform:scaleX(-1);flex:0 0 auto;}

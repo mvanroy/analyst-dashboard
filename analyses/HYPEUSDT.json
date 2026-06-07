@@ -57,6 +57,7 @@
 
   "setup": {
     "type": "Bullish Divergence Reversal (Countertrend)",
+    "thesis": "Long the oversold divergence reversal off the $55.4-56.3 major support, targeting mean-reversion into the overhead supply / means at $61-62.",
     "why": "Bounce off major support with 4H bullish RSI divergence (LL in price / HL in RSI) after a liquidity sweep and reclaim. Countertrend within a bearish structure.",
     "not": "Trend Continuation (structure broken) or a clean Pullback (double-top breakdown)."
   },
