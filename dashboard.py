@@ -242,6 +242,37 @@ def _kv(items):
     )
 
 
+# bull / bear / neutral icons (inherit colour via fill:currentColor)
+_BEAR_SVG = (
+    '<svg class="bias-ico" viewBox="0 0 40 40" width="30" height="30" fill="currentColor">'
+    '<circle cx="11" cy="12" r="5.5"/><circle cx="29" cy="12" r="5.5"/>'
+    '<ellipse cx="20" cy="22" rx="12.5" ry="11.5"/>'
+    '<ellipse cx="20" cy="26.5" rx="5.5" ry="4.2" fill="rgba(0,0,0,.32)"/>'
+    '<circle cx="20" cy="23.5" r="1.7" fill="rgba(0,0,0,.55)"/>'
+    '<circle cx="14.5" cy="19.5" r="1.3" fill="rgba(0,0,0,.45)"/>'
+    '<circle cx="25.5" cy="19.5" r="1.3" fill="rgba(0,0,0,.45)"/></svg>'
+)
+_BULL_SVG = (
+    '<svg class="bias-ico" viewBox="0 0 40 40" width="30" height="30" fill="currentColor">'
+    '<path d="M9 16 C2 12 2 5 6 4 C6 9 9 12 13 15 Z"/>'
+    '<path d="M31 16 C38 12 38 5 34 4 C34 9 31 12 27 15 Z"/>'
+    '<ellipse cx="20" cy="22" rx="11.5" ry="11.5"/>'
+    '<ellipse cx="20" cy="27" rx="6" ry="4.5" fill="rgba(0,0,0,.3)"/>'
+    '<circle cx="17" cy="27" r="1.1" fill="rgba(0,0,0,.5)"/>'
+    '<circle cx="23" cy="27" r="1.1" fill="rgba(0,0,0,.5)"/>'
+    '<circle cx="15" cy="20" r="1.3" fill="rgba(0,0,0,.45)"/>'
+    '<circle cx="25" cy="20" r="1.3" fill="rgba(0,0,0,.45)"/></svg>'
+)
+_NEU_SVG = (
+    '<svg class="bias-ico" viewBox="0 0 40 40" width="30" height="30" fill="currentColor">'
+    '<rect x="8" y="18" width="24" height="5" rx="2.5"/></svg>'
+)
+
+
+def _bias_icon(cls):
+    return {"bull": _BULL_SVG, "bear": _BEAR_SVG}.get(cls, _NEU_SVG)
+
+
 # ----------------------------------------------------------------- header
 def _header(d):
     chg = d.get("change_pct_24h", 0)
@@ -249,7 +280,7 @@ def _header(d):
     chg_str = (f"+{chg}" if isinstance(chg, (int, float)) and chg >= 0 else f"{chg}") + "%"
     bias = d.get("market_bias", "")
     bc = _cls(bias)
-    icon = {"bull": "▲", "bear": "▼", "neu": "■"}[bc]
+    icon = _bias_icon(bc)
     meta = d.get("meta", {})
 
     def cell(label, val, vc=""):
@@ -297,17 +328,18 @@ _CSS = """
 
 /* header */
 .dhead{display:flex;gap:12px;align-items:stretch;margin-bottom:14px;flex-wrap:wrap;}
-.hmain{flex:2 1 440px;background:#0e1116;border:1px solid #1e242c;border-radius:10px;display:flex;overflow:hidden;}
+.hmain{flex:1 1 320px;background:#0e1116;border:1px solid #1e242c;border-radius:10px;display:flex;overflow:hidden;}
 .hprice-col{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;}
 .hbias-col{flex:1;padding:12px 14px;border-left:1px solid #1e242c;display:flex;flex-direction:column;justify-content:center;text-align:center;}
 .hbias-col.bear{background:rgba(246,70,93,.07);}
 .hbias-col.bull{background:rgba(14,203,129,.07);}
+.bias-ico{vertical-align:middle;margin-right:5px;}
 .hsym{font-size:16px;font-weight:800;letter-spacing:.02em;}
 .hperp{font-size:10px;color:#8b94a0;border:1px solid #2a323c;border-radius:4px;padding:1px 5px;vertical-align:middle;margin-left:4px;}
 .hprice{font-size:30px;font-weight:800;margin-top:4px;}
 .hchg{font-size:15px;font-weight:700;}
 .hhead{color:#8b94a0;font-size:12px;margin-top:2px;}
-.hmeta{flex:2 1 380px;display:flex;gap:10px;}
+.hmeta{flex:2 1 420px;display:flex;gap:10px;}
 .mcell{flex:1;background:#0e1116;border:1px solid #1e242c;border-radius:10px;padding:10px 12px;}
 .ml{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#8b94a0;}
 .mv{font-size:14px;font-weight:700;margin-top:5px;}
