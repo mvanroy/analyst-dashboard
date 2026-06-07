@@ -829,11 +829,12 @@ except Exception as exc:
 ICONS = icon_map(tuple(df["symbol"]))
 
 # ---------------- top bar: page nav (left) + live clocks (right) ----------------
-navc, clockc = st.columns([1, 2.5])
+navc, clockc = st.columns([1.5, 2.1])
 with navc:
     _nav = st.container(key="topnav")
     _nav.page_link("app.py", label="Market Scanner")
     _nav.page_link("pages/1_Analyst_Dashboard.py", label="Analyst Dashboard")
+    _nav.page_link("pages/2_Position_Size_Calculator.py", label="Position Size Calculator")
 with clockc:
     render_clocks()
 

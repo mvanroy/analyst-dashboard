@@ -9,6 +9,7 @@
   "price": "$58.11",
   "change_pct_24h": 1.82,
   "headline": "Mid-bounce off $55.45 low",
+  "levels": {"direction": "long", "entry": 58.0, "stop": 55.4, "target1": 61.5, "target2": 63.7},
 
   "market_bias": "BEARISH",
   "bias_qualifier": "TRANSITIONAL",

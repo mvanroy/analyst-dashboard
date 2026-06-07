@@ -48,7 +48,9 @@
       "Bash(git commit -q -m ' *)",
       "Bash(.venv/bin/python -m py_compile dashboard.py)",
       "Bash(.venv/bin/python -c ' *)",
-      "Bash(.venv/bin/python -c \"import json;json.load\\(open\\('analyses/HYPEUSDT.json'\\)\\)\")"
+      "Bash(.venv/bin/python -c \"import json;json.load\\(open\\('analyses/HYPEUSDT.json'\\)\\)\")",
+      "Bash(.venv/bin/python -m py_compile app.py pages/1_Analyst_Dashboard.py pages/2_Position_Size_Calculator.py dashboard.py)",
+      "Bash(.venv/bin/python -c \"import json;d=json.load\\(open\\('analyses/HYPEUSDT.json'\\)\\);print\\('levels:',d['levels']\\)\")"
     ]
   }
 }
