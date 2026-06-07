@@ -458,13 +458,13 @@ _CSS = """
 .tphead{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
 .tphead .dtitle{margin-bottom:0;}
 .tpdir{display:inline-block;background:rgba(76,141,255,.12);color:#4c8dff;border:1px solid rgba(76,141,255,.4);border-radius:5px;padding:2px 8px;font-size:10px;font-weight:700;}
-.tprow{display:flex;gap:10px;align-items:center;padding:4px 0;}
+.tprow{display:flex;gap:10px;align-items:baseline;padding:4px 0;}
 .tplab{flex:0 0 74px;color:#8b94a0;font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;line-height:1.3;}
 .tplab.bull{color:#0ecb81;} .tplab.bear{color:#f6465d;} .tplab.blue{color:#4c8dff;}
 .tpval{flex:1;font-size:12px;font-weight:700;color:#dfe3e8;line-height:1.35;}
 .tpval.bull{color:#0ecb81;} .tpval.bear{color:#f6465d;} .tpval.blue{color:#4c8dff;}
 .tpnote{color:#8b94a0;font-weight:500;font-size:10px;}
-.rrbox{flex:0 0 auto;background:#11151b;border:1px solid #2a323c;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:800;color:#4c8dff;white-space:nowrap;}
+.rrbox{flex:0 0 86px;background:#11151b;border:1px solid #2a323c;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:800;color:#4c8dff;white-space:nowrap;text-align:right;}
 .rrlab{color:#8b94a0;font-weight:700;}
 
 /* levels */
@@ -477,7 +477,6 @@ _CSS = """
 /* what changes my mind */
 .wgrid{display:flex;gap:10px;}
 .wcol{flex:1;border:1px solid #232a33;border-radius:8px;padding:9px;}
-.wcol.bull{background:rgba(14,203,129,.05);} .wcol.bear{background:rgba(246,70,93,.05);}
 .wtit{font-weight:800;font-size:12px;}
 .wcol.bull .wtit{color:#0ecb81;} .wcol.bear .wtit{color:#f6465d;}
 .wsub{font-size:9.5px;color:#8b94a0;text-transform:uppercase;letter-spacing:.04em;margin-bottom:6px;}
