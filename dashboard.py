@@ -319,12 +319,24 @@ def _header(d):
         "</div>"
         "</div>"
     )
+    # Market Snapshot (first 4 lines) spanning the old Timeframe + Analysis-Time
+    # slots; timeframe now lives in the page caption instead.
+    snap_rows = "".join(
+        f'<div class="msrow"><span class="msl">{_e(s.get("label"))}</span>'
+        f'<span class="msv">{_e(s.get("value"))}</span></div>'
+        for s in d.get("snapshot", [])[:4]
+    )
+    snap_box = (
+        '<div class="mcell mcell-snap">'
+        '<div class="dtitle">Market Snapshot</div>'
+        + snap_rows
+        + "</div>"
+    )
     metastrip = (
         '<div class="hmeta">'
-        + cell("Timeframe", meta.get("timeframe_analyzed"), "blue")
-        + cell("Analysis Time", meta.get("analysis_time"))
+        + snap_box
         + cell("Market Regime", meta.get("market_regime"), "amber")
-        + cell("Current Phase", meta.get("current_phase"), "blue")
+        + cell("Trading Thesis", meta.get("current_phase"), "blue")
         + "</div>"
     )
     # grid: row1 = price+bias | meta strip (spans 2) ;
@@ -412,9 +424,15 @@ _CSS = """
 .hchg{font-size:15px;font-weight:700;}
 .hhead{color:#8b94a0;font-size:12px;margin-top:2px;}
 .hmeta{grid-area:meta;display:flex;gap:10px;align-self:stretch;}
-.mcell{flex:1;background:#0e1116;border:1px solid #1e242c;border-radius:10px;padding:10px 12px;}
+.mcell{flex:1;background:#0e1116;border:1px solid #1e242c;border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;justify-content:center;}
 .ml{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#8b94a0;}
 .mv{font-size:14px;font-weight:700;margin-top:5px;}
+.mcell-snap{flex:2;justify-content:center;gap:0;}
+.mcell-snap .dtitle{margin-bottom:4px;}
+.msrow{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:3px 0;border-bottom:1px solid #161b21;}
+.msrow:last-child{border-bottom:none;}
+.msl{color:#8b94a0;font-size:9px;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;}
+.msv{color:#dfe3e8;font-size:11px;font-weight:700;white-space:nowrap;}
 .hbl{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:#8b94a0;}
 .hbv{font-size:26px;font-weight:800;margin-top:2px;display:flex;align-items:center;justify-content:center;gap:6px;}
 .hbq{font-size:11px;color:#8b94a0;letter-spacing:.06em;}

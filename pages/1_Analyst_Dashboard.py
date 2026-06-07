@@ -47,9 +47,11 @@ data = dashboard.load_analysis(symbol)
 
 st.divider()
 if data:
+    _m = data.get("meta", {})
     st.caption(
         f"Showing **{data.get('symbol', symbol)}** · analysis time "
-        f"{data.get('meta', {}).get('analysis_time', '—')} · framework "
+        f"{_m.get('analysis_time', '—')} · analysis performed on "
+        f"{_m.get('timeframe_analyzed', '—')} · framework "
         f"{data.get('framework_version', 'v1')}"
     )
     dashboard.render(data)
