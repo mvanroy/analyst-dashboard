@@ -297,7 +297,7 @@ def _header(d):
         "</div>"
         f'<div class="hbias-col {bc}">'
         '<div class="hbl">Market Bias</div>'
-        f'<div class="hbv">{icon} {_e(bias)}</div>'
+        f'<div class="hbv">{_e(bias)} {icon}</div>'
         f'<div class="hbq">({_e(d.get("bias_qualifier"))})</div>'
         "</div>"
         "</div>"
@@ -330,7 +330,7 @@ _CSS = """
 .hmain{flex:1 1 320px;background:#0e1116;border:1px solid #1e242c;border-radius:10px;display:flex;overflow:hidden;}
 .hprice-col{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;}
 .hbias-col{flex:1;padding:12px 14px;border-left:1px solid #1e242c;display:flex;flex-direction:column;justify-content:center;text-align:center;}
-.bias-ico{vertical-align:middle;margin-right:5px;}
+.bias-ico{vertical-align:middle;margin-left:6px;transform:scaleX(-1);}
 .hsym{font-size:16px;font-weight:800;letter-spacing:.02em;}
 .hperp{font-size:10px;color:#8b94a0;border:1px solid #2a323c;border-radius:4px;padding:1px 5px;vertical-align:middle;margin-left:4px;}
 .hprice{font-size:30px;font-weight:800;margin-top:4px;}
