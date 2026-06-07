@@ -260,9 +260,16 @@ def _header(d):
 
     main = (
         '<div class="hmain">'
+        '<div class="hprice-col">'
         f'<div class="hsym">{_e(d.get("symbol"))} <span class="hperp">{_e(d.get("contract"))}</span></div>'
         f'<div class="hprice">{_e(d.get("price"))} <span class="{chg_cls} hchg">{_e(chg_str)}</span></div>'
         f'<div class="hhead">{_e(d.get("headline"))}</div>'
+        "</div>"
+        f'<div class="hbias-col {bc}">'
+        '<div class="hbl">Market Bias</div>'
+        f'<div class="hbv">{icon} {_e(bias)}</div>'
+        f'<div class="hbq">({_e(d.get("bias_qualifier"))})</div>'
+        "</div>"
         "</div>"
     )
     metastrip = (
@@ -273,14 +280,7 @@ def _header(d):
         + cell("Current Phase", meta.get("current_phase"), "blue")
         + "</div>"
     )
-    biasbox = (
-        f'<div class="hbias {bc}">'
-        '<div class="hbl">Market Bias</div>'
-        f'<div class="hbv">{icon} {_e(bias)}</div>'
-        f'<div class="hbq">({_e(d.get("bias_qualifier"))})</div>'
-        "</div>"
-    )
-    return f'<div class="dhead">{main}{biasbox}{metastrip}</div>'
+    return f'<div class="dhead">{main}{metastrip}</div>'
 
 
 # ----------------------------------------------------------------- CSS
@@ -297,7 +297,11 @@ _CSS = """
 
 /* header */
 .dhead{display:flex;gap:12px;align-items:stretch;margin-bottom:14px;flex-wrap:wrap;}
-.hmain{flex:1 1 230px;background:#0e1116;border:1px solid #1e242c;border-radius:10px;padding:12px 14px;}
+.hmain{flex:2 1 440px;background:#0e1116;border:1px solid #1e242c;border-radius:10px;display:flex;overflow:hidden;}
+.hprice-col{flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:center;}
+.hbias-col{flex:1;padding:12px 14px;border-left:1px solid #1e242c;display:flex;flex-direction:column;justify-content:center;text-align:center;}
+.hbias-col.bear{background:rgba(246,70,93,.07);}
+.hbias-col.bull{background:rgba(14,203,129,.07);}
 .hsym{font-size:16px;font-weight:800;letter-spacing:.02em;}
 .hperp{font-size:10px;color:#8b94a0;border:1px solid #2a323c;border-radius:4px;padding:1px 5px;vertical-align:middle;margin-left:4px;}
 .hprice{font-size:30px;font-weight:800;margin-top:4px;}
@@ -307,9 +311,6 @@ _CSS = """
 .mcell{flex:1;background:#0e1116;border:1px solid #1e242c;border-radius:10px;padding:10px 12px;}
 .ml{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#8b94a0;}
 .mv{font-size:14px;font-weight:700;margin-top:5px;}
-.hbias{flex:1 1 190px;border:1px solid #2a323c;border-radius:10px;padding:12px 14px;text-align:center;display:flex;flex-direction:column;justify-content:center;}
-.hbias.bear{background:rgba(246,70,93,.08);border-color:rgba(246,70,93,.4);}
-.hbias.bull{background:rgba(14,203,129,.08);border-color:rgba(14,203,129,.4);}
 .hbl{font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;color:#8b94a0;}
 .hbv{font-size:26px;font-weight:800;margin-top:2px;}
 .hbq{font-size:11px;color:#8b94a0;letter-spacing:.06em;}
