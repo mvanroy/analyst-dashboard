@@ -316,11 +316,13 @@ def _header(d):
         + cell("Current Phase", meta.get("current_phase"), "blue")
         + "</div>"
     )
-    # 2x2 grid: row1 = price+bias | meta strip ; row2 = setup | trade plan
-    tradeplan = _card("Trade Plan", _trade_plan(d.get("trade_plan", {})))
+    # grid: row1 = price+bias | meta strip (spans 2) ;
+    #       row2 = setup | trade plan | what-changes-my-mind
+    tradeplan = _card("Trade Plan", _trade_plan(d.get("trade_plan", {})), "ga-trade")
+    wcmm = _card("What Changes My Mind?", _wcmm(d.get("what_changes_my_mind", {})), "ga-wcmm")
     return (
         '<div class="dhead">'
-        + main + metastrip + _setup_box(d) + tradeplan
+        + main + metastrip + _setup_box(d) + tradeplan + wcmm
         + "</div>"
     )
 
@@ -372,11 +374,16 @@ _CSS = """
 @media(max-width:760px){.dbody{column-count:1;}}
 
 /* header */
-.dhead{display:grid;grid-template-columns:1.25fr 2fr;gap:12px;margin-bottom:14px;align-items:start;}
-@media(max-width:820px){.dhead{grid-template-columns:1fr;}}
+.dhead{display:grid;grid-template-columns:1.25fr 1fr 1.15fr;
+  grid-template-areas:"price meta meta" "setup trade wcmm";
+  gap:12px;margin-bottom:14px;align-items:start;}
+@media(max-width:980px){.dhead{grid-template-columns:1fr;
+  grid-template-areas:"price" "meta" "setup" "trade" "wcmm";}}
 .dhead .dcard{margin-bottom:0;}
-.hmain{background:#0e1116;border:1px solid #1e242c;border-radius:10px;display:flex;overflow:hidden;}
-.setupbox{background:#0e1116;border:1px solid #1e242c;border-radius:10px;padding:12px 14px;}
+.ga-trade{grid-area:trade;}
+.ga-wcmm{grid-area:wcmm;}
+.hmain{grid-area:price;background:#0e1116;border:1px solid #1e242c;border-radius:10px;display:flex;overflow:hidden;}
+.setupbox{grid-area:setup;background:#0e1116;border:1px solid #1e242c;border-radius:10px;padding:12px 14px;}
 .setup-grid{display:flex;flex-direction:column;gap:11px;margin-top:2px;}
 .srow{display:flex;gap:12px;}
 .slab{flex:0 0 86px;font-size:9.5px;letter-spacing:.05em;text-transform:uppercase;color:#8b94a0;line-height:1.4;}
@@ -393,7 +400,7 @@ _CSS = """
 .hprice{font-size:30px;font-weight:800;margin-top:4px;}
 .hchg{font-size:15px;font-weight:700;}
 .hhead{color:#8b94a0;font-size:12px;margin-top:2px;}
-.hmeta{display:flex;gap:10px;align-self:stretch;}
+.hmeta{grid-area:meta;display:flex;gap:10px;align-self:stretch;}
 .mcell{flex:1;background:#0e1116;border:1px solid #1e242c;border-radius:10px;padding:10px 12px;}
 .ml{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#8b94a0;}
 .mv{font-size:14px;font-weight:700;margin-top:5px;}
