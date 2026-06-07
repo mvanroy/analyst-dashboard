@@ -186,7 +186,7 @@ def _wcmm(w):
     )
 
 
-def _trade_plan(tp):
+def _trade_plan(tp, symbol=""):
     # map "To Target 1" -> Target 1 row so the R:R sits inline on that row
     rr_map = {}
     for x in tp.get("rr", []):
@@ -212,7 +212,13 @@ def _trade_plan(tp):
         '<div class="tphead"><div class="dtitle">Trade Plan</div>'
         f'<div class="tpdir">{_e(tp.get("direction"))}</div></div>'
     )
-    return head + rows
+    btn = ""
+    if symbol:
+        btn = (
+            f'<a class="pushbtn" target="_self" '
+            f'href="/Position_Size_Calculator?symbol={_e(symbol)}">Push Calculator &rarr;</a>'
+        )
+    return head + rows + btn
 
 
 def _levels(kl):
@@ -341,7 +347,8 @@ def _header(d):
     )
     # grid: row1 = price+bias | meta strip (spans 2) ;
     #       row2 = setup | trade plan | what-changes-my-mind
-    tradeplan = _card("", _trade_plan(d.get("trade_plan", {})), "ga-trade")
+    sym = re.sub(r"[^A-Z0-9]", "", (d.get("symbol") or "").upper())
+    tradeplan = _card("", _trade_plan(d.get("trade_plan", {}), sym), "ga-trade")
     wcmm = _card("What Changes My Mind?", _wcmm(d.get("what_changes_my_mind", {})), "ga-wcmm")
     return (
         '<div class="dhead">'
@@ -484,6 +491,10 @@ _CSS = """
 .tpnote{color:#8b94a0;font-weight:500;font-size:10px;}
 .rrbox{flex:0 0 86px;background:#11151b;border:1px solid #2a323c;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:800;color:#4c8dff;white-space:nowrap;text-align:right;}
 .rrlab{color:#8b94a0;font-weight:700;}
+.pushbtn{display:block;text-align:center;margin-top:12px;padding:8px 12px;border-radius:7px;
+  background:rgba(76,141,255,.14);border:1px solid rgba(76,141,255,.5);color:#4c8dff;
+  font-size:12px;font-weight:700;letter-spacing:.02em;text-decoration:none;}
+.pushbtn:hover{background:rgba(76,141,255,.24);border-color:#4c8dff;}
 
 /* levels */
 .lvgrid{display:flex;gap:14px;}
