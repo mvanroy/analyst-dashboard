@@ -316,8 +316,13 @@ def _header(d):
         + cell("Current Phase", meta.get("current_phase"), "blue")
         + "</div>"
     )
-    leftcol = f'<div class="dhead-left">{main}{_setup_box(d)}</div>'
-    return f'<div class="dhead">{leftcol}{metastrip}</div>'
+    # 2x2 grid: row1 = price+bias | meta strip ; row2 = setup | trade plan
+    tradeplan = _card("Trade Plan", _trade_plan(d.get("trade_plan", {})))
+    return (
+        '<div class="dhead">'
+        + main + metastrip + _setup_box(d) + tradeplan
+        + "</div>"
+    )
 
 
 _PRICE_RE = re.compile(r"\$\d[\d,]*(?:\.\d+)?(?:\s*[-–]\s*\$?\d[\d,]*(?:\.\d+)?)*")
@@ -367,8 +372,9 @@ _CSS = """
 @media(max-width:760px){.dbody{column-count:1;}}
 
 /* header */
-.dhead{display:flex;gap:12px;align-items:flex-start;margin-bottom:14px;flex-wrap:wrap;}
-.dhead-left{flex:1 1 320px;display:flex;flex-direction:column;gap:12px;}
+.dhead{display:grid;grid-template-columns:1.25fr 2fr;gap:12px;margin-bottom:14px;align-items:start;}
+@media(max-width:820px){.dhead{grid-template-columns:1fr;}}
+.dhead .dcard{margin-bottom:0;}
 .hmain{background:#0e1116;border:1px solid #1e242c;border-radius:10px;display:flex;overflow:hidden;}
 .setupbox{background:#0e1116;border:1px solid #1e242c;border-radius:10px;padding:12px 14px;}
 .setup-grid{display:flex;flex-direction:column;gap:11px;margin-top:2px;}
@@ -387,7 +393,7 @@ _CSS = """
 .hprice{font-size:30px;font-weight:800;margin-top:4px;}
 .hchg{font-size:15px;font-weight:700;}
 .hhead{color:#8b94a0;font-size:12px;margin-top:2px;}
-.hmeta{flex:2 1 420px;display:flex;gap:10px;}
+.hmeta{display:flex;gap:10px;align-self:stretch;}
 .mcell{flex:1;background:#0e1116;border:1px solid #1e242c;border-radius:10px;padding:10px 12px;}
 .ml{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#8b94a0;}
 .mv{font-size:14px;font-weight:700;margin-top:5px;}
