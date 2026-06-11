@@ -13,6 +13,7 @@ editable; account inputs are yours.
 """
 from __future__ import annotations
 
+import base64
 import json
 import math
 import os
@@ -57,10 +58,30 @@ st.markdown(
   border:2px solid;letter-spacing:.02em;white-space:nowrap;}
 .dbtn.active{font-weight:800;}
 .dbtn.inactive{background:transparent;border-width:1.5px;opacity:1;}
+/* active side = solid-fill pill (Long green, Short red); inactive = neutral grey outline */
 .dbtn.long.active{background:#0ecb81;border-color:#0ecb81;color:#08120c;}
 .dbtn.short.active{background:#f6465d;border-color:#f6465d;color:#ffffff;}
-/* inactive side: neutral grey (no colour) so only the active side reads coloured */
 .dbtn.long.inactive,.dbtn.short.inactive{border-color:#2a323c;color:#8b94a0;}
+/* ---- Blank-calc interactive Direction box — the same stacked Long/Short solid-fill pills,
+   clickable to set the trade direction. ---- */
+.st-key-dirseg{background:#13101e;border:1px solid rgba(139,92,246,.38);border-radius:10px;
+  box-shadow:0 0 0 1px rgba(124,58,237,.06),0 0 22px rgba(124,58,237,.15);
+  padding:14px 16px;min-height:190px;height:100%;display:flex!important;flex-direction:column!important;}
+.st-key-dirseg .chead{margin:0 0 9px;}
+.st-key-dirbtns{flex:1!important;justify-content:center!important;gap:9px!important;}
+/* make each button fill the box width so border-radius reads as a PILL, not a circle */
+.st-key-dirbtns [data-testid="stElementContainer"],
+.st-key-dirbtns [data-testid="stButton"]{width:100%!important;}
+.st-key-dirseg button{width:100%!important;border-radius:9999px!important;border:2px solid #2a323c!important;
+  background:transparent!important;color:#8b94a0!important;font-weight:700!important;font-size:14px!important;
+  min-height:0!important;height:auto!important;padding:7px 6px!important;line-height:1.1!important;
+  white-space:nowrap!important;transition:none!important;}
+.st-key-dirseg button p{white-space:nowrap!important;line-height:1.1!important;margin:0!important;}
+.st-key-dirlong_on button,.st-key-dirlong_on button:hover{background:#0ecb81!important;
+  border-color:#0ecb81!important;color:#08120c!important;font-weight:800!important;}
+.st-key-dirshort_on button,.st-key-dirshort_on button:hover{background:#f6465d!important;
+  border-color:#f6465d!important;color:#ffffff!important;font-weight:800!important;}
+.st-key-dirlong_off button:hover,.st-key-dirshort_off button:hover{border-color:#3a4250!important;color:#cdd3da!important;}
 /* ---- P&L box (where the leverage box was) ---- */
 .pnlbox{height:100%;margin-bottom:0;display:flex;flex-direction:column;}
 .pnlrows{flex:1;display:flex;flex-direction:column;justify-content:center;gap:2px;}
@@ -264,6 +285,12 @@ st.markdown(
 /* risk mode nests Leverage|Account inside the right zone — stretch the nested cells full height */
 [data-testid="stColumn"]:has(>div>[data-testid="stVerticalBlock"]>[data-testid="stColumn"] .st-key-acct_card){align-self:stretch;}
 
+/* Blank-calc skeleton — muted "—" placeholders so every box shows its FULL structure at its
+   final size before any levels are entered, then fills in as you type. */
+.srow .v.skel,.pnlrow b.skel,.pnlrow .roe.skel,.wr-n.skel,.mm-v.skel,.wr-e.skel{color:#4d5663!important;}
+.srow .rrpill.skel,.pnlrow .rr.skel{color:#4d5663!important;border-color:#2a323c!important;
+  background:transparent!important;}
+
 /* ---- summary rows (matches .statrow / .kvrow) ---- */
 .srow{display:flex;justify-content:space-between;align-items:baseline;padding:7px 0;
   border-bottom:1px solid #161b21;font-size:14.5px;line-height:1.5;}
@@ -449,13 +476,44 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+# Clear-inputs icon (the exchange/swap arrows from the user's SVG), embedded as a CSS mask so a
+# single shape can be tinted grey (inactive) → "Calculator" blue (active) via background-color.
+_EXCHANGE_SVG = (
+    "<svg viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'>"
+    "<path d='m2.44 32.33h6.57v-14.53h41.21l-6.32 6.32 4.64 4.65 14.12-14.13.26-.26-14.12-14.12-.26-.26-4.64 4.64 6.58 6.58h-48.04z'/>"
+    "<path d='m1.08 49.62 14.12 14.12.26.26 4.64-4.65-6.58-6.58h47.9v-21.11h-6.57v14.54h-41.07l6.32-6.33-4.64-4.64-14.12 14.13z'/>"
+    "</svg>"
+)
+_exchange_uri = "data:image/svg+xml;base64," + base64.b64encode(_EXCHANGE_SVG.encode()).decode()
+st.markdown(
+    f"""<style>
+/* Clear-inputs icon button — exchange arrows, centred at the bottom of the Trade Inputs box in
+   Blank Calc. Inactive = grey; activated (hover / press / focus) = the "Calculator" blue. */
+.st-key-refreshbtn button{{border:none!important;background:transparent!important;box-shadow:none!important;
+  min-height:0!important;width:auto!important;padding:7px!important;border-radius:8px!important;
+  font-size:0!important;line-height:0!important;}}
+/* hide the (text) label entirely so only the icon shows */
+.st-key-refreshbtn button p,.st-key-refreshbtn button [data-testid="stMarkdownContainer"]{{
+  font-size:0!important;line-height:0!important;margin:0!important;}}
+.st-key-refreshbtn button::before{{content:"";display:inline-block;width:26px;height:26px;
+  background-color:#8b94a0;transition:background-color .12s;
+  -webkit-mask:url("{_exchange_uri}") center/contain no-repeat;
+  mask:url("{_exchange_uri}") center/contain no-repeat;}}
+.st-key-refreshbtn button:hover,.st-key-refreshbtn button:focus{{background:rgba(76,141,255,.10)!important;}}
+.st-key-refreshbtn button:hover::before,.st-key-refreshbtn button:active::before,
+.st-key-refreshbtn button:focus::before,.st-key-refreshbtn button:focus-visible::before{{background-color:#4c8dff;}}
+</style>""",
+    unsafe_allow_html=True,
+)
+
 # --------------------------------------------------------------------------- #
 # Which coin? (persisted; mirrors the most-recently-pushed trade)
 # --------------------------------------------------------------------------- #
 _pushed = st.query_params.get("symbol")
 if _pushed:
     st.session_state["calc_symbol"] = _pushed.upper()
-if st.session_state.get("calc_blank"):
+_blank_mode = bool(st.session_state.get("calc_blank"))
+if _blank_mode:
     # Blank Calc is an ad-hoc calculator on ANY coin — it defaults to BTCUSDT rather than
     # inheriting the pushed trade's symbol, and tracks its own ticker independent of the plan.
     symbol = (st.session_state.get("calc_blank_symbol") or "BTCUSDT").upper()
@@ -464,11 +522,22 @@ else:
 coin = symbol[:-4] if symbol.endswith("USDT") else symbol
 
 data = dashboard.load_analysis(symbol)
-# Blank Calc mode: ignore the inherited trade plan and start from an empty calculator
-# (you fill Entry / Stop / TPs yourself). "Back to Plan" clears the flag and reloads.
-levels = {} if st.session_state.get("calc_blank") else (data or {}).get("levels", {})
-direction = (levels.get("direction") or "long").lower()
+# Blank Calc ignores the inherited plan and starts empty; you fill Entry / Stop / TPs yourself.
+levels = {} if _blank_mode else (data or {}).get("levels", {})
+# Direction: in Blank Calc it's a user choice (persisted); in Push Trade it follows the plan.
+if _blank_mode:
+    direction = (st.session_state.get("calc_blank_direction") or "long").lower()
+else:
+    direction = (levels.get("direction") or "long").lower()
 is_long = direction != "short"
+
+# Level-input keys are namespaced per mode so Blank Calc levels never collide with a pushed
+# trade on the same symbol — each set persists independently across mode switches.
+_kpfx = "blank_" if _blank_mode else ""
+K_ENTRY = f"entry_{_kpfx}{symbol}"
+K_STOP = f"stop_{_kpfx}{symbol}"
+K_T1 = f"t1_{_kpfx}{symbol}"
+K_T2 = f"t2_{_kpfx}{symbol}"
 
 MMR = 0.005  # isolated-margin maintenance margin rate (Bybit default tier)
 
@@ -568,36 +637,32 @@ def _set_mode(exposure: bool):
 
 
 def _set_blank(blank: bool):
-    """Segmented context toggle: select Push Trade (blank=False) or Blank Calc (blank=True).
-    Delegates to _toggle_blank only when the state actually changes, so clicking the already-
-    active segment is a no-op (and we keep the BTCUSDT-seed / plan-restore logic in one place)."""
-    if st.session_state.get("calc_blank", False) != blank:
-        _toggle_blank()
-
-
-def _toggle_blank():
-    """Flip between the inherited trade plan and a blank ad-hoc calc. Runs as an on_click
-    callback (before the script body). We SET the per-symbol level inputs explicitly — to 0
-    for Blank, or to the plan levels for Back to Plan — rather than popping the keys, because
-    popping + relying on value= leaves the field's displayed text stale on the frontend."""
-    going_blank = not st.session_state.get("calc_blank", False)
-    st.session_state["calc_blank"] = going_blank
-    if going_blank:
-        # Entering Blank Calc: start fresh on BTCUSDT (not the plan's coin) with empty levels
-        # and a cleared "Ticker…" field, so the first thing you see is the BTC live price.
-        _sym = "BTCUSDT"
-        st.session_state["calc_blank_symbol"] = _sym
+    """Segmented context toggle: select Push Trade (blank=False) or Blank Calc (blank=True)."""
+    st.session_state["calc_blank"] = blank
+    # First-ever entry into Blank Calc seeds BTCUSDT + an empty Ticker field. On every later
+    # entry we leave the blank-calc symbol/levels/direction exactly as you left them — they
+    # live in their own namespaced session keys, so they persist across mode switches and
+    # never collide with the pushed trade. (Push Trade levels load from the plan via value=.)
+    if blank and not st.session_state.get("calc_blank_symbol"):
+        st.session_state["calc_blank_symbol"] = "BTCUSDT"
         st.session_state["calc_symbol_input"] = ""
         st.session_state["calc_sym_err"] = ""
-        lv = {}
-    else:
-        # Back to Plan: restore the pushed trade's symbol and its plan levels.
-        _sym = (st.session_state.get("calc_symbol") or dashboard.latest_symbol()).upper()
-        lv = (dashboard.load_analysis(_sym) or {}).get("levels", {})
-    st.session_state[f"entry_{_sym}"] = float(lv.get("entry", 0.0))
-    st.session_state[f"stop_{_sym}"] = float(lv.get("stop", 0.0))
-    st.session_state[f"t1_{_sym}"] = float(lv.get("target1", 0.0))
-    st.session_state[f"t2_{_sym}"] = float(lv.get("target2", 0.0))
+
+
+def _set_direction(d: str):
+    """Blank-calc Direction toggle: set Long / Short (persisted)."""
+    st.session_state["calc_blank_direction"] = d
+
+
+def _clear_blank_inputs():
+    """Refresh button (on_click, runs before the inputs re-render): zero out the Blank Calc
+    Entry/Stop/Targets and their shadows so you can enter a fresh trade. We SET the values to
+    0 (rather than popping the keys) so the displayed fields actually update, not just the maths."""
+    _sym = (st.session_state.get("calc_blank_symbol") or "BTCUSDT").upper()
+    for n in ("entry", "stop", "t1", "t2"):
+        k = f"{n}_blank_{_sym}"
+        st.session_state[k] = 0.0
+        st.session_state[f"pv_{k}"] = 0.0
 
 
 def _apply_symbol():
@@ -730,10 +795,10 @@ _lev_q = (("Conservative", "#0ecb81", "Low risk exposure") if leverage <= 3
 # your risk; leverage scales the RETURN ON MARGIN (the % column), not the dollars.
 def _pnl_preview():
     g = lambda k, d: float(st.session_state.get(k, d) or 0)
-    e = g(f"entry_{symbol}", levels.get("entry", 0.0))
-    s = g(f"stop_{symbol}", levels.get("stop", 0.0))
-    t1v = g(f"t1_{symbol}", levels.get("target1", 0.0))
-    t2v = g(f"t2_{symbol}", levels.get("target2", 0.0))
+    e = g(K_ENTRY, levels.get("entry", 0.0))
+    s = g(K_STOP, levels.get("stop", 0.0))
+    t1v = g(K_T1, levels.get("target1", 0.0))
+    t2v = g(K_T2, levels.get("target2", 0.0))
     eqv, levv = g("calc_equity", _eq_default), g("calc_lev", _lev_default)
     sd = abs(e - s)
     if not (e > 0 and sd > 0 and levv > 0):
@@ -767,7 +832,12 @@ if _pnl:
         f'<div class="pnlrow"><span class="pl">Loss → SL</span><b class="neg">−${_pnl["sl"]:,.2f}</b><span class="roe neg">−{_pnl["rsl"]:.1f}%</span><span class="rr base">1R</span></div>'
     )
 else:
-    _pnl_rows = '<div class="pnlrow"><span class="pl">Enter valid levels…</span></div>'
+    # Skeleton: show the full P&L structure with muted dashes until levels are entered.
+    _pnl_rows = (
+        '<div class="pnlrow"><span class="pl">Profit → TP1</span><b class="skel">—</b><span class="roe skel">—</span><span class="rr skel">—</span></div>'
+        '<div class="pnlrow"><span class="pl">Profit → TP2</span><b class="skel">—</b><span class="roe skel">—</span><span class="rr skel">—</span></div>'
+        '<div class="pnlrow"><span class="pl">Loss → SL</span><b class="skel">—</b><span class="roe skel">—</span><span class="rr base">1R</span></div>'
+    )
 _pnl_box = (
     '<div class="ocard pnlbox">'
     '<div class="chead"><span class="t">P&amp;L</span></div>'
@@ -803,7 +873,17 @@ with top_price:
                 placeholder="Ticker…", label_visibility="collapsed",
             )
 with top_dir:
-    st.markdown(_dir_box, unsafe_allow_html=True)
+    if _blank_mode:
+        # Blank Calc: Direction is a choice — two stacked pill buttons (direct colour scheme).
+        with st.container(key="dirseg"):
+            st.markdown("<div class='chead'><span class='t'>Direction</span></div>", unsafe_allow_html=True)
+            with st.container(key="dirbtns"):
+                st.button("Long", key="dirlong_on" if is_long else "dirlong_off",
+                          on_click=_set_direction, args=("long",), use_container_width=True)
+                st.button("Short", key="dirshort_on" if not is_long else "dirshort_off",
+                          on_click=_set_direction, args=("short",), use_container_width=True)
+    else:
+        st.markdown(_dir_box, unsafe_allow_html=True)
 with top_pnl:
     st.markdown(_pnl_box, unsafe_allow_html=True)
 with top_right:
@@ -889,14 +969,36 @@ with c_in:
     card = st.container(key="inputs_card")
     with card:
         st.markdown("<div class='chead'><span class='t'>Trade Inputs</span></div>", unsafe_allow_html=True)
-        entry = st.number_input("Entry Price", min_value=0.0, value=float(levels.get("entry", 0.0)), step=0.0001, format="%.4f", key=f"entry_{symbol}")
-        stop = st.number_input("Stop Loss", min_value=0.0, value=float(levels.get("stop", 0.0)), step=0.0001, format="%.4f", key=f"stop_{symbol}")
-        t1 = st.number_input("Target 1", min_value=0.0, value=float(levels.get("target1", 0.0)), step=0.0001, format="%.4f", key=f"t1_{symbol}")
-        t2 = st.number_input("Target 2", min_value=0.0, value=float(levels.get("target2", 0.0)), step=0.0001, format="%.4f", key=f"t2_{symbol}")
-        if st.button("Restore Trade Plan", key="restorebtn"):
-            # Restore only the trade levels — account details (balance/risk/leverage)
-            # are user settings and must persist.
-            for k in (f"entry_{symbol}", f"stop_{symbol}", f"t1_{symbol}", f"t2_{symbol}"):
+        # Blank Calc levels persist across mode switches via a shadow value (pv_*): Streamlit
+        # clears a widget's state when it isn't rendered (e.g. while you're in Push Trade), so we
+        # seed value= from the shadow and re-save it each render. Push Trade seeds from the plan
+        # each time, so it always reflects the pushed levels.
+        # Seed each level's default into session_state ONCE, then create the widgets with NO
+        # value= param — that lets the clear/refresh callback set these keys without tripping the
+        # "default value + Session State" warning. Blank Calc seeds from its persistent shadow
+        # (survives the widget unmounting on a mode switch); Push Trade seeds from the plan.
+        def _seed(key, plan_val):
+            return float(st.session_state.get(f"pv_{key}", 0.0)) if _blank_mode else plan_val
+
+        st.session_state.setdefault(K_ENTRY, _seed(K_ENTRY, float(levels.get("entry", 0.0))))
+        st.session_state.setdefault(K_STOP, _seed(K_STOP, float(levels.get("stop", 0.0))))
+        st.session_state.setdefault(K_T1, _seed(K_T1, float(levels.get("target1", 0.0))))
+        st.session_state.setdefault(K_T2, _seed(K_T2, float(levels.get("target2", 0.0))))
+        entry = st.number_input("Entry Price", min_value=0.0, step=0.0001, format="%.4f", key=K_ENTRY)
+        stop = st.number_input("Stop Loss", min_value=0.0, step=0.0001, format="%.4f", key=K_STOP)
+        t1 = st.number_input("Target 1", min_value=0.0, step=0.0001, format="%.4f", key=K_T1)
+        t2 = st.number_input("Target 2", min_value=0.0, step=0.0001, format="%.4f", key=K_T2)
+        if _blank_mode:  # keep the shadow in sync so the values survive the next mode switch
+            st.session_state[f"pv_{K_ENTRY}"], st.session_state[f"pv_{K_STOP}"] = entry, stop
+            st.session_state[f"pv_{K_T1}"], st.session_state[f"pv_{K_T2}"] = t1, t2
+        if _blank_mode:
+            # Blank Calc: a centred exchange/refresh icon button that CLEARS the trade inputs
+            # so you can enter a fresh trade (on_click clears via _clear_blank_inputs, which sets
+            # the fields to 0 so the displayed values update too). Label is hidden — only the icon.
+            st.button("clear", key="refreshbtn", on_click=_clear_blank_inputs)
+        # Push Trade: "Restore Trade Plan" reloads the pushed levels (account settings persist).
+        elif st.button("Restore Trade Plan", key="restorebtn"):
+            for k in (K_ENTRY, K_STOP, K_T1, K_T2):
                 st.session_state.pop(k, None)
             st.rerun()
 
@@ -991,7 +1093,63 @@ def build_viz() -> str:
     badge = f"<span class='posbadge {'long' if is_long else 'short'}'>{'LONG' if is_long else 'SHORT'} POSITION</span>"
     head = f"<div class='chead'><span class='t'>Trade Visualization</span>{badge}</div>"
     if not valid:
-        return f"<div class='ocard'>{head}<div style='color:#8b94a0;font-size:13px;padding:40px 0;text-align:center;'>Enter a valid entry and stop to visualise the trade.</div></div>"
+        # Skeleton diagram: the full chart structure (grid, zones, level boxes, arrows) at its
+        # final size, with evenly-spaced placeholder levels and muted "—" prices/percentages.
+        VBW, VBH, top, bot = 760, 430, 28, 28
+        x0, x1 = 132, 478
+        ax = (x0 + x1) // 2
+        plotH = VBH - top - bot
+        BW, BH = 116, 42
+        LEFT_BX, RIGHT_BX = x0 - BW - 6, x1 + 6
+        SK = "#4d5663"  # muted placeholder colour
+        yf = lambda f: top + f * plotH
+        # Orient the skeleton by direction: Long → TPs up top / stop at the bottom; Short → the
+        # mirror image (stop up top, TPs below), matching how a real long/short trade plots.
+        if is_long:
+            y_tp2, y_tp1, y_en, y_sl = yf(0.12), yf(0.34), yf(0.54), yf(0.78)
+        else:
+            y_sl, y_en, y_tp1, y_tp2 = yf(0.12), yf(0.34), yf(0.54), yf(0.78)
+
+        def sbox(y, color, label, side="right"):
+            bx = LEFT_BX if side == "left" else RIGHT_BX
+            by = y - BH / 2
+            return (f"<rect x='{bx}' y='{by:.1f}' width='{BW}' height='{BH}' rx='8' fill='#0d1422' "
+                    f"fill-opacity='0.95' stroke='{color}' stroke-width='1' vector-effect='non-scaling-stroke'/>"
+                    f"<text x='{bx + BW / 2:.0f}' y='{by + 17:.1f}' text-anchor='middle' class='vboxlab' fill='{color}'>{label}</text>"
+                    f"<text x='{bx + BW / 2:.0f}' y='{by + 34:.1f}' text-anchor='middle' class='vboxval' fill='{SK}'>—</text>")
+
+        def sdline(y, color):
+            return f"<line x1='{x0}' y1='{y:.1f}' x2='{x1}' y2='{y:.1f}' stroke='{color}' stroke-width='1.4' stroke-dasharray='6 5' opacity='0.7'/>"
+
+        grid = "".join(
+            f"<line x1='{x0}' y1='{top + i * plotH / 4:.0f}' x2='{x1}' y2='{top + i * plotH / 4:.0f}' stroke='#19202e' stroke-width='1'/>"
+            for i in range(5)
+        ) + "".join(
+            f"<line x1='{x0 + i * (x1 - x0) / 6:.0f}' y1='{top}' x2='{x0 + i * (x1 - x0) / 6:.0f}' y2='{VBH - bot}' stroke='#19202e' stroke-width='1'/>"
+            for i in range(7)
+        )
+        sk_svg = (
+            f"<svg viewBox='0 0 {VBW} {VBH}' width='100%' style='display:block'>"
+            + grid
+            + f"<rect x='{x0}' y='{min(y_en, y_tp2):.1f}' width='{x1 - x0}' height='{abs(y_tp2 - y_en):.1f}' fill='#0ecb81' fill-opacity='0.06' rx='4'/>"
+            + f"<rect x='{x0}' y='{min(y_en, y_sl):.1f}' width='{x1 - x0}' height='{abs(y_sl - y_en):.1f}' fill='#f6465d' fill-opacity='0.06' rx='4'/>"
+            + sdline(y_tp2, "#0ecb81") + sdline(y_tp1, "#0ecb81")
+            + f"<line x1='{x0}' y1='{y_en:.1f}' x2='{x1}' y2='{y_en:.1f}' stroke='#c9d1d9' stroke-width='1.4' stroke-dasharray='2 4' opacity='0.4'/>"
+            + sdline(y_sl, "#f6465d")
+            + f"<circle cx='{ax}' cy='{y_en:.1f}' r='4.5' fill='{SK}' stroke='#0d1422' stroke-width='1.5' vector-effect='non-scaling-stroke'/>"
+            + sbox(y_en, "#5b8cff", "ENTRY", side="left")
+            + sbox(y_tp2, "#0ecb81", "TAKE PROFIT 2")
+            + sbox(y_tp1, "#0ecb81", "TAKE PROFIT 1")
+            + sbox(y_sl, "#f6465d", "STOP LOSS")
+            + "</svg>"
+        )
+        sk_overlay = (
+            f"<div class='vpctlabel' style='top:{y_sl / VBH * 100:.3f}%;color:{SK};'>—</div>"
+            f"<div class='vpctlabel' style='top:{y_tp1 / VBH * 100:.3f}%;color:{SK};'>—</div>"
+            f"<div class='vpctlabel' style='top:{y_tp2 / VBH * 100:.3f}%;color:{SK};'>—</div>"
+            f"<div class='vliqtxt' style='top:{(y_sl + (26 if is_long else -26)) / VBH * 100:.3f}%;color:{SK};'>LIQ —</div>"
+        )
+        return f"<div class='ocard'>{head}<div class='vizrel'>{sk_svg}{sk_overlay}</div></div>"
 
     pts = [entry, stop, t1, t2]
     lo, hi = min(pts), max(pts)
@@ -1094,12 +1252,26 @@ def build_viz() -> str:
 # --------------------------------------------------------------------------- #
 def build_summary() -> str:
     head = "<div class='chead'><span class='t'>Position Summary</span><span class='ico'>⧉</span></div>"
-    if not valid:
-        return f"<div class='ocard'>{head}<div style='color:#8b94a0;font-size:13px;padding:24px 0;text-align:center;'>Awaiting valid inputs.</div></div>"
 
     def row(k, v, cls="", unit="USDT", tail=""):
         u = f"<span class='u'>{unit}</span>" if unit else ""
         return f"<div class='srow'><span class='k'>{k}</span><span class='v {cls}'>{v}{u}{tail}</span></div>"
+
+    if not valid:
+        # Skeleton: every summary row at full size with a muted "—" until levels are entered.
+        rp = "<span class='rrpill skel'>—</span>"
+        skel = (
+            row("Position Size", "—", "skel", "")
+            + row("Position Value [exposure]" if is_exposure else "Position Value", "—", "skel", "")
+            + row("Risk Amount", "—", "skel", "")
+            + row("Reward → TP1", "—", "skel", "", tail=rp)
+            + row("Reward → TP2", "—", "skel", "", tail=rp)
+            + ("" if is_exposure else row("Minimum leverage", "—", "skel", ""))
+            + row("Liquidation Price", "—", "skel", "")
+            + row("Liquidation buffer", "—", "skel", "")
+            + row("Margin Required", "—", "skel", "")
+        )
+        return f"<div class='ocard'>{head}{skel}</div>"
 
     levreq_txt = "&lt;1× (none needed)" if lev_req < 1 else f"{lev_req:.2f}×"
     # Liquidation is only "dangerous" when it sits inside the stop (you'd be force-closed
@@ -1145,16 +1317,11 @@ def build_summary() -> str:
 
 def build_score() -> str:
     head = "<div class='chead'><span class='t'>Risk / Reward Score</span></div>"
-    if not valid:
-        return f"<div class='ocard'>{head}<div style='color:#8b94a0;font-size:13px;padding:18px 0;text-align:center;'>—</div></div>"
 
-    # Segmented circular gauge — a full ring of 12 segments with a pink→purple→blue
-    # gradient (symmetric: pink at top, blue at the bottom), score in the centre disc.
     # Risk/Reward gauge — same semicircular gauge the Trade Dashboard uses (red/amber/green
-    # zones with a needle), pointed at the score, with the value below.
-    gpos = max(0.0, min(1.0, score / 10.0))
+    # zones with a needle), pointed at the score, with the value below. The coloured arcs are
+    # static, so build them once and reuse for both the skeleton and the live gauge.
     gcx, gcy, gR, gL = 100.0, 100.0, 80.0, 62.0
-    gnum_color = "#0ecb81" if gpos >= 0.6 else "#e0a33e" if gpos >= 0.4 else "#f6465d"
 
     def _gpt(p, r):
         th = math.radians(180 * (1 - p))
@@ -1166,12 +1333,38 @@ def build_score() -> str:
         return (f'<path d="M {x0:.1f} {y0:.1f} A {gR:.0f} {gR:.0f} 0 0 1 {x1:.1f} {y1:.1f}" '
                 f'stroke="{color}" stroke-width="15" fill="none"/>')
 
+    arcs = _garc(0.0, 0.40, "#f6465d") + _garc(0.40, 0.60, "#e0a33e") + _garc(0.60, 1.0, "#0ecb81")
+
+    if not valid:
+        # Skeleton: the gauge (no needle, "—" score) + the four checklist items with neutral
+        # markers, so the box shows its full structure at final size before levels are entered.
+        sk_gauge = (
+            '<svg viewBox="0 0 200 108" width="100%" style="display:block">'
+            + arcs
+            + f'<circle cx="{gcx:.0f}" cy="{gcy:.0f}" r="6" fill="#6b747e"/>'
+            + '<text x="100" y="72" text-anchor="middle" class="gsn" fill="#4d5663">—</text>'
+            + '<text x="100" y="90" text-anchor="middle" class="gso">/ 10</text>'
+            + "</svg>"
+        )
+
+        def ckskel(label):
+            return ("<div class='ck'><span class='i' style='background:#1a202b;color:#4d5663'>–</span>"
+                    f"<span style='color:#6b747e'>{label}</span></div>")
+
+        sk_checks = (
+            "<div class='svhead' style='color:#4d5663'>—</div>"
+            + ckskel("Risk / Reward") + ckskel("Position size")
+            + ckskel("Leverage") + ckskel("Risk within limits")
+        )
+        return f"<div class='ocard scorecard'>{head}<div class='scoreflex'><div class='scoregauge'>{sk_gauge}</div><div class='scorechecks'>{sk_checks}</div></div></div>"
+
+    gpos = max(0.0, min(1.0, score / 10.0))
+    gnum_color = "#0ecb81" if gpos >= 0.6 else "#e0a33e" if gpos >= 0.4 else "#f6465d"
+
     nx, ny = _gpt(gpos, gL)
     gauge = (
         '<svg viewBox="0 0 200 108" width="100%" style="display:block">'
-        + _garc(0.0, 0.40, "#f6465d")
-        + _garc(0.40, 0.60, "#e0a33e")
-        + _garc(0.60, 1.0, "#0ecb81")
+        + arcs
         + f'<line x1="{gcx:.0f}" y1="{gcy:.0f}" x2="{nx:.1f}" y2="{ny:.1f}" stroke="#cdd3da" stroke-width="3" stroke-linecap="round"/>'
         + f'<circle cx="{gcx:.0f}" cy="{gcy:.0f}" r="6" fill="#6b747e"/>'
         + f'<text x="100" y="72" text-anchor="middle" class="gsn" fill="{gnum_color}">{score:.1f}</text>'
@@ -1196,7 +1389,15 @@ def build_score() -> str:
 def build_winrate() -> str:
     head = "<div class='chead'><span class='t'>Win-Rate</span></div>"
     if not valid:
-        return f"<div class='ocard wrcard'>{head}</div>"
+        # Skeleton: break-even structure with muted dashes until levels are entered.
+        return (
+            f"<div class='ocard wrcard'>{head}"
+            "<div class='wrmid'>"
+            "<div class='wr-n skel'>—</div>"
+            "<div class='wr-s'>Break-even</div>"
+            "<div class='wr-e skel'>—</div>"
+            "</div></div>"
+        )
     edge_txt, edge_cls = ("Has an edge", "green") if be1 < 50 else ("Needs hit-rate", "amber")
     return (
         f"<div class='ocard wrcard'>{head}"
@@ -1213,7 +1414,13 @@ def build_marketmoves() -> str:
     move on the full exposure — direction-aware (a price rise loses on a short)."""
     head = "<div class='chead'><span class='t'>Market Moves</span></div>"
     if not valid:
-        return f"<div class='ocard wrcard mmcard'>{head}</div>"
+        # Skeleton: the four price-move rows with muted dashes until levels are entered.
+        rows = "".join(
+            f"<div class='mm-row'><span class='mm-l'>If Price Moves {'+' if mv > 0 else '−'}{abs(mv)}%</span>"
+            "<span class='mm-v skel'>—</span></div>"
+            for mv in (5, 10, -5, -10)
+        )
+        return f"<div class='ocard wrcard mmcard'>{head}<div class='mmlist'>{rows}</div></div>"
     sgn = 1 if is_long else -1
     rows = ""
     for mv in (5, 10, -5, -10):
