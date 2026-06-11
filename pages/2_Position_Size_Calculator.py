@@ -14,11 +14,13 @@ editable; account inputs are yours.
 from __future__ import annotations
 
 import base64
+import datetime
 import json
 import math
 import os
 import re
 
+import httpx
 import streamlit as st
 
 import chrome
@@ -258,6 +260,13 @@ st.markdown(
   width:auto;white-space:nowrap;}
 .st-key-inputs_card [data-testid="stButton"] button:hover{border-color:#4c8dff!important;
   color:#4c8dff!important;background:transparent!important;}
+/* Bottom actions group (Push to Journal + clear/restore) — centred as one block in the
+   leftover space, buttons stacked with a small gap. */
+.st-key-inputs_actions{margin-top:auto!important;margin-bottom:auto!important;
+  gap:8px!important;align-items:center!important;width:100%!important;}
+.st-key-inputs_actions [data-testid="stElementContainer"]:has([data-testid="stButton"]){
+  margin:0!important;width:100%!important;display:flex!important;justify-content:center!important;}
+/* Push to Journal inherits the generic Restore-Trade-Plan pill style (transparent + outline). */
 /* account card: the monetary "capital at risk" figure (e.g. 1% of 10,000 = $100) */
 .acct-risk{display:flex;align-items:baseline;gap:10px;margin:0 0 14px;padding-bottom:12px;
   border-bottom:1px solid #161b21;font-size:12px;color:#8b94a0;}
@@ -511,7 +520,17 @@ st.markdown(
 # --------------------------------------------------------------------------- #
 _pushed = st.query_params.get("symbol")
 if _pushed:
-    st.session_state["calc_symbol"] = _pushed.upper()
+    _pu = _pushed.upper()
+    st.session_state["calc_symbol"] = _pu
+    # A fresh push from the dashboard reloads the plan: drop any persisted edits/shadows for the
+    # pushed symbol, then clear the URL param so later reruns + mode switches keep your edits.
+    for _s in ("entry", "stop", "t1", "t2"):
+        st.session_state.pop(f"{_s}_{_pu}", None)
+        st.session_state.pop(f"pv_{_s}_{_pu}", None)
+    try:
+        del st.query_params["symbol"]
+    except Exception:
+        pass
 _blank_mode = bool(st.session_state.get("calc_blank"))
 if _blank_mode:
     # Blank Calc is an ad-hoc calculator on ANY coin — it defaults to BTCUSDT rather than
@@ -540,6 +559,43 @@ K_T1 = f"t1_{_kpfx}{symbol}"
 K_T2 = f"t2_{_kpfx}{symbol}"
 
 MMR = 0.005  # isolated-margin maintenance margin rate (Bybit default tier)
+
+# --------------------------------------------------------------------------- #
+# Trade Journal — "Push to Journal" posts the planned trade to a Google Sheet via an
+# Apps Script web app (URL in journal_config.json, gitignored). See journal/SETUP.md.
+# --------------------------------------------------------------------------- #
+_JOURNAL_CFG_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "journal_config.json")
+
+
+def _journal_config():
+    try:
+        with open(_JOURNAL_CFG_PATH) as f:
+            c = json.load(f)
+        return (c.get("webhook_url") or "").strip(), (c.get("token") or "").strip()
+    except Exception:
+        return "", ""
+
+
+def _post_journal(payload: dict):
+    """POST a trade row to the journal web app. Returns (ok, message)."""
+    url, token = _journal_config()
+    if not url:
+        return False, "No journal webhook set — add it to journal_config.json (see journal/SETUP.md)."
+    if token:
+        payload = {**payload, "token": token}
+    try:
+        # Apps Script web apps 302-redirect to googleusercontent.com — follow it.
+        r = httpx.post(url, json=payload, timeout=12, follow_redirects=True)
+        r.raise_for_status()
+        try:
+            body = r.json()
+            if isinstance(body, dict) and body.get("ok") is False:
+                return False, str(body.get("error", "rejected by script"))
+        except Exception:
+            pass
+        return True, "ok"
+    except Exception as e:
+        return False, str(e)
 
 
 # --------------------------------------------------------------------------- #
@@ -663,6 +719,18 @@ def _clear_blank_inputs():
         k = f"{n}_blank_{_sym}"
         st.session_state[k] = 0.0
         st.session_state[f"pv_{k}"] = 0.0
+
+
+def _restore_plan():
+    """Restore button (on_click): reload the pushed plan's levels into the Push Trade inputs +
+    shadows, discarding any edits. Sets the values (not pop) so the displayed fields update too."""
+    _sym = (st.session_state.get("calc_symbol") or dashboard.latest_symbol()).upper()
+    lv = (dashboard.load_analysis(_sym) or {}).get("levels", {})
+    for suffix, plankey in (("entry", "entry"), ("stop", "stop"), ("t1", "target1"), ("t2", "target2")):
+        k = f"{suffix}_{_sym}"
+        v = float(lv.get(plankey, 0.0))
+        st.session_state[k] = v
+        st.session_state[f"pv_{k}"] = v
 
 
 def _apply_symbol():
@@ -973,12 +1041,14 @@ with c_in:
         # clears a widget's state when it isn't rendered (e.g. while you're in Push Trade), so we
         # seed value= from the shadow and re-save it each render. Push Trade seeds from the plan
         # each time, so it always reflects the pushed levels.
-        # Seed each level's default into session_state ONCE, then create the widgets with NO
-        # value= param — that lets the clear/refresh callback set these keys without tripping the
-        # "default value + Session State" warning. Blank Calc seeds from its persistent shadow
-        # (survives the widget unmounting on a mode switch); Push Trade seeds from the plan.
+        # BOTH modes persist edits across mode switches via a shadow value (pv_*): Streamlit
+        # clears a widget's state when it isn't rendered, so we seed each input from its shadow
+        # (falling back to the plan in Push Trade / 0 in Blank Calc) and re-save it each render.
+        # A fresh dashboard push or "Restore Trade Plan" resets the shadow back to the plan
+        # (handled where the push is read, and in _restore_plan). value= is omitted so the clear/
+        # restore callbacks can set these keys without the "default value + Session State" warning.
         def _seed(key, plan_val):
-            return float(st.session_state.get(f"pv_{key}", 0.0)) if _blank_mode else plan_val
+            return float(st.session_state.get(f"pv_{key}", plan_val))
 
         st.session_state.setdefault(K_ENTRY, _seed(K_ENTRY, float(levels.get("entry", 0.0))))
         st.session_state.setdefault(K_STOP, _seed(K_STOP, float(levels.get("stop", 0.0))))
@@ -988,19 +1058,20 @@ with c_in:
         stop = st.number_input("Stop Loss", min_value=0.0, step=0.0001, format="%.4f", key=K_STOP)
         t1 = st.number_input("Target 1", min_value=0.0, step=0.0001, format="%.4f", key=K_T1)
         t2 = st.number_input("Target 2", min_value=0.0, step=0.0001, format="%.4f", key=K_T2)
-        if _blank_mode:  # keep the shadow in sync so the values survive the next mode switch
-            st.session_state[f"pv_{K_ENTRY}"], st.session_state[f"pv_{K_STOP}"] = entry, stop
-            st.session_state[f"pv_{K_T1}"], st.session_state[f"pv_{K_T2}"] = t1, t2
-        if _blank_mode:
-            # Blank Calc: a centred exchange/refresh icon button that CLEARS the trade inputs
-            # so you can enter a fresh trade (on_click clears via _clear_blank_inputs, which sets
-            # the fields to 0 so the displayed values update too). Label is hidden — only the icon.
-            st.button("clear", key="refreshbtn", on_click=_clear_blank_inputs)
-        # Push Trade: "Restore Trade Plan" reloads the pushed levels (account settings persist).
-        elif st.button("Restore Trade Plan", key="restorebtn"):
-            for k in (K_ENTRY, K_STOP, K_T1, K_T2):
-                st.session_state.pop(k, None)
-            st.rerun()
+        # keep the shadow in sync (both modes) so edits survive the widget unmounting on a switch
+        st.session_state[f"pv_{K_ENTRY}"], st.session_state[f"pv_{K_STOP}"] = entry, stop
+        st.session_state[f"pv_{K_T1}"], st.session_state[f"pv_{K_T2}"] = t1, t2
+        # Bottom actions — centred: the clear/restore button on top, then Push to Journal beneath
+        # it (styled like the Restore Trade Plan pill).
+        with st.container(key="inputs_actions"):
+            if _blank_mode:
+                # Blank Calc: a centred exchange/refresh icon button that CLEARS the trade inputs
+                # so you can enter a fresh trade (clears via _clear_blank_inputs). Icon-only label.
+                st.button("clear", key="refreshbtn", on_click=_clear_blank_inputs)
+            else:
+                # Push Trade: "Restore Trade Plan" reloads the pushed levels (account persists).
+                st.button("Restore Trade Plan", key="restorebtn", on_click=_restore_plan)
+            journal_clicked = st.button("Push to Journal", key="journalbtn")
 
 # --------------------------------------------------------------------------- #
 # Maths
@@ -1474,3 +1545,48 @@ st.markdown(
     </div>""",
     unsafe_allow_html=True,
 )
+
+# --------------------------------------------------------------------------- #
+# Push to Journal — handled here (end of script) so every computed value exists. The button
+# lives in the Trade Inputs box; clicking it builds the planned-trade row and POSTs it to the
+# Google Sheet. Works in BOTH Push Trade and Blank Calc; analyst columns fill on pushed trades.
+# --------------------------------------------------------------------------- #
+if journal_clicked:
+    if not valid:
+        st.toast("Enter a valid trade (entry + stop) before pushing to the journal.", icon="⚠️")
+    else:
+        _q = scanner.live_ticker(symbol)
+        _live = _q["last"] if _q else entry
+        _payload = {
+            "planned_at": datetime.datetime.now().strftime("%Y-%m-%d %H:%M"),
+            "symbol": symbol,
+            "direction": "Long" if is_long else "Short",
+            "sizing_mode": "Exposure" if is_exposure else "Risk",
+            "entry": round(entry, 6), "stop": round(stop, 6),
+            "tp1": round(t1, 6), "tp2": round(t2, 6),
+            "rr_tp1": round(rr1, 2), "rr_tp2": round(rr2, 2),
+            "position_size": round(size, 6), "notional": round(notional, 2),
+            "leverage": leverage, "margin": round(margin_req, 2),
+            "risk_usd": round(risk_amount, 2), "risk_pct": round(risk_pct_eff, 3),
+            "account_balance": round(equity, 2),
+            "liq_price": round(liq, 6), "liq_buffer": round(liq_buffer, 6),
+            "setup_score": round(score, 1), "live_price": round(_live, 6),
+            "status": "Planned",
+        }
+        # Analyst columns — only meaningful for a pushed trade with an analysis behind it.
+        if not _blank_mode and data:
+            _meta = data.get("meta", {}) or {}
+            _setup = data.get("setup", {}) if isinstance(data.get("setup"), dict) else {}
+            _verdict = data.get("verdict", {}) if isinstance(data.get("verdict"), dict) else {}
+            _payload.update({
+                "analyst_bias": data.get("market_bias", ""),
+                "analyst_market_state": _meta.get("market_state", ""),
+                "analyst_phase": _meta.get("current_phase", ""),
+                "analyst_setup": _setup.get("type", ""),
+                "analyst_verdict": _verdict.get("action", ""),
+            })
+        _ok, _msg = _post_journal(_payload)
+        if _ok:
+            st.toast(f"Pushed {symbol} ({_payload['direction']}) to the journal ✓", icon="✅")
+        else:
+            st.toast(f"Journal push failed — {_msg}", icon="⚠️")
