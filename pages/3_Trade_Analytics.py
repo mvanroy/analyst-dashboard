@@ -207,7 +207,7 @@ def _theme(c):
 eq_col, setup_col = st.columns(2, gap="medium")
 with eq_col:
     with st.container(key="eqcard"):
-        st.markdown("<div class='ac-h'>Equity Curve — cumulative net P&amp;L ($)</div>", unsafe_allow_html=True)
+        st.markdown(f"<div class='ac-h'>Cumulative Net P&amp;L ($) — {days} days</div>", unsafe_allow_html=True)
         # Aggregate to one end-of-day point per day so the curve runs over DAYS (not intraday
         # hours), and start it from $0 the day before the first trade.
         _d = df.copy()
@@ -222,12 +222,25 @@ with eq_col:
                                       alt.GradientStop(color="rgba(124,58,237,0.02)", offset=1)],
                                x1=1, x2=1, y1=1, y2=0),
         ).encode(
-            x=alt.X("day:T", title=None, axis=alt.Axis(format="%d %b")),
-            y=alt.Y("cum:Q", title=None),
+            # One tick per week (e.g. 25 May, 01 Jun, …) instead of one per day.
+            x=alt.X("day:T", title=None,
+                    axis=alt.Axis(format="%d %b", tickCount={"interval": "week", "step": 1})),
+            y=alt.Y("cum:Q", title=None, axis=alt.Axis(format="$,.0f")),
             tooltip=[alt.Tooltip("day:T", title="Date", format="%d %b %Y"),
                      alt.Tooltip("cum:Q", title="Cumulative $", format=",.2f")],
-        ).properties(height=250)
-        st.altair_chart(_theme(area), use_container_width=True)
+        )
+        # Small white dots mark each day on which at least one trade closed.
+        dots = alt.Chart(daily).mark_point(
+            shape="circle", filled=True, color="#ffffff", size=26, opacity=0.95,
+            stroke="#0a0711", strokeWidth=0.6,
+        ).encode(
+            x="day:T",
+            y="cum:Q",
+            tooltip=[alt.Tooltip("day:T", title="Trade day", format="%d %b %Y"),
+                     alt.Tooltip("cum:Q", title="Cumulative $", format=",.2f")],
+        )
+        st.altair_chart(_theme(alt.layer(area, dots).properties(height=250)),
+                        use_container_width=True)
 with setup_col:
     # Performance by Setup — reads the journal's "Set Up Type" column from the Sheet (the manual
     # judgment columns don't exist in Bybit's API). Groups tagged trades by setup; empty until
