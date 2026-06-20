@@ -866,8 +866,8 @@ _CSS = """
 .dbody{column-count:3;column-gap:12px;}
 @media(max-width:1100px){.dbody{column-count:2;}}
 @media(max-width:760px){.dbody{column-count:1;}}
-.drow2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:12px;align-items:stretch;}
-.drow3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-bottom:12px;align-items:stretch;}
+.drow2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:auto auto auto auto;gap:12px;margin-bottom:12px;align-items:start;}
+.drow3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto auto auto auto;gap:12px;margin-bottom:12px;align-items:start;}
 .drow4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px;align-items:stretch;}
 .drow2 .dcard,.drow3 .dcard,.drow4 .dcard{margin-bottom:0;}
 .dstack{display:flex;flex-direction:column;gap:12px;}
@@ -875,6 +875,10 @@ _CSS = """
    qualifier subtitle · large grade box · classification · summary */
 .drowlab{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#8b94a0;margin:2px 0 8px;}
 .pcard{display:flex;flex-direction:column;gap:11px;}
+/* In a multi-column row, each card becomes a subgrid spanning the 4 shared row
+   lines so head/summary/entry/rest align across columns (entry zones level). */
+.drow2 .pcard,.drow3 .pcard{display:grid;grid-template-rows:subgrid;grid-row:1/-1;row-gap:11px;}
+.pc-tools{align-self:end;}
 .phead{display:flex;align-items:flex-start;gap:12px;}
 .pmain{flex:1 1 auto;min-width:0;}
 .ptoprow{display:flex;align-items:center;gap:9px;flex-wrap:wrap;}
@@ -895,7 +899,7 @@ _CSS = """
 .pmode.aggressive{background:rgba(245,130,31,.16);color:#f5821f;border:1px solid rgba(245,130,31,.5);}
 .pmode.balanced{background:rgba(46,189,133,.16);color:#2ebd85;border:1px solid rgba(46,189,133,.5);}
 .pmode.chasing{background:rgba(139,148,158,.16);color:#aab2bd;border:1px solid rgba(139,148,158,.45);}
-.pgrade{flex:0 0 auto;width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#f0f2f5;border:2px solid rgba(230,232,235,.45);background:rgba(230,232,235,.06);}
+.pgrade{flex:0 0 auto;width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:900;color:#f0f2f5;border:1px solid #eef2f8;background:transparent;box-shadow:none;}
 .pgrade.a,.pgrade.b,.pgrade.c{color:#f0f2f5;}
 .psummary{font-size:13px;color:#e6e8eb;line-height:1.5;}
 .plab{font-size:9px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#8b94a0;margin:6px 0 1px;}
@@ -917,6 +921,8 @@ _CSS = """
 /* calculator push icon — top-right of the entry hero, grey idle → blue on hover */
 .dash a.ezcalc{position:absolute;top:14px;right:14px;color:#8b94a0;line-height:0;display:block;text-decoration:none;}
 .dash a.ezcalc:hover{color:#4c8dff;}
+.dash .ez-long a.ezcalc:hover{color:#2ebd85;}
+.dash .ez-short a.ezcalc:hover{color:#f6465d;}
 .dash a.ezcalc svg{width:29px;height:29px;display:block;}
 .ezpill{display:inline-block;font-size:9.5px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#2ebd85;border:1px solid rgba(46,189,133,.5);border-radius:7px;padding:3px 10px;}
 .ezbig{font-size:24px;font-weight:800;color:#f4f7fa;letter-spacing:-.01em;margin-top:10px;line-height:1;}
@@ -945,16 +951,16 @@ _CSS = """
 .lmtop.c-bear{color:#f6465d;}.lmdot.c-bear{background:#f6465d;}.lmbot.c-bear{color:#f6465d;}
 .lmtop.c-blue{color:#4c8dff;}.lmdot.c-blue{background:#4c8dff;}.lmbot.c-blue{color:#4c8dff;}
 .lmtop.c-bull{color:#2ebd85;}.lmdot.c-bull{background:#2ebd85;}.lmbot.c-bull{color:#2ebd85;}
-.ltnow{position:absolute;top:0;width:1px;height:60px;background:#eef2f8;transform:translateX(-50%);z-index:3;}
+.ltnow{position:absolute;top:0;width:1px;height:60px;background:#eef2f8;transform:translateX(-50%);z-index:0;}
 .ltnowic{position:absolute;left:50%;bottom:100%;transform:translateX(-50%);margin-bottom:4px;display:inline-flex;}
-.ekey{margin-top:18px;padding-top:14px;border-top:1px solid #1c222b;display:flex;flex-direction:column;gap:11px;}
+.ekey{margin-top:6px;display:flex;flex-direction:column;gap:11px;}
 .ekrow{display:flex;align-items:center;gap:11px;}
 .eklead{flex:0 0 32px;display:inline-flex;align-items:center;}
 .ekic{display:inline-flex;align-items:center;}
 .ekic svg{width:17px;height:17px;}
 .ektp{font-size:12.5px;font-weight:800;letter-spacing:.03em;color:#4c8dff;}
 .eknote{flex:1;min-width:0;font-size:13px;color:#aab2bd;line-height:1.4;}
-.ekrr{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;letter-spacing:.02em;color:#fff;background:#3a7afe;border-radius:8px;padding:7px 10px;white-space:nowrap;}
+.ekrr{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;letter-spacing:.02em;color:#fff;background:#3a7afe;border-radius:7px;padding:3px 10px;white-space:nowrap;}
 .etiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
 .etile{border-radius:11px;padding:12px;border:1px solid;}
 .etlh{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;}
@@ -970,9 +976,9 @@ _CSS = """
 .psec{display:flex;gap:11px;margin-top:13px;}
 .psecic{flex:0 0 auto;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid #2a323c;background:#161b22;}
 .psecic .sic{width:15px;height:15px;}
-.psecic.ic-ev{color:#2ebd85;border-color:rgba(46,189,133,.3);}
-.psecic.ic-note{color:#a78bfa;border-color:rgba(139,92,246,.3);}
-.psecic.ic-conf{color:#2ebd85;border-color:rgba(46,189,133,.3);}
+.psecic.ic-ev{color:#eef2f8;background:transparent;border-color:#eef2f8;}
+.psecic.ic-note{color:#eef2f8;background:transparent;border-color:#eef2f8;}
+.psecic.ic-conf{color:#eef2f8;background:transparent;border-color:#eef2f8;}
 .psecbody{flex:1;min-width:0;}
 .psechd{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8b94a0;margin-bottom:5px;display:flex;align-items:center;gap:9px;}
 .pconfcols{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;}
@@ -984,7 +990,8 @@ _CSS = """
 .cstr.s-strong{background:rgba(46,189,133,.16);color:#2ebd85;border:1px solid rgba(46,189,133,.5);}
 .cstr.s-mod{background:rgba(228,160,8,.15);color:#e0a33e;border:1px solid rgba(228,160,8,.45);}
 .cstr.s-weak{background:rgba(246,70,93,.15);color:#f6465d;border:1px solid rgba(246,70,93,.45);}
-.ptools{font-size:10px;color:#6e7681;margin-top:13px;border-top:1px solid #1e242c;padding-top:9px;}
+.ptools{font-size:10px;color:#6e7681;margin-top:0;border-top:1px solid #1e242c;padding-top:9px;}
+.ptlab{font-weight:700;color:#8b94a0;}
 /* Phase 4.5 Opportunity Window — three-tier strip inside each pattern card */
 .psecic.ic-opp{color:#e0a33e;border-color:rgba(228,160,8,.3);}
 .oppwrap{display:flex;flex-direction:column;gap:1px;border:1px solid #232a33;border-radius:9px;overflow:hidden;background:#11161d;}
@@ -1752,7 +1759,9 @@ def _pattern_cards(cands, current=None, symbol=None):
             _mr.get(_maturity_cls(p.get("maturity")), 2),
         ),
     )
-    cells = ""
+    # First pass: build every card's sections so we can give each section its own
+    # shared subgrid row (Evidence aligns with Evidence, Note with Note, etc.).
+    built = []
     for p in cands[:3]:
         grade = (p.get("grade") or "").strip().upper()[:1]
         gbadge = f'<div class="pgrade {_grade_cls(grade)}">{_e(grade)}</div>' if grade else ""
@@ -1789,25 +1798,45 @@ def _pattern_cards(cands, current=None, symbol=None):
         )
         summary = f'<div class="psummary">{_hl_numbers(p.get("summary"))}</div>' if p.get("summary") else ""
         entryblock = _pattern_entry(p.get("entry"), current, symbol)
-        oppsec = _section(_IC_OPP, "Opportunity Window", _opportunity(p.get("opportunity")), "ic-opp")
         ev = "".join(f"<li>{_hl_numbers(x)}</li>" for x in p.get("evidence", []))
-        evsec = _section(_IC_EV, "Evidence", f'<ul class="plist">{ev}</ul>' if ev else "", "ic-ev")
         miss = "".join(f"<li>{_hl_numbers(x)}</li>" for x in p.get("missing", []))
-        notesec = _section(_IC_NOTE, "Note", f'<ul class="plist miss">{miss}</ul>' if miss else "", "ic-note")
         cpill, cbody = _confluence(p.get("confluence"))
-        confsec = _section(_IC_CONF, "Confluence", cbody, "ic-conf", cpill)
         tools = (p.get("entry") or {}).get("tools")
-        toolsfoot = f'<div class="ptools">Tools · {_e(tools)}</div>' if tools else ""
-        cells += (
-            '<div class="dcard pcard">'
-            + head + summary + entryblock + oppsec + evsec + notesec + confsec + toolsfoot
-            + "</div>"
+        toolsfoot = (
+            f'<div class="ptools"><span class="ptlab">Tools used:</span> {_e(tools)}</div>'
+            if tools else ""
         )
+        built.append({
+            "head": head,
+            "sum": summary,
+            "entry": entryblock,
+            "opp": _section(_IC_OPP, "Opportunity Window", _opportunity(p.get("opportunity")), "ic-opp"),
+            "ev": _section(_IC_EV, "Evidence", f'<ul class="plist">{ev}</ul>' if ev else "", "ic-ev"),
+            "note": _section(_IC_NOTE, "Note", f'<ul class="plist miss">{miss}</ul>' if miss else "", "ic-note"),
+            "conf": _section(_IC_CONF, "Confluence", cbody, "ic-conf", cpill),
+            "tools": toolsfoot,
+        })
+
+    # One subgrid row per slot. Fixed slots first, then any optional section that
+    # appears in at least one card (so empty rows don't leave gaps). Tools last so
+    # it pins to the bottom of every card.
+    fixed = [("head", "pc-head"), ("sum", "pc-sum"), ("entry", "pc-entry")]
+    optional = [("opp", "pc-opp"), ("ev", "pc-ev"), ("note", "pc-note"),
+                ("conf", "pc-conf"), ("tools", "pc-tools")]
+    slots = fixed + [s for s in optional if any(b[s[0]] for b in built)]
+    nrows = len(slots)
+
+    cells = ""
+    for b in built:
+        inner = "".join(f'<div class="{c}">{b[k]}</div>' for k, c in slots)
+        cells += f'<div class="dcard pcard">{inner}</div>'
+
     # Adapt the grid to the number of cards so 2 patterns aren't left in a 3-up row.
     grid = "drow3" if len(cands) >= 3 else "drow2" if len(cands) == 2 else "dstack"
+    rows_style = f"grid-template-rows:repeat({nrows},auto);" if grid in ("drow2", "drow3") else ""
     return (
         '<div class="drowlab">&nbsp;</div>'
-        f'<div class="{grid}">{cells}</div>'
+        f'<div class="{grid}" style="{rows_style}">{cells}</div>'
     )
 
 
