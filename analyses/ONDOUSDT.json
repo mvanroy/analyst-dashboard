@@ -1,0 +1,233 @@
+{
+  "schema_version": 2,
+  "framework_version": "Trade Setup Framework v1",
+  "symbol": "ONDO/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-20T08:26:54Z",
+  "price": "$0.3496",
+  "change_pct_24h": -0.54,
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H + 1H + 15M",
+    "analysis_time": "Jun 20, 2026, 6:26 PM AEST"
+  },
+  "snapshot": [
+    {
+      "label": "Current Price",
+      "value": "$0.3496"
+    },
+    {
+      "label": "24H High",
+      "value": "$0.3600"
+    },
+    {
+      "label": "24H Low",
+      "value": "$0.3448"
+    },
+    {
+      "label": "24H Volume",
+      "value": "$24.52M"
+    }
+  ],
+  "market_structure": {
+    "state": "Range Bound",
+    "volatility": "Compression",
+    "bias": "Neutral",
+    "structure": [
+      "Daily is rotating inside a well-defined mid-range after the early-June selloff: repeated defenses near ~$0.345\u2013$0.350 and repeated caps into ~$0.366\u2013$0.378 suggests two-sided acceptance rather than a trending HH/HL or LH/LL sequence.",
+      "4H/1H show lower highs since the 6/18 spike to $0.3785 and a flat-to-slightly-rising base around $0.348\u2013$0.350, consistent with a tightening coil rather than directional follow-through."
+    ],
+    "volatility_note": "Ranges have visibly contracted from the earlier daily swings (e.g., 6/4\u20136/6) to the last ~24\u201348h where 4H candles are small and price is contained (~$0.348\u2013$0.3565). This is actionable because it increases breakout/failed-break odds around nearby range edges.",
+    "bias_note": "Neutral: price is sitting near the lower portion of the recent balance (~$0.345\u2013$0.378) but has not shown acceptance below support; equally, bulls have not reclaimed the mid-range supply near ~$0.360\u2013$0.366."
+  },
+  "intermarket": {
+    "cor": 0.8024,
+    "cor_tf": "15M",
+    "note": "High BTC dependency on 15M. Recent BTC 15M candles show a sharp dip into ~63,445\u201363,470 after failing near ~63,760; if BTC continues slipping, ONDO break attempts are more likely to fail or delay, while BTC stabilization would improve odds of an upside range breakout."
+  },
+  "pattern_candidates": [
+    {
+      "name": "Bullish Rectangle (range floor retest at $0.345\u2013$0.350)",
+      "maturity": "Mature",
+      "entry_mode": "Balanced",
+      "classification": "Continuation",
+      "qualifier": "Repeated support holds at the range floor while supply remains overhead at ~$0.360\u2013$0.366.",
+      "grade": "B",
+      "summary": "Price is compressing at the bottom of a multi-day balance, offering defined risk against the range floor. Upside exists back to the range ceiling, but it is still a mean-reversion trade until a clean breakout above ~$0.366.",
+      "entry": {
+        "direction": "long",
+        "zone": {
+          "low": 0.3478,
+          "high": 0.3502,
+          "label": "$0.3478 \u2013 $0.3502",
+          "subtitle": "Buy near the base of balance (recent 4H/1H closes clustering ~$0.349\u2013$0.351) to keep risk defined under the range floor."
+        },
+        "stop": {
+          "value": 0.3444,
+          "label": "$0.3444",
+          "note": "Invalid if acceptance develops below the 24H low / range floor (~$0.3448); that would shift the balance into breakdown conditions."
+        },
+        "risk": {
+          "label": "~$0.0040\u2013$0.0058",
+          "unit": "per ONDO"
+        },
+        "t1": {
+          "value": 0.3565,
+          "label": "$0.3565",
+          "rr": "~1 : 1.1",
+          "note": "Return to the near-term pivot (recent 4H highs/caps). Taking partial here reduces exposure if the range persists."
+        },
+        "t2": {
+          "value": 0.3662,
+          "label": "$0.3662",
+          "rr": "~1 : 2.7",
+          "note": "Retest of the range mid/upper band (recent daily close 6/18 at $0.3662 and repeated 4H resistance). If reached, the market is likely testing whether balance can break higher."
+        },
+        "tools": "Daily/4H horizontal support-resistance; recent swing lows/highs; simple R:R from entry zone to invalidation and range targets"
+      },
+      "evidence": [
+        "24H low printed $0.3448 and price is still holding ~$0.349\u2013$0.350: suggests buyers are defending the lower boundary rather than letting a breakdown run.",
+        "1H and 15M show repeated dips getting bought back toward ~$0.350 (multiple closes ~0.349\u20130.352): indicates local demand is present at the base.",
+        "Upside reference points are structurally obvious: $0.3565 (today\u2019s high) then ~$0.366 (multiple 4H pivots).",
+        "Volatility contraction into the floor increases the chance of a sharp move once the floor/ceiling is tested with participation.",
+        "Funding is mildly positive (+0.004594%): not extreme, but it slightly increases the risk of long-side crowding if price pushes into resistance and fails."
+      ],
+      "missing": [
+        "No confirmed expansion away from support yet (no impulsive 4H reclaim through ~$0.356\u2013$0.360).",
+        "Range ceiling (~$0.366\u2013$0.378) has not been meaningfully challenged in the last ~24\u201348h; until it is, this remains rotational.",
+        "Only a snapshot OI is provided; no OI trend to validate whether compression is accompanied by positioning build."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": [
+          "Clear horizontal floor: ~$0.345\u2013$0.350 has held multiple times across 4H/1H.",
+          "Tight current 4H range (~$0.348\u2013$0.3565) provides defined execution and stop placement."
+        ],
+        "warnings": [
+          "COR(15M)=0.8024 means a BTC drawdown can invalidate a local ONDO bounce quickly.",
+          "If price tags ~$0.360\u2013$0.366 and stalls, positive funding raises failed-push risk."
+        ]
+      }
+    },
+    {
+      "name": "Ascending Triangle (flat cap near $0.360 with rising base from ~$0.345\u2013$0.350)",
+      "maturity": "Forming",
+      "entry_mode": "Chasing",
+      "classification": "Compression",
+      "qualifier": "Potential compression between a horizontal supply band and a rising floor, but the apex is not yet well-defined.",
+      "grade": "C",
+      "summary": "There is a plausible triangle framework if the market continues to print higher lows while respecting ~$0.360\u2013$0.366 supply. A breakout entry exists, but it risks being late/whippy without stronger pre-break compression and acceptance above the cap.",
+      "entry": {
+        "direction": "long",
+        "zone": {
+          "low": 0.3605,
+          "high": 0.3666,
+          "label": "$0.3605 \u2013 $0.3666",
+          "subtitle": "Conditional: only engage on a strong push through the local cap (clear reclaim above ~$0.360, then holding above ~$0.3666 which has been a repeated 4H inflection)."
+        },
+        "stop": {
+          "value": 0.356,
+          "label": "$0.3560",
+          "note": "Invalid if price breaks back under the breakout area and loses the reclaimed level; this would signal a failed breakout back into balance."
+        },
+        "risk": {
+          "label": "~$0.0045\u2013$0.0106",
+          "unit": "per ONDO"
+        },
+        "t1": {
+          "value": 0.3785,
+          "label": "$0.3785",
+          "rr": "~1 : 1.7",
+          "note": "First logical magnet is the 6/18 4H swing high; reaching it would confirm follow-through beyond the triangle cap."
+        },
+        "t2": {
+          "value": 0.392,
+          "label": "$0.3920",
+          "rr": "~1 : 3.0",
+          "note": "Next higher-timeframe sell area (daily high 6/15 at $0.392). If price reaches here, the move is transitioning from range-break into broader recovery."
+        },
+        "tools": "Horizontal resistance mapping ($0.360\u2013$0.3666); prior swing highs ($0.3785, $0.3920); conditional breakout/acceptance logic"
+      },
+      "evidence": [
+        "Multiple rejections/inflections around ~$0.360\u2013$0.3666 on 4H (e.g., 6/19 12:00 high $0.360; 6/19 00:00\u201304:00 highs ~$0.360\u2013$0.3666): suggests a workable horizontal supply band.",
+        "Base zone is repeatedly defended near ~$0.345\u2013$0.350 (24H low $0.3448; current price $0.3496): creates the potential for rising pressure under resistance.",
+        "Current volatility is compressing (tight 4H and 15M ranges): aligns with triangle-type pre-break behaviour.",
+        "Funding mildly positive: an upside break could accelerate if shorts are under-positioned, but it also increases failed-break risk if longs pile in late."
+      ],
+      "missing": [
+        "Rising-lows sequence is not clean on 4H (there was a deeper pullback from $0.3662 to ~$0.3448), so the ascending base is still an interpretation rather than a confirmed structure.",
+        "No demonstrated acceptance above ~$0.360 yet; the last 24H high is exactly $0.360 and price is back below it.",
+        "Measured-move projection is not reliable without a clearer triangle boundary set and a confirmed breakout."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": [
+          "Clear reference resistance (~$0.360) and clear floor (~$0.345) make the breakout/invalid levels easy to define."
+        ],
+        "warnings": [
+          "Breakout entry is inherently chasing; if BTC remains heavy (high COR), breakout attempts can fail quickly.",
+          "Stop placement is vulnerable to range noise unless there is real expansion/acceptance above the cap."
+        ]
+      }
+    },
+    {
+      "name": "Failed Breakdown (bear trap) below ~$0.345\u2013$0.350",
+      "maturity": "Nascent",
+      "entry_mode": "Aggressive",
+      "classification": "Trap",
+      "qualifier": "Not currently active: requires a sweep below $0.3448 followed by a fast reclaim back above ~$0.350.",
+      "grade": "D",
+      "summary": "A bear-trap setup would be high-quality only if price briefly breaks the range floor and snaps back, trapping breakdown sellers. Right now price has not swept below $0.3448 in the provided 15M/1H window, so this is a watchlist condition, not a live trade.",
+      "entry": {
+        "direction": "long",
+        "zone": {
+          "low": 0.3495,
+          "high": 0.352,
+          "label": "No valid entry (conditional)",
+          "subtitle": "Only consider AFTER a downside sweep (print < $0.3448) AND a reclaim/hold back above ~$0.350 on 15M/1H; without the sweep + reclaim sequence, there is no trap."
+        },
+        "stop": {
+          "value": 0.3438,
+          "label": "$0.3438 (only after reclaim entry)",
+          "note": "Invalid if price reclaims ~$0.350 but then accepts back below the sweep low; that would confirm the breakdown was real rather than a trap."
+        },
+        "risk": {
+          "label": "~$0.0065\u2013$0.0082 (only if triggered)",
+          "unit": "per ONDO"
+        },
+        "t1": {
+          "value": 0.3565,
+          "label": "$0.3565",
+          "rr": "~1 : 0.6",
+          "note": "First bounce objective back to the local pivot; would mainly be a quick de-risk point due to modest R:R."
+        },
+        "t2": {
+          "value": 0.3662,
+          "label": "$0.3662",
+          "rr": "~1 : 2.0",
+          "note": "If a trap truly triggers, rotation back to the range mid/upper band is the natural destination."
+        },
+        "tools": "Liquidity sweep condition (prior low $0.3448); reclaim/acceptance logic; horizontal levels for targets"
+      },
+      "evidence": [
+        "Range floor is clearly defined by repeated lows, with the most recent daily/24H low at $0.3448; this is the natural liquidity point where traps often occur.",
+        "Current compression near the floor means a stop-run below support (if it occurs) can be sharp, and the reclaim can be equally fast\u2014ideal behaviour for a failed-breakdown read.",
+        "High BTC correlation increases the odds that any sweep is driven by a BTC flush; that can create the exact conditions for a quick reclaim if BTC bounces."
+      ],
+      "missing": [
+        "No sweep below $0.3448 has occurred in the provided intraday candles; the defining event of the pattern is absent.",
+        "No reclaim/acceptance evidence above ~$0.350 following a sweep (because the sweep hasn't happened).",
+        "Without the trap trigger, stop placement and R:R are speculative."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": [
+          "Liquidity level is unambiguous: $0.3448 is the line in the sand."
+        ],
+        "warnings": [
+          "If BTC continues trending down intraday, a 'sweep' can become a real breakdown (trap thesis fails).",
+          "Funding is positive; if longs are already leaning on support, a breakdown can extend as stops cascade."
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,237 @@
+{
+  "schema_version": 2,
+  "framework_version": "Trade Setup Framework v1",
+  "symbol": "BTC/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-20T10:28:00Z",
+  "price": "$63,459.9",
+  "change_pct_24h": 1.3024,
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H + 1H + 15M",
+    "analysis_time": "Jun 20, 2026, 6:28 PM AEST"
+  },
+  "snapshot": [
+    {
+      "label": "Current Price",
+      "value": "$63,459.9"
+    },
+    {
+      "label": "24H High",
+      "value": "$63,945.7"
+    },
+    {
+      "label": "24H Low",
+      "value": "$62,271.6"
+    },
+    {
+      "label": "24H Volume",
+      "value": "46,997.52 BTC"
+    }
+  ],
+  "market_structure": {
+    "state": "Range Bound",
+    "volatility": "Compression",
+    "bias": "Neutral",
+    "structure": [
+      "Daily has rotated inside a well-defined band: support repeatedly defended around $62.2k–$62.3k (Jun 18–19 lows) while supply has shown up into $63.9k–$64.0k (today’s 24H high).",
+      "The mid-range pivot near ~$63.5k is acting as a magnet (multiple 1H/4H closes clustering around $63.4k–$63.6k), suggesting two-sided trade rather than directional follow-through."
+    ],
+    "volatility_note": "15M and late 1H ranges have tightened after the earlier impulse to $63.95k (05:00–05:15 15M). Post-spike candles are smaller and overlapping, consistent with short-term contraction into a decision point.",
+    "bias_note": "The market bounced off the $62.27k base and reclaimed the mid-band, but acceptance above $64k is not present yet; until $64k breaks/holds or $62.2k breaks/holds, directional bias stays neutral."
+  },
+  "intermarket": {
+    "cor": 1,
+    "cor_tf": "15M",
+    "note": "COR(15M)=1.00 implies BTC is the driver (self-referential here). Practically, the immediate read is that the trade thesis should be keyed off BTC’s own range boundaries ($62.2k base, $64.0k ceiling) rather than expecting idiosyncratic divergence."
+  },
+  "pattern_candidates": [
+    {
+      "name": "Bullish Rectangle (range rotation $62.2k–$64.0k)",
+      "maturity": "Ready",
+      "entry_mode": "Balanced",
+      "classification": "Compression",
+      "qualifier": "Mid-range compression after $62.2k defense; needs ceiling break/hold.",
+      "grade": "B",
+      "summary": "Price is coiling beneath the $63.9k–$64.0k range ceiling after a clean defense of $62.27k. A breakout can be traded only if acceptance above the ceiling appears; otherwise it remains a rotation.",
+      "entry": {
+        "direction": "long",
+        "zone": {
+          "low": 64010,
+          "high": 64200,
+          "label": "$64,010 – $64,200",
+          "subtitle": "Conditional entry: take only on sustained acceptance above the ~$63,945–$64,000 ceiling (not just a wick)."
+        },
+        "stop": {
+          "value": 63600,
+          "label": "$63,600",
+          "note": "Invalidates the breakout thesis by dropping back below the consolidation cluster/pivot (~$63.6k) after reclaiming $64k."
+        },
+        "risk": {
+          "label": "~$510",
+          "unit": "per BTC"
+        },
+        "t1": {
+          "value": 64780,
+          "label": "$64,780",
+          "rr": "~1 : 1.1",
+          "note": "First logical objective is the next visible daily supply zone (Jun 13 high ~$64.75k) where prior selling previously appeared."
+        },
+        "t2": {
+          "value": 65770,
+          "label": "$65,770",
+          "rr": "~1 : 3.1",
+          "note": "Retest of the June 14 swing high (~$65.77k) — a clean next destination if the range expands upward."
+        },
+        "tools": "Horizontal support/resistance from Daily/4H swings; short-term compression read from 15M overlapping candles; simple measured range projection concept (range height)."
+      },
+      "evidence": [
+        "Range boundaries are objectively defined by 24H low $62,271.6 and 24H high $63,945.7; price currently sits mid-band at $63,459.9, consistent with a rectangle environment.",
+        "After the 15M impulse to $63,945.7 (05:00), subsequent 15M candles repeatedly overlap and fail to extend highs, indicating compression under resistance rather than trend continuation already underway.",
+        "4H shows a sharp selloff on Jun 18 12:00 to $62,216.9 followed by stabilization back to ~$63.5k—this is typical 'range repair' behavior where breakout attempts need clearer acceptance to be trustworthy.",
+        "Funding is mildly positive (0.004488%), supporting that longs are paying but not at an extreme; this reduces the 'crowded long' warning for a fresh breakout, though it doesn’t confirm it.",
+        "Open interest snapshot is substantial (53,374.482), consistent with a market capable of expanding once the range resolves (though direction can be either way)."
+      ],
+      "missing": [
+        "No demonstrated acceptance above ~$64,000 yet (only a tagged high at $63,945.7).",
+        "No higher-high sequence on 4H since the $66k+ area (Jun 17 12:00 high $65,838.6 still overhead).",
+        "Breakout quality is unproven until a close/hold above the ceiling occurs."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": [
+          "Clear horizontal ceiling: ~$63.95k–$64.0k (24H high).",
+          "Clear invalidation reference: return below ~$63.6k pivot after breakout.",
+          "Upside destinations are well-defined on Daily: ~$64.75k then ~$65.77k."
+        ],
+        "warnings": [
+          "If $64k breaks but immediately re-enters the range, this becomes a Failed Breakout / bull trap setup.",
+          "Current price is not at support; chasing inside the rectangle reduces asymmetry."
+        ]
+      }
+    },
+    {
+      "name": "Support Retest (bullish) of $62.2k–$62.3k base",
+      "maturity": "Forming",
+      "entry_mode": "Aggressive",
+      "classification": "Continuation",
+      "qualifier": "Base held once; next retest could be the trade if it holds again.",
+      "grade": "B",
+      "summary": "The $62.2k area has been defended (Jun 18–19) and price reverted to the mean near $63.5k. The clean trade belongs on a pullback into the base; at current price it is not a location trade.",
+      "entry": {
+        "direction": "long",
+        "zone": {
+          "low": 62250,
+          "high": 62600,
+          "label": "$62,250 – $62,600",
+          "subtitle": "Only if price pulls back into the defended base and shows hold/rejection (location-based entry; no chase from mid-range)."
+        },
+        "stop": {
+          "value": 62080,
+          "label": "$62,080",
+          "note": "Invalidates the base-defense thesis by accepting below the recent swing lows ($62,216–$62,272 area)."
+        },
+        "risk": {
+          "label": "~$320",
+          "unit": "per BTC"
+        },
+        "t1": {
+          "value": 63500,
+          "label": "$63,500",
+          "rr": "~1 : 3.3",
+          "note": "Mean reversion to the current pivot/cluster zone where price has repeatedly closed (logical first scale)."
+        },
+        "t2": {
+          "value": 63945.7,
+          "label": "$63,945.7",
+          "rr": "~1 : 4.6",
+          "note": "Retest of the 24H high / range ceiling; if reached, the market is back at the decision level for breakout vs rejection."
+        },
+        "tools": "Horizontal support from Daily/4H lows; retest logic using most recent swing low and pivot level."
+      },
+      "evidence": [
+        "Daily low cluster: Jun 18 low $62,216.4 and Jun 19 low $62,271.6 form a clear defended base (buyers repeatedly prevented continuation lower).",
+        "The rebound from ~$62.2k to ~$63.5k happened without reclaiming higher-timeframe highs, consistent with a retest/rotation rather than a confirmed trend reversal.",
+        "4H candles after the selloff stabilized above ~$62.9k and progressed back to $63.5k, which supports that $62.2k is the obvious 'line in the sand' for the long thesis.",
+        "Current price $63,459.9 is far from the invalidation ($62.08k), so entering here would be structurally late for a retest-based idea.",
+        "Funding mildly positive supports that dip demand exists, but it’s not an entry signal; the edge is the location at support."
+      ],
+      "missing": [
+        "Price is not currently at the retest zone; no live touch to execute without chasing.",
+        "A second clean reaction (higher low) at the base is not yet printed; only the first defense is confirmed.",
+        "If sellers accept below $62.2k, this pattern fails fast."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": [
+          "Well-defined support: $62.2k–$62.3k has two daily confirmations.",
+          "Clear invalidation: acceptance below ~$62.2k.",
+          "Targets are natural: pivot ~$63.5k then ceiling ~$64.0k."
+        ],
+        "warnings": [
+          "If price breaks $62.2k, downside can expand quickly given the prior daily flushes (e.g., Jun 5 low $59,081).",
+          "This is a pullback-entry plan; if it never pulls back, there is no trade."
+        ]
+      }
+    },
+    {
+      "name": "Prior Day High Sweep / Failed Breakout risk near $63.9k–$64.0k",
+      "maturity": "Nascent",
+      "entry_mode": "Balanced",
+      "classification": "Liquidity / Reversal",
+      "qualifier": "Needs an actual sweep above $64k and a clean rejection back below.",
+      "grade": "D",
+      "summary": "There is a clear liquidity pool at the range ceiling (~$64k), but the evidence pack does not show a sweep above it yet. Without a tagged high above ~$64k and a reclaim back below, this remains a watch-item not a trade.",
+      "entry": {
+        "direction": "short",
+        "zone": {
+          "low": 0,
+          "high": 0,
+          "label": "No valid entry",
+          "subtitle": "Condition required: sweep above ~$64,000 (take stops) followed by rejection and acceptance back below the level."
+        },
+        "stop": {
+          "value": 0,
+          "label": "No stop (no trade)",
+          "note": "Stop and risk are undefined until a sweep wick and rejection structure actually prints."
+        },
+        "risk": {
+          "label": "~$0",
+          "unit": "per BTC"
+        },
+        "t1": {
+          "value": 0,
+          "label": "No target (no trade)",
+          "rr": "~1 : 0.0",
+          "note": "Targets depend on the sweep location and subsequent breakdown structure."
+        },
+        "t2": {
+          "value": 0,
+          "label": "No target (no trade)",
+          "rr": "~1 : 0.0",
+          "note": "A valid setup would typically target the pivot (~$63.5k) then the base (~$62.3k), but only after the trigger exists."
+        },
+        "tools": "Liquidity pool identification via horizontal highs (24H high / range ceiling); failure lens using acceptance back inside range."
+      },
+      "evidence": [
+        "A well-advertised ceiling exists at $63,945.7 (24H high), a typical area where stops and breakout orders cluster.",
+        "The first touch into the ceiling (15M 05:00 spike) did not produce continuation; subsequent candles overlapped, suggesting a 'potential' trap area if a later sweep occurs.",
+        "Daily context shows prior resistance zones above (e.g., Jun 13–14 highs $64.75k–$65.77k), increasing the chance that rallies into $64k can meet supply."
+      ],
+      "missing": [
+        "No confirmed sweep above ~$64,000 is present in the provided candles (high printed is $63,945.7).",
+        "No post-sweep bearish structure (lower high + breakdown) to define a stop and entry.",
+        "No acceptance below a reclaimed level (the trigger condition for a failed breakout)."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": [
+          "Clear potential liquidity level exists: ~$64k."
+        ],
+        "warnings": [
+          "Front-running a sweep (shorting before the sweep/rejection) is structurally premature and can be steamrolled by a real breakout.",
+          "Funding is mildly positive; if a breakout occurs, shorts can become fuel rather than edge."
+        ]
+      }
+    }
+  ]
+}

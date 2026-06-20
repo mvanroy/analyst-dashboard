@@ -1,0 +1,234 @@
+{
+  "schema_version": 2,
+  "framework_version": "Trade Setup Framework v1",
+  "symbol": "JUP/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-20T08:16:00Z",
+  "price": "$0.19881",
+  "change_pct_24h": 6.2019,
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H + 1H + 15M",
+    "analysis_time": "Jun 20, 2026, 6:16 PM AEST"
+  },
+  "snapshot": [
+    {
+      "label": "Current Price",
+      "value": "$0.19881"
+    },
+    {
+      "label": "24H High",
+      "value": "$0.20236"
+    },
+    {
+      "label": "24H Low",
+      "value": "$0.18278"
+    },
+    {
+      "label": "24H Volume",
+      "value": "$6.66M turnover (34.78M JUP)"
+    }
+  ],
+  "market_structure": {
+    "state": "Transition",
+    "volatility": "Neutral",
+    "bias": "Neutral",
+    "structure": [
+      "Daily shows a sharp selloff into 6/10 (down to $0.1442), then a recovery back into the prior supply band ($0.19–$0.20); price is back near $0.20 but not cleanly trending (mixed HH/HL vs prior swing highs).",
+      "4H/1H have defended the 6/19 low ($0.1828) and pushed to $0.2024, but follow-through is not yet acceptance above the key daily resistance area ($0.201–$0.2045)."
+    ],
+    "volatility_note": "Range size has been fairly steady over the last ~2 sessions (roughly $0.1828–$0.2024 on 24H data) without a clear contraction into an apex or a fresh volatility blow-off; this reads as neutral rather than compression/expansion.",
+    "bias_note": "Near-term momentum is up (24H +6.2%), but the market is still negotiating a heavy overhead band ($0.201–$0.2045) that previously rejected; bias stays neutral until either acceptance above that band or a failure back under $0.19 develops."
+  },
+  "intermarket": {
+    "cor": 0.6333,
+    "cor_tf": "15M",
+    "note": "Moderate BTC dependency. Recent BTC 15M drifted lower into 08:00 while JUP held near $0.198; BTC weakness can still delay/deny any JUP breakout attempts, but JUP is currently showing some local resilience."
+  },
+  "pattern_candidates": [
+    {
+      "name": "Resistance Retest (daily supply band $0.201–$0.2045)",
+      "maturity": "Ready",
+      "entry_mode": "Balanced",
+      "classification": "Continuation",
+      "qualifier": "Break-and-hold needed above $0.201–$0.2045",
+      "grade": "B",
+      "summary": "Price has rotated back into the prior rejection zone and is pressing it again from below. The setup becomes tradable only on acceptance (hold) above the band, otherwise it's just a retest into supply.",
+      "entry": {
+        "direction": "long",
+        "zone": {
+          "low": 0.2015,
+          "high": 0.2046,
+          "label": "$0.2015 – $0.2046",
+          "subtitle": "Conditional: enter only after a 1H close above ~$0.2015 and price holds above (retest/acceptance), not a wick rejection."
+        },
+        "stop": {
+          "value": 0.1965,
+          "label": "$0.1965",
+          "note": "Invalidated if breakout attempt loses the post-break structure and trades back below the recent 1H swing/support area ($0.1965 area seen in 1H/15M lows after the push)."
+        },
+        "risk": {
+          "label": "~$0.0050",
+          "unit": "per JUP"
+        },
+        "t1": {
+          "value": 0.2167,
+          "label": "$0.2167",
+          "rr": "~1 : 3.1",
+          "note": "Retest of the 6/03 daily high; first logical liquidity/supply destination if acceptance above $0.2045 develops."
+        },
+        "t2": {
+          "value": 0.2300,
+          "label": "$0.2300",
+          "rr": "~1 : 5.8",
+          "note": "Extension beyond the prior daily high; only reasonable if price can hold above $0.2167 and expand (not just tag-and-reject)."
+        },
+        "tools": "Daily/4H horizontal resistance mapping ($0.201–$0.2045), 1H/15M swing lows for invalidation, prior daily high as objective"
+      },
+      "evidence": [
+        "Daily has multiple interactions with ~$0.201–$0.2045 (6/15 high $0.2013, 6/16 high $0.2045, 6/20 high $0.2024), marking it as the current decision/supply band.",
+        "Price is now back at $0.1988 after defending $0.1828 (6/19 low), indicating buyers can lift price, but they haven't proven acceptance above supply yet.",
+        "1H push reached $0.2024 (06:00) and then held near $0.198–$0.199 rather than immediate collapse, suggesting the retest pressure is still active.",
+        "Funding is slightly positive (+0.005%), implying mild long demand; not extreme, but it can make failed breakouts more punishing if the move stalls.",
+        "OI is sizable (40.7M) which can amplify the reaction once price exits the $0.19–$0.20 area, but direction is not confirmed without acceptance."
+      ],
+      "missing": [
+        "No confirmed acceptance above $0.2045 (only a push to $0.2024 so far); needs a clean reclaim/hold above the band.",
+        "A clear higher low above $0.20 after breakout is not established yet (structure still forming).",
+        "BTC is slipping on the latest 15M window; continued BTC softness can cap breakout follow-through given COR=0.63."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": [
+          "HTF level clarity: repeated daily highs cluster in $0.201–$0.2045",
+          "Defined nearby invalidation: post-break structure can be invalidated under ~$0.1965",
+          "Clear objective: prior daily high $0.2167"
+        ],
+        "warnings": [
+          "Breakout attempts may wick-fail inside $0.201–$0.2045 given repeated prior rejections",
+          "Moderate BTC correlation means breakout timing can be hostage to BTC volatility"
+        ]
+      }
+    },
+    {
+      "name": "Bull Pennant / Micro-compression after impulse (1H/15M)",
+      "maturity": "Forming",
+      "entry_mode": "Aggressive",
+      "classification": "Compression",
+      "qualifier": "Tight range under $0.2024; break decides",
+      "grade": "C",
+      "summary": "After the impulsive push to $0.2024, price is stalling around $0.198–$0.200 with smaller 15M candles, hinting at a developing pennant. Structure is incomplete because the compression boundaries and a clean trigger are not yet well-defined.",
+      "entry": {
+        "direction": "long",
+        "zone": {
+          "low": 0.1970,
+          "high": 0.1990,
+          "label": "$0.1970 – $0.1990",
+          "subtitle": "Aggressive participation only if the range continues to tighten and $0.197 holds as the higher-low floor (otherwise, no trade)."
+        },
+        "stop": {
+          "value": 0.1932,
+          "label": "$0.1932",
+          "note": "Invalidated if price breaks below the post-impulse base (seen on 1H/15M lows around $0.1932), implying the 'pause before continuation' thesis failed."
+        },
+        "risk": {
+          "label": "~$0.0040",
+          "unit": "per JUP"
+        },
+        "t1": {
+          "value": 0.2024,
+          "label": "$0.2024",
+          "rr": "~1 : 0.9",
+          "note": "Conservative: reclaim of session high; low RR warns this is more of a structure-building entry than a finished setup."
+        },
+        "t2": {
+          "value": 0.2167,
+          "label": "$0.2167",
+          "rr": "~1 : 4.4",
+          "note": "If $0.2024 breaks and holds, next meaningful HTF destination is the prior daily high."
+        },
+        "tools": "1H impulse high ($0.2024), 15M/1H swing lows ($0.197 then $0.1932) for structure/invalidation, daily high $0.2167 for objective"
+      },
+      "evidence": [
+        "1H made an impulse leg into $0.2024 (06:00) from the ~$0.195 area, then pulled back and held near $0.198–$0.199 rather than reversing to $0.19 immediately.",
+        "15M candles after 06:00 show reduced ranges and overlapping closes between ~$0.1977–$0.2006, consistent with early compression behaviour.",
+        "The local floor is visible around $0.1970–$0.1973 (multiple 15M lows), giving a provisional HL reference.",
+        "The compression is occurring directly beneath a major daily resistance band, so a clean break can produce an outsized reaction (either direction)."
+      ],
+      "missing": [
+        "Compression is not yet clearly 'narrowing into an apex' (still a loose coil); boundaries remain fuzzy.",
+        "No clean breakout trigger: $0.2024 has not been broken on a closing basis in the provided 1H/15M sequence.",
+        "Risk-to-reward to the first objective is poor unless the breakout actually triggers and holds."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": [
+          "Post-impulse consolidation present on 15M",
+          "Nearby structural invalidation available ($0.1932)"
+        ],
+        "warnings": [
+          "Pattern is early and can degrade into chop under $0.20",
+          "BTC softness + moderate correlation increases fakeout risk around the trigger"
+        ]
+      }
+    },
+    {
+      "name": "Failed Breakout / Bull Trap risk at $0.201–$0.202 (liquidity rejection)",
+      "maturity": "Nascent",
+      "entry_mode": "Balanced",
+      "classification": "Trap",
+      "qualifier": "Needs rejection + acceptance back below $0.197",
+      "grade": "D",
+      "summary": "The market is testing the same overhead band repeatedly, which creates a real trap risk if a breakout attempt wicks and then accepts back below the range. Right now there is not enough breakdown/acceptance evidence to justify a clean short entry.",
+      "entry": {
+        "direction": "short",
+        "zone": {
+          "low": 0.0,
+          "high": 0.0,
+          "label": "No valid entry",
+          "subtitle": "Condition for any short: a sweep/attempt above ~$0.201–$0.202 followed by acceptance back below ~$0.197 on 1H (range breakdown)."
+        },
+        "stop": {
+          "value": 0.0,
+          "label": "N/A",
+          "note": "No trade until failure is confirmed; if triggered, invalidation would be sustained acceptance back above the reclaimed breakout level ($0.201+)."
+        },
+        "risk": {
+          "label": "N/A",
+          "unit": "per JUP"
+        },
+        "t1": {
+          "value": 0.0,
+          "label": "N/A",
+          "rr": "N/A",
+          "note": "No trade: targets depend on where the failed-breakdown acceptance occurs."
+        },
+        "t2": {
+          "value": 0.0,
+          "label": "N/A",
+          "rr": "N/A",
+          "note": "No trade: targets depend on confirmation."
+        },
+        "tools": "Horizontal level logic only (daily supply band; local 15M/1H range floor)"
+      },
+      "evidence": [
+        "Repeated tests into $0.201–$0.2045 without confirmed acceptance increases the odds of a wick-and-reject event (classic trap environment).",
+        "15M shows a spike to $0.2024 (06:00) followed by drift back under $0.200, which is the first ingredient of a potential failed breakout (but not confirmation).",
+        "Funding is mildly positive (+0.005%), which can fuel a flush if longs pile in too early and the market rejects."
+      ],
+      "missing": [
+        "No confirmed failure sequence: need acceptance below the local range floor (~$0.197) after a breakout attempt, not just a pullback.",
+        "No clear lower-high structure post-rejection on 1H yet.",
+        "Targets/stop are not well-defined until the market shows where it accepts (below $0.197 vs below $0.19)."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": [
+          "Clear overhead supply zone defined on daily"
+        ],
+        "warnings": [
+          "Shorting without acceptance back below support is premature and prone to squeeze if $0.2045 breaks"
+        ]
+      }
+    }
+  ]
+}

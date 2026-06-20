@@ -1,0 +1,233 @@
+{
+  "schema_version": 2,
+  "framework_version": "Trade Setup Framework v1",
+  "symbol": "HYPE/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-20T08:20:00Z",
+  "price": "$70.518",
+  "change_pct_24h": 4.6913,
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H + 1H + 15M",
+    "analysis_time": "Jun 20, 2026, 6:20 PM AEST"
+  },
+  "snapshot": [
+    {
+      "label": "Current Price",
+      "value": "$70.518"
+    },
+    {
+      "label": "24H High",
+      "value": "$71.356"
+    },
+    {
+      "label": "24H Low",
+      "value": "$66.371"
+    },
+    {
+      "label": "24H Volume",
+      "value": "$412,778,357"
+    }
+  ],
+  "market_structure": {
+    "state": "Transition",
+    "volatility": "Neutral",
+    "bias": "Neutral",
+    "structure": [
+      "Daily shows a sharp selloff (Jun 4–10) followed by a sharp rebound (Jun 11–16) and then 3 days of back-and-forth between ~66.5 and ~76.6; trend structure is mixed rather than clean HH/HL or LH/LL.",
+      "Since the Jun 16 impulse high (76.993), price has printed lower highs (76.639 → 73.732 → 71.356) but also defended the 66.5–68.4 demand zone multiple times (Jun 18–20), suggesting neither side has clear control yet."
+    ],
+    "volatility_note": "After the earlier expansion (big daily ranges into Jun 16), the last ~2 days are tighter (today’s daily range ~2.526), and 1H/15M candles show a steadier grind rather than explosive moves; volatility reads as stabilising (neutral) rather than continuing to compress into an apex or expand directionally.",
+    "bias_note": "Near-term reclaim from 66.37 to 70.52 is constructive, but overhead supply remains from 71.35/73.7 and the larger swing high at 76.99; bias stays neutral until either acceptance above ~71.35–73.7 (bull case) or loss of ~68.4–66.5 (bear case)."
+  },
+  "intermarket": {
+    "cor": 0.6659,
+    "cor_tf": "15M",
+    "note": "Moderate BTC dependency: HYPE often follows BTC intraday, so BTC’s current soft drift (15M push down into ~63522) can delay long triggers or accelerate breakdowns; treat breakouts/breakdowns as higher quality when BTC is aligned."
+  },
+  "pattern_candidates": [
+    {
+      "name": "Support Retest (66.5–68.4 demand) with pivot reclaim",
+      "maturity": "Mature",
+      "entry_mode": "Balanced",
+      "classification": "Continuation",
+      "qualifier": "Higher-timeframe range low defended; reclaiming mid-range",
+      "grade": "B",
+      "summary": "Multiple 4H/1H tests held above ~66.5–68.4 and price has rotated back to ~70.5, implying buyers are still defending the range floor. Upside is capped unless price can reclaim/accept above the 71.35 area that rejected on Jun 19.",
+      "entry": {
+        "direction": "long",
+        "zone": {
+          "low": 69.70,
+          "high": 70.35,
+          "label": "$69.70 – $70.35",
+          "subtitle": "Re-entry on pullback into the reclaimed 1H pivot zone after the bounce from $68.40; avoids chasing into $71.35 resistance."
+        },
+        "stop": {
+          "value": 68.35,
+          "label": "$68.35",
+          "note": "Invalidated if price loses the recent swing floor (today’s 4H low $68.401) and accepts back below the reclaim."
+        },
+        "risk": {
+          "label": "~$1.45",
+          "unit": "per HYPE"
+        },
+        "t1": {
+          "value": 71.356,
+          "label": "$71.356",
+          "rr": "~1 : 0.7",
+          "note": "First logical sell wall is the 24H high / prior rejection; mainly a de-risk point rather than a full take-profit."
+        },
+        "t2": {
+          "value": 73.732,
+          "label": "$73.732",
+          "rr": "~1 : 2.3",
+          "note": "Retest of the Jun 18 4H swing high; acceptance above here starts reopening the path toward the $76.6–$77.0 swing high zone."
+        },
+        "tools": "Daily/4H/1H swing highs & lows, 24H high/low, simple horizontal S/R mapping, wick-based invalidation"
+      },
+      "evidence": [
+        "4H shows repeat support interaction at/above $66.50–$68.40 (Jun 18 16:00 low $66.504; Jun 20 00:00 low $68.401), indicating buyers defend the range floor.",
+        "1H sequence from $68.401 low (02:00) to $70.927 high (06:00) shows a clean rebound leg, providing a reclaim pivot to lean on for defined risk.",
+        "Overhead resistance is well-defined: $71.356 rejected on Jun 19 (1H/4H), and $73.732 is the next obvious 4H supply.",
+        "Funding is positive (+0.007825%), suggesting longs are paying; this supports momentum but warns against late entries into resistance (crowded longs can fuel pullbacks).",
+        "OI is sizable (3,327,422), suggesting participation is present; with a range context this can mean sharper reactions at key levels."
+      ],
+      "missing": [
+        "No acceptance above $71.356 yet; without that, upside can remain rotational rather than trending.",
+        "Daily structure still has lower highs since $76.993; bulls need to reclaim $73.7+ to reduce the ‘sell-the-rip’ dynamic.",
+        "OI is a snapshot only (no trend), so the quality of the rebound (new longs vs shorts covering) cannot be confirmed."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": [
+          "Range-floor defense is clear on 4H (multiple reactions around $66.5–$68.4).",
+          "Defined invalidation just below $68.40 reduces ambiguity."
+        ],
+        "warnings": [
+          "Positive funding means pullbacks can be sharper if longs are leaning too hard.",
+          "BTC 15M is drifting lower; with COR 0.6659, HYPE breakouts may fail if BTC continues to slip."
+        ]
+      }
+    },
+    {
+      "name": "Descending Triangle / Compression under $71.35 with rising base ~$68.40",
+      "maturity": "Forming",
+      "entry_mode": "Balanced",
+      "classification": "Compression",
+      "qualifier": "Lower highs into flat resistance; pressure building at range mid",
+      "grade": "C",
+      "summary": "Price is compressing between lower highs (71.35 area) and a defended base around 68.4–69.0, creating a directional decision zone. It is not yet a clean triangle because the base is not repeatedly tagged at a consistent level (key lows vary from $66.50 to $68.40).",
+      "entry": {
+        "direction": "long",
+        "zone": {
+          "low": 71.50,
+          "high": 72.00,
+          "label": "$71.50 – $72.00 (conditional)",
+          "subtitle": "Only if price breaks and holds above $71.356 (24H high / local cap). Without acceptance, avoid trading the middle of compression."
+        },
+        "stop": {
+          "value": 70.40,
+          "label": "$70.40",
+          "note": "Invalidated if breakout fails back below the reclaimed level and returns into the pre-break range."
+        },
+        "risk": {
+          "label": "~$1.20",
+          "unit": "per HYPE"
+        },
+        "t1": {
+          "value": 73.732,
+          "label": "$73.732",
+          "rr": "~1 : 1.4",
+          "note": "First expansion target is the prior 4H swing high; this is where failed-breakout risk increases."
+        },
+        "t2": {
+          "value": 76.639,
+          "label": "$76.639",
+          "rr": "~1 : 4.3",
+          "note": "Next major supply is the Jun 17 swing high; reaching here implies real expansion, not just a stop-run above $71.35."
+        },
+        "tools": "Horizontal resistance ($71.356), swing-high ladder, conditional breakout/acceptance logic, measured path to next 4H resistances"
+      },
+      "evidence": [
+        "Repeated rejection near $71.35 (4H high Jun 19 16:00 = $71.356; 1H highs also cluster below/at that level) makes it a meaningful trigger line.",
+        "Lower highs since the Jun 16 peak (76.993 → 76.639 → 73.732 → 71.356) show sellers stepping down, consistent with compression under resistance.",
+        "15M/1H action from 06:00–08:15 oscillates tightly around ~70.3–70.7, supporting a short-term coil behaviour.",
+        "Funding positive adds fuel for a breakout if it triggers cleanly (shorts less comfortable), but also increases failed-breakout odds if breakout is weak."
+      ],
+      "missing": [
+        "Base is not cleanly flat: the bigger range low is $66.371, while the latest low is $68.401—triangle definition is still ‘soft’.",
+        "No clear acceptance signal is provided in the data beyond price prints; needs follow-through above $71.35 rather than a wick.",
+        "Without OI trend, cannot confirm whether compression is building (OI rising) or decaying (OI falling)."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": [
+          "Clear horizontal cap at $71.356.",
+          "Compression-like candle behaviour on lower timeframes."
+        ],
+        "warnings": [
+          "Pattern clarity is incomplete (base inconsistency).",
+          "With COR 0.6659, a BTC dip can invalidate breakout attempts quickly."
+        ]
+      }
+    },
+    {
+      "name": "Prior Day High sweep / Failed Breakout risk at $71.356",
+      "maturity": "Nascent",
+      "entry_mode": "Aggressive",
+      "classification": "Liquidity / Reversal",
+      "qualifier": "Needs an actual sweep-and-rejection to exist",
+      "grade": "D",
+      "summary": "The $71.356 level is a clear liquidity magnet, but the evidence pack does not show price trading above it today and snapping back (no sweep confirmed). This remains a watch-item rather than a live setup.",
+      "entry": {
+        "direction": "short",
+        "zone": {
+          "low": 0.0,
+          "high": 0.0,
+          "label": "No valid entry (watch for sweep)",
+          "subtitle": "Only consider if price trades above $71.356 and then reclaims below it with momentum (failed breakout behaviour)."
+        },
+        "stop": {
+          "value": 0.0,
+          "label": "N/A",
+          "note": "No stop defined because the trigger event (sweep + rejection) has not occurred."
+        },
+        "risk": {
+          "label": "N/A",
+          "unit": "per HYPE"
+        },
+        "t1": {
+          "value": 0.0,
+          "label": "N/A",
+          "rr": "N/A",
+          "note": "If triggered, first target would logically be the $70.0 area / intraday pivot, but only after a real rejection is visible."
+        },
+        "t2": {
+          "value": 0.0,
+          "label": "N/A",
+          "rr": "N/A",
+          "note": "If triggered and range fails, next destination is the $68.9–$68.4 support band."
+        },
+        "tools": "Liquidity level identification (prior/24H high), rejection/acceptance logic, basic S/R"
+      },
+      "evidence": [
+        "$71.356 is both the 24H high and a recent 4H swing cap, so it is a natural level for stop-runs and traps.",
+        "Price currently sits below that level (~$70.52), leaving room for a tag that could become a sweep event.",
+        "Positive funding can encourage crowded longs into $71.35; if a sweep rejects, downside can accelerate as late longs unwind."
+      ],
+      "missing": [
+        "No confirmed sweep above $71.356 followed by acceptance back below it (the actual pattern trigger).",
+        "No local breakdown structure after the hypothetical rejection (e.g., loss of a reaction low) is present yet."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": [
+          "Clear, well-watched liquidity level at $71.356."
+        ],
+        "warnings": [
+          "Do not pre-short into resistance without a sweep/rejection; the market can simply break out and trend.",
+          "BTC correlation is moderate; BTC strength during a $71.35 test would reduce trap probability."
+        ]
+      }
+    }
+  ]
+}

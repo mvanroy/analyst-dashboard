@@ -1,0 +1,230 @@
+{
+  "schema_version": 2,
+  "framework_version": "Trade Setup Framework v1",
+  "symbol": "INJ/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-20T06:05:19Z",
+  "price": "$5.149",
+  "change_pct_24h": 0.59,
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H",
+    "analysis_time": "Jun 20, 2026, 4:05 PM AEST"
+  },
+  "snapshot": [
+    {
+      "label": "Current Price",
+      "value": "$5.149"
+    },
+    {
+      "label": "24H High",
+      "value": "$5.179"
+    },
+    {
+      "label": "24H Low",
+      "value": "$4.981"
+    },
+    {
+      "label": "24H Volume",
+      "value": "$9.7M"
+    }
+  ],
+  "market_structure": {
+    "state": "Transition",
+    "volatility": "Compression",
+    "bias": "Bearish",
+    "structure": [
+      "A damaged uptrend in transition — the Daily has printed lower highs ($7.34 → $6.7 → $6.1) against a horizontal, repeatedly-tested floor at $4.77–4.98.",
+      "Price rejected the $6.1 range high and has ground back to $5.13, sitting in the lower half and pressing toward the floor."
+    ],
+    "volatility_note": "The wide $4.8–6.1 swings have contracted into a tight $5.03–5.15 base just above support — energy coiling toward a resolution.",
+    "bias_note": "Lower highs, price below the 4H EMA ($5.22) and PR Average ($5.97), and heavily negative CVD all tilt down; the bias only confirms on a break of $4.80, the one counter being the strong multi-tested floor."
+  },
+  "intermarket": {
+    "cor": 0.74,
+    "cor_tf": "15M",
+    "note": "INJ is tracking BTC at COR +0.74 (Moderate) — a BTC bounce can defend the $4.80 floor and stall the breakdown, while continued BTC weakness pressures the floor toward a break."
+  },
+  "pattern_candidates": [
+    {
+      "name": "Descending Triangle",
+      "maturity": "Mature",
+      "entry_mode": "Chasing",
+      "classification": "Compression",
+      "qualifier": "pending a break of $4.80",
+      "grade": "B",
+      "summary": "Lower highs compressing into a strong floor with CVD and OI behind them. A 4H close below $4.80 opens a measured move toward $3.7; until then it's compression and the floor can bounce.",
+      "entry": {
+        "direction": "short",
+        "zone": {
+          "low": 4.75,
+          "high": 4.8,
+          "label": "$4.75 – $4.80",
+          "subtitle": "On a 4H close below the floor"
+        },
+        "stop": {
+          "value": 5.06,
+          "label": "$5.06",
+          "note": "A reclaim back inside the range means the breakdown failed and rotation resumes."
+        },
+        "risk": {
+          "label": "~$0.29",
+          "unit": "per INJ"
+        },
+        "t1": {
+          "value": 4.4,
+          "label": "$4.40",
+          "rr": "~1 : 1.1",
+          "note": "The late-April consolidation shelf — first downside pocket."
+        },
+        "t2": {
+          "value": 3.7,
+          "label": "$3.70",
+          "rr": "~1 : 3.4",
+          "note": "Toward the triangle's measured move (range height ~$1.3 off $4.80) — the objective of a confirmed breakdown."
+        },
+        "tools": "Predictive Ranges (4H) · horizontal S/R · equal-lows liquidity · CVD · Open Interest"
+      },
+      "evidence": [
+        "Daily lower highs ($7.34 → $6.7 → $6.1) pressing a fixed $4.77–4.98 floor — the textbook descending triangle, sellers progressively defending lower prices.",
+        "Price below the 4H EMA ($5.22) and PR Average ($5.97), grinding toward PR Lower-2 ($4.80) — momentum sits with sellers into the apex.",
+        "CVD heavily negative (~−2.6M taker flow while price is flat) — distribution, not accumulation, behind the drift.",
+        "OI built +3.1% over 4 days as price fell — new shorts pressing, not short-covering; conviction behind the decline."
+      ],
+      "missing": [
+        "The floor ($4.80) hasn't broken — until a 4H close below it, this is compression, not a triggered breakdown.",
+        "$4.77–4.98 has held ~4–5 times — a strong floor that can bounce before it breaks."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": [
+          "Negative CVD",
+          "Rising OI into the decline",
+          "Price below EMA / PR-Average",
+          "Equal lows = liquidity below $4.80"
+        ],
+        "warnings": [
+          "Floor unbroken — pending a 4H close below $4.80",
+          "Multi-tested support can bounce first"
+        ]
+      }
+    },
+    {
+      "name": "Equal Low Sweep",
+      "maturity": "Nascent",
+      "entry_mode": "Aggressive",
+      "classification": "Liquidity / Reversal",
+      "qualifier": "conditional — sweep + reclaim of the floor",
+      "grade": "C",
+      "summary": "The bullish counter — buy a sweep-and-reclaim of the $4.8 floor toward the range mean. Good R:R if it triggers, but the base case is a break, not a hold.",
+      "entry": {
+        "direction": "long",
+        "zone": {
+          "low": 4.85,
+          "high": 4.95,
+          "label": "$4.85 – $4.95",
+          "subtitle": "On a 4H reclaim back above the swept floor"
+        },
+        "stop": {
+          "value": 4.65,
+          "label": "$4.65",
+          "note": "Acceptance below the swept low = genuine breakdown, thesis dead."
+        },
+        "risk": {
+          "label": "~$0.25",
+          "unit": "per INJ"
+        },
+        "t1": {
+          "value": 5.39,
+          "label": "$5.39",
+          "rr": "~1 : 2.0",
+          "note": "PR Lower-1 / range mid — first pivot back toward the mean."
+        },
+        "t2": {
+          "value": 5.97,
+          "label": "$5.97",
+          "rr": "~1 : 4.3",
+          "note": "PR Average / range mean — full rotation back into the range."
+        },
+        "tools": "Predictive Ranges (4H) · equal-lows liquidity · horizontal S/R · CVD (watch for a positive shift)"
+      },
+      "evidence": [
+        "The $4.77–4.98 equal lows are obvious liquidity — a sweep below then reclaim would trap breakdown sellers at a floor defended ~4–5 times.",
+        "A reclaim back into the range targets the mean (PR Average $5.97) — strong R:R from a defined floor."
+      ],
+      "missing": [
+        "Hasn't swept or reclaimed — purely conditional.",
+        "CVD heavily negative + OI building argue the floor is more likely to break than reverse — this fights the flow."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": [
+          "Multi-tested HTF support",
+          "Liquidity below the equal lows",
+          "PR Lower-2 ($4.80) confluence"
+        ],
+        "warnings": [
+          "Counter to the bearish CVD/OI flow",
+          "Unconfirmed — needs a convincing reclaim"
+        ]
+      }
+    },
+    {
+      "name": "Bear Flag",
+      "maturity": "Forming",
+      "entry_mode": "Balanced",
+      "classification": "Continuation",
+      "qualifier": "no room to the floor",
+      "grade": "D",
+      "summary": "The near-term leg into the floor, but with support right below there's nothing to trade here on its own.",
+      "entry": {
+        "direction": "short",
+        "zone": {
+          "low": 5.05,
+          "high": 5.15,
+          "label": "$5.05 – $5.15",
+          "subtitle": "Tight consolidation above the floor"
+        },
+        "stop": {
+          "value": 5.25,
+          "label": "$5.25",
+          "note": "Reclaim above the flag = the continuation leg failed."
+        },
+        "risk": {
+          "label": "~$0.15",
+          "unit": "per INJ"
+        },
+        "t1": {
+          "value": 4.8,
+          "label": "$4.80",
+          "rr": "~1 : 2.0",
+          "note": "The $4.80 floor — the move is already nearly there."
+        },
+        "t2": {
+          "value": 4.4,
+          "label": "$4.40",
+          "rr": "~1 : 4.7",
+          "note": "Interim shelf if the floor breaks with it."
+        },
+        "tools": "PR levels · horizontal S/R · CVD"
+      },
+      "evidence": [
+        "The tight $5.03–5.15 consolidation just above the floor is a low-level bear flag — a pause before the next push at $4.80."
+      ],
+      "missing": [
+        "Almost no room to the floor — the move is already at support.",
+        "Duplicates the descending-triangle thesis at a faster timeframe; little fresh edge."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": [
+          "Below EMA",
+          "CVD negative"
+        ],
+        "warnings": [
+          "Limited downside before strong support",
+          "Better expressed as the triangle break"
+        ]
+      }
+    }
+  ]
+}
