@@ -1,0 +1,182 @@
+{
+  "schema_version": 1,
+  "framework_version": "v1",
+  "symbol": "SOL/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-08T21:54:00Z",
+  "data_sources": ["Bybit USDⓈ-M perp (TradingView MCP)", "manual chart read"],
+
+  "price": "$67.79",
+  "change_pct_24h": 2.0,
+  "headline": "Confirmed 4H reversal off the $60.03 capitulation low",
+  "levels": {"direction": "long", "entry": 65.5, "stop": 62.5, "target1": 75.9, "target2": 80},
+
+  "market_bias": "BEARISH",
+  "bias_qualifier": "TRANSITIONAL",
+
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H",
+    "analysis_time": "Jun 08, 2026 21:54 UTC",
+    "market_state": "TRANSITIONAL",
+    "market_state_note": "Capitulation low → confirmed 4H bullish reversal, but the daily is still bearish. Two-sided by timeframe: don't chase $67.8 — long a pullback to $65-66, or wait for the rally into $76-82 to short with the dominant bearish bias.",
+    "current_phase": "Countertrend Bounce"
+  },
+
+  "snapshot": [
+    {"label": "Current Price", "value": "$67.79"},
+    {"label": "24H High", "value": "$68.15"},
+    {"label": "24H Low", "value": "$64.92", "tone": "bear"},
+    {"label": "24H Volume", "value": "9.1M"},
+    {"label": "Funding Rate", "value": "N/A"},
+    {"label": "Open Interest", "value": "N/A"}
+  ],
+
+  "daily": {
+    "lean": "BEARISH",
+    "count": "5 Bearish / 1 Neutral / 0 Bullish",
+    "factors": [
+      {"factor": "Structure", "reading": "LH + LL", "evidence": "Downtrend from the ~$98 top (-65% over the window from $253). A waterfall broke the $80-82 range floor and flushed to a fresh low $60.03; strong 2-day bounce since, but no daily higher high yet.", "call": "Bearish"},
+      {"factor": "20 EMA", "reading": "~$75.9", "evidence": "Price $67.8 below the 20 EMA (computed from daily closes).", "call": "Bearish"},
+      {"factor": "50 EMA", "reading": "~$81.5", "evidence": "Price below; 20 EMA ($75.9) below 50 EMA ($81.5) — bearish stack.", "call": "Bearish"},
+      {"factor": "AVWAP", "reading": "~$79.2", "evidence": "Price below AVWAP; sits overhead as resistance.", "call": "Bearish"},
+      {"factor": "RSI regime", "reading": "~56", "evidence": "Recovered off the low to above the midline and above its MA — no longer bearish, not a bull regime.", "call": "Neutral"},
+      {"factor": "Volume trend", "reading": "Climactic on decline", "evidence": "Capitulation day carried 26M (vs ~12M avg); bounce days 9-13.5M — solid but below the flush.", "call": "Bearish"}
+    ]
+  },
+
+  "h4": {
+    "lean": "BULLISH",
+    "count": "3 Bullish / 1 Bearish / 1 Neutral",
+    "factors": [
+      {"factor": "Structure", "reading": "HH + HL (reversal)", "evidence": "Clear higher-highs/higher-lows sequence off $60.03 (60.03 → 61.3 → 63.5 → 65.4 → 66.5 lows; 63 → 65 → 67.9 → 68.2 highs). A genuine short-term uptrend, not a flat base.", "call": "Bullish"},
+      {"factor": "20 EMA", "reading": "~$66.1", "evidence": "Price $67.8 is above the 4H 20 EMA — reclaimed on the bounce.", "call": "Bullish"},
+      {"factor": "AVWAP", "reading": "~$97.4", "evidence": "Far below; stale far-back anchor (see Analyst Notes).", "call": "Bearish"},
+      {"factor": "Momentum", "reading": "RSI ~55, > its MA", "evidence": "RSI back above the midline and well above its MA (40) — momentum has turned up.", "call": "Bullish"},
+      {"factor": "Volume", "reading": "Bounce moderate", "evidence": "Capitulation bars ran 4-6.6M; bounce bars 1.3-4.1M — rising but not strongly volume-confirmed.", "call": "Neutral"}
+    ]
+  },
+
+  "setup": {
+    "type": "Failed Breakdown (Countertrend 4H Reversal)",
+    "thesis": "Tactical long the confirmed 4H reversal — ideally on a pullback to $65-66 (4H 20-EMA + prior breakout) rather than chasing $67.8 — targeting the daily means $75.9 → $79.2 (then $80-82). It's countertrend to a bearish daily, so treat it as a bounce-to-resistance with a defined cap; the higher-conviction swing trade is to short the rally as it reaches $76-82.",
+    "not": "Not Trend Continuation (the 4H has turned against the daily trend); not a Breakdown (acceptance below $60 never occurred)."
+  },
+
+  "verdict": {
+    "action": "WAIT",
+    "rationale": "Two-sided by timeframe, and not a chase at $67.8. The 4H is a confirmed bullish reversal — long a pullback to $65-66 (stop <$63, targets $75.9 then $79-82). But the daily is bearish, so the bounce likely caps at $76-82, where the higher-conviction short sets up. Long below, short into the supply — don't enter mid-move here."
+  },
+
+  "scorecard": {
+    "factors": [
+      {"factor": "Daily Structure", "call": "Bearish"},
+      {"factor": "Daily EMA Position", "call": "Bearish"},
+      {"factor": "Daily AVWAP Position", "call": "Bearish"},
+      {"factor": "Daily RSI Regime", "call": "Neutral"},
+      {"factor": "Daily Volume Trend", "call": "Bearish"},
+      {"factor": "4H Structure", "call": "Bullish"},
+      {"factor": "4H EMA Position", "call": "Bullish"},
+      {"factor": "4H AVWAP Position", "call": "Bearish"},
+      {"factor": "4H Momentum", "call": "Bullish"},
+      {"factor": "4H Volume", "call": "Neutral"}
+    ],
+    "count": {"bullish": 3, "neutral": 2, "bearish": 5}
+  },
+
+  "evidence_matrix": [
+    {"factor": "Daily Structure", "timeframe": "Daily", "reading": "LH/LL downtrend from ~$98; waterfall to $60.03", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Daily EMA Position", "timeframe": "Daily", "reading": "Price $67.8 below 20 ($75.9) & 50 ($81.5); bearish stack", "interpretation": "Bearish", "impact": "down", "weight": "Medium"},
+    {"factor": "Daily Volume Trend", "timeframe": "Daily", "reading": "Capitulation 26M on the flush; bounce 9-13.5M", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "4H Structure", "timeframe": "4H", "reading": "Confirmed HH/HL reversal off $60.03; reclaimed 4H 20 EMA", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Momentum (RSI)", "timeframe": "Daily + 4H", "reading": "4H RSI ~55 > MA; daily RSI recovered to ~56", "interpretation": "Bullish", "impact": "up", "weight": "Medium"},
+    {"factor": "Liquidity Sweep", "timeframe": "4H", "reading": "$60.03 swept then reclaimed (long lower wick)", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Support / Resistance", "timeframe": "4H", "reading": "Building higher lows above the 4H 20 EMA (~$66)", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Volume Profile", "timeframe": "Daily", "reading": "Heavy breakdown supply $72-82 overhead", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "VWAP / AVWAP", "timeframe": "Daily", "reading": "Below daily AVWAP $79.2 (overhead target/resistance)", "interpretation": "Neutral", "impact": "flat", "weight": "Medium"},
+    {"factor": "Open Interest / Funding / CVD", "timeframe": "—", "reading": "Not available in feed", "interpretation": "Neutral", "impact": "flat", "weight": "Low"}
+  ],
+
+  "analyst_summary": [
+    "SOL is bearish on the swing but transitioning — the daily is below every mean (20/50 EMA stack + AVWAP) with LH/LL from ~$98, yet the 4H has flipped to a confirmed bullish reversal off the $60.03 capitulation low (HH/HL, 4H 20 EMA reclaimed, RSI back above its MA).",
+    "Two-sided by timeframe: the 4H favours a tactical long the bounce, the daily favours shorting the rally into supply. They're the same path — up into $76-82, then likely back down.",
+    "Don't chase $67.8: long a pullback to $65-66 (stop <$63, targets $75.9 then $79-82), or wait for the rally into $76-82 to short with the dominant bearish bias.",
+    "Caveats: bounce volume is moderate, not climactic-confirmed; OI/Funding/CVD unavailable; the 4H AVWAP (~$97) is a stale anchor (daily AVWAP $79.2 is the relevant resistance); SOL is high-beta to BTC — the path into $76-82 is largely a BTC call, so check BTC before acting."
+  ],
+  "bottom_line": "Countertrend / reversal attempt — a tactical 4H bounce, not trend-following on the daily. Long a pullback to $65-66, or short the rally into $76-82; the same supply zone caps the bounce and sets up the higher-conviction short.",
+
+  "what_changes_my_mind": {
+    "bullish_upgrade": {
+      "title": "Bullish Continuation",
+      "subtitle": "Bounce Extends",
+      "checks": [
+        "4H holds above the 20 EMA (~$66) on pullbacks",
+        "Reclaim $72-73 (prior breakdown)",
+        "Daily close back above $75.9 (20 EMA)",
+        "Volume expansion on the upside"
+      ],
+      "result": "Bounce extends toward $79-82; daily bias upgrades toward Neutral."
+    },
+    "bearish_confirmation": {
+      "title": "Bearish Reassertion",
+      "subtitle": "Reversal Fails",
+      "checks": [
+        "Rejection at $76-82 supply",
+        "4H close below ~$63 (last higher low)",
+        "Loss of $60.03 cycle low"
+      ],
+      "result": "Daily bias reasserts; continuation toward $60 and lower."
+    }
+  },
+
+  "bull_case": "Capitulation at $60.03 then a confirmed 4H reversal (HH/HL, 4H 20 EMA reclaimed, RSI > MA) — a structured bounce targeting the daily means $75.9-79.2.",
+  "bear_case": "Daily below every mean with LH/LL from $98; the bounce is a countertrend rally into heavy $72-82 supply that likely stalls and resumes lower toward $60.",
+
+  "trade_plan": {
+    "direction": "Countertrend Long",
+    "rows": [
+      {"label": "Entry Zone", "value": "$65.00 - $66.00", "note": "4H 20 EMA + prior breakout (pullback)", "tone": "bull"},
+      {"label": "Stop Loss", "value": "< $63.00", "note": "Below last 4H higher low", "tone": "bear"},
+      {"label": "Risk", "value": "~$3.00 per SOL", "note": ""},
+      {"label": "Target 1", "value": "$75.90", "note": "Daily 20 EMA", "tone": "blue"},
+      {"label": "Target 2", "value": "$79 - $82", "note": "Daily AVWAP / broken range floor", "tone": "blue"}
+    ],
+    "rr": [
+      {"label": "To Target 1", "value": "~1 : 3.5"},
+      {"label": "To Target 2", "value": "~1 : 4.8"}
+    ]
+  },
+
+  "key_levels": {
+    "resistance": [
+      {"price": "$80 - $82", "label": "Range Floor / 50 EMA (Supply)"},
+      {"price": "$79.2", "label": "Daily AVWAP"},
+      {"price": "$75.9", "label": "Daily 20 EMA / Target 1"},
+      {"price": "$74.7", "label": "4H PR Upper-1"},
+      {"price": "$72.7", "label": "Prior Breakdown / Daily PR Lower-1"}
+    ],
+    "support": [
+      {"price": "$66.1", "label": "4H 20 EMA"},
+      {"price": "$65.4", "label": "4H PR Lower-1 / Entry"},
+      {"price": "$63.0", "label": "Last 4H Higher Low / Invalidation"},
+      {"price": "$60.03", "label": "Capitulation / Cycle Low"}
+    ]
+  },
+
+  "probability_distribution": [
+    {"scenario": "Bullish Reversal (Breaks $82, daily flips)", "pct": 25, "tone": "bull"},
+    {"scenario": "Range / Chop ($63-$76)", "pct": 30, "tone": "neutral"},
+    {"scenario": "Bearish Reassertion (Rejects means / loses $63)", "pct": 45, "tone": "bear"}
+  ],
+
+  "failure_scenario": "The bounce stalls into the $76-82 supply (daily 20 EMA + AVWAP + range floor), gets rejected, the bearish daily reasserts, and price rolls back toward $62-60 and retests the $60.03 low.",
+
+  "additional_data": [
+    {"label": "Open Interest", "value": "N/A"},
+    {"label": "Funding Rate", "value": "N/A"},
+    {"label": "CVD", "value": "N/A"},
+    {"label": "Volume Profile", "value": "Supply $72-82; capitulation low $60.03"},
+    {"label": "VWAP / AVWAP", "value": "Below daily AVWAP $79.2 (resistance)"}
+  ],
+
+  "conclusion": "Countertrend / Reversal Attempt — tactical 4H bounce, explicitly not trend-following on the daily."
+}

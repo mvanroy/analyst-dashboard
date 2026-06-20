@@ -1,0 +1,158 @@
+{
+  "schema_version": 1,
+  "framework_version": "v3.5",
+  "symbol": "BTC/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-16T18:00:00Z",
+  "data_sources": [
+    "Binance BTCUSDT (TradingView MCP) — Daily / 4H / 15m",
+    "Bybit + Binance public REST (OI / Funding / CVD)",
+    "manual chart read"
+  ],
+  "price": "$66,606",
+  "change_pct_24h": 0.4,
+  "market_bias": "NEUTRAL",
+  "bias_qualifier": "TRANSITION",
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H + 15m",
+    "analysis_time": "Jun 16, 2026 18:00 UTC",
+    "market_state": "TRANSITION",
+    "volatility_state": "NEUTRAL",
+    "current_phase": "Counter-trend recovery into breakdown supply",
+    "market_state_note": "Daily downtrend (lower highs 82.8k -> 78k, major lower low 59,130) damaged by a sharp V-reclaim. Price has reclaimed the daily 20-EMA but sits below the 50/200 stack — no new uptrend confirmed. Expansion has cooled into measured swings under resistance."
+  },
+  "snapshot": [
+    {"label": "Current Price", "value": "$66,606"},
+    {"label": "24H High", "value": "$67,292"},
+    {"label": "24H Low", "value": "$65,354"},
+    {"label": "24H Volume", "value": "$1.1B"},
+    {"label": "Funding Rate", "value": "-0.005%"},
+    {"label": "Open Interest", "value": "$3.51B"}
+  ],
+  "derivatives": [
+    {"metric": "Open Interest", "tone": "bear", "signal": "Falling into the bounce", "note": "OI down ~3% (54.3k -> 52.7k BTC) as price rose — leg is short-covering, not fresh long conviction"},
+    {"metric": "Funding", "tone": "neutral", "signal": "Flat / slightly negative", "note": "~-0.005% — no crowded longs backing the rally; shorts still paying, leaves fuel either way"},
+    {"metric": "CVD (taker flow)", "tone": "neutral", "signal": "Balanced, choppy", "note": "Taker buy/sell ratios oscillating ~0.88-1.35 — no decisive aggression on the push, no clear divergence"}
+  ],
+  "derivatives_summary": "Derivatives read corrective, not impulsive: the recovery is carried by short-covering (OI bleeding) with flat funding and no aggressive taker buying — consistent with a relief rally into resistance rather than a conviction reversal.",
+  "convergence": {
+    "title": "Decision Zone — 67,300 to 68,000",
+    "note": "All three candidates point at one pivot. The bull (Double Bottom) target requires breaking THROUGH the 67,300-68,000 breakdown supply; both bear cases (Resistance Retest / Bearish SFP) need a rejection FROM it. The triggered double bottom is extended and arriving at this band; the short cases are not yet live. Until 67.3-68k resolves with acceptance or rejection, the actionable stance is WAIT — let the zone print its hand."
+  },
+  "pattern_candidates": [
+    {
+      "name": "Double Bottom",
+      "qualifier": "4H — 59,130 / 60,755 base, neckline 64,400 reclaimed",
+      "summary": "Two defended lows at 59,130 and a higher 60,755 with a 64,400 reaction-high neckline that has already been reclaimed — the reversal has triggered and price is mid-flight toward the ~69,670 measured move. The clean entries are gone; what's left is a chase into supply.",
+      "grade": "B",
+      "maturity": "Triggered",
+      "classification": "Reversal",
+      "entry": {
+        "model": "Neckline retest (only clean long left)",
+        "direction": "long",
+        "zone": {"low": 64000, "high": 64400, "label": "$64,000 – $64,400", "subtitle": "Pullback to the reclaimed neckline — the trigger has already fired above"},
+        "stop": {"value": 58900, "label": "$58,900", "note": "Below the 59,130 double-bottom low — pattern fails"},
+        "risk": {"label": "~$5,300", "unit": "per BTC"},
+        "t1": {"value": 67300, "label": "$67,300", "rr": "~1 : 0.6"},
+        "t2": {"value": 69670, "label": "$69,670", "rr": "~1 : 1.0"},
+        "alignment": 58,
+        "tools": "Measured Move · RSI Divergence · HTF S/R"
+      },
+      "opportunity": [
+        {"type": "Aggressive", "zone": "Second-low test (59,130 / 60,755)", "status": "Missed", "reason": "Base held weeks ago — price is 6k above it"},
+        {"type": "Balanced", "zone": "Reclaim / reaction off the base", "status": "Missed", "reason": "Reaction high broke; recovery leg already mature"},
+        {"type": "Confirmation", "zone": "Neckline break > 64,400", "status": "Triggered", "reason": "4H closed and held above the neckline — trigger fired, now extended"}
+      ],
+      "evidence": [
+        "Sellers failed to force a new low — second bottom (60,755) printed above the first (59,130), the signature of a base.",
+        "The 64,400 reaction-high neckline is already reclaimed, so the measured move to ~69,670 is in play and price is roughly halfway there.",
+        "Reclaimed the daily 20-EMA (66,740) on the way up — structure flipping short-term constructive."
+      ],
+      "missing": [
+        "OI fell ~3% as price rose — this leg is short-covering, not fresh longs, which caps confidence in a durable reversal.",
+        "All direct entries are spent; a fresh long needs a deep pullback to 64,400 (wide ~$5.3k stop) or a clean break of 67.3-68k.",
+        "Measured target 69,670 sits inside the larger 70-71k breakdown supply — limited room above."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": ["Higher second low (selling exhaustion)", "Neckline reclaimed = triggered", "Above daily 20-EMA"],
+        "warnings": ["OI declining = short-covering, not conviction", "Entry zone far below price (chasing)", "Target runs into 70-71k supply"]
+      }
+    },
+    {
+      "name": "Resistance Retest",
+      "qualifier": "4H — counter-trend rally into the 67.3-68k breakdown supply",
+      "summary": "In a daily downtrend, the bounce is arriving at the exact zone it broke down from (4H PR-Upper 67,680, daily 20-EMA 66,740, local high 67,292) — where rallies are typically sold. A lower-high rejection here resumes the downtrend; it just hasn't printed yet.",
+      "grade": "C",
+      "maturity": "Developing",
+      "classification": "Continuation",
+      "entry": {
+        "model": "Rejection Confirmed",
+        "direction": "short",
+        "zone": {"low": 67300, "high": 68000, "label": "$67,300 – $68,000", "subtitle": "Breakdown supply / 4H PR-Upper + daily 20-EMA"},
+        "stop": {"value": 68500, "label": "$68,500", "note": "Sustained 4H acceptance above — bear thesis dead, double-bottom target opens"},
+        "risk": {"label": "~$850", "unit": "per BTC"},
+        "t1": {"value": 63500, "label": "$63,500", "rr": "~1 : 4.9"},
+        "t2": {"value": 60700, "label": "$60,700", "rr": "~1 : 8.2"},
+        "alignment": 54,
+        "tools": "HTF Supply · Liquidity Pool · CVD · AVWAP"
+      },
+      "opportunity": [
+        {"type": "Aggressive", "zone": "First tag of 67.3-68k supply", "status": "Approaching", "reason": "Price ~700 below the zone; assessable from Developing, but needs the tag"},
+        {"type": "Balanced", "zone": "Lower-high rejection candle", "status": "Unavailable", "reason": "Requires Mature status — no rejection has formed"},
+        {"type": "Confirmation", "zone": "Break of recent swing low", "status": "Unavailable", "reason": "Requires Ready/Triggered — structure still pointing up"}
+      ],
+      "evidence": [
+        "Counter-trend rally is reaching reclaimed supply — in a downtrend, this is where sellers re-engage and lower highs form.",
+        "OI bleeding on the way up signals a corrective advance, the kind that stalls into resistance rather than breaking it.",
+        "4H RSI 64.9 is strong but approaching stretched right as price meets the zone — room for a cool-off rejection."
+      ],
+      "missing": [
+        "No rejection candle yet — price is still grinding up, so this is the trigger the whole short case waits on.",
+        "A clean break and acceptance above 68k flips this into bullish continuation and invalidates the fade."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": ["At reclaimed breakdown supply", "OI declining (corrective rally)", "RSI stretching into resistance"],
+        "warnings": ["No rejection yet — not live", "Strong recovery momentum against the fade"]
+      }
+    },
+    {
+      "name": "Bearish SFP",
+      "qualifier": "4H — liquidity above the 67,292 swing high",
+      "summary": "The 67,292 local high sits as obvious liquidity directly overhead. A sweep above it that closes back below would trap breakout buyers and upgrade the bear case — but no sweep or reclaim has happened, so this is a watch, not a setup in play.",
+      "grade": "C",
+      "maturity": "Emerging",
+      "classification": "Liquidity Reversal",
+      "entry": {
+        "model": "Reclaim Below High",
+        "direction": "short",
+        "zone": {"low": 67300, "high": 67600, "label": "Sweep > $67,292 → reclaim", "subtitle": "Liquidity grab above the swing high, close back below"},
+        "stop": {"value": 67950, "label": "$67,950", "note": "Above the sweep wick — acceptance, not a trap"},
+        "risk": {"label": "~$500", "unit": "per BTC"},
+        "t1": {"value": 64500, "label": "$64,500", "rr": "~1 : 5.6"},
+        "t2": {"value": 60700, "label": "$60,700", "rr": "~1 : 12.5"},
+        "alignment": 40,
+        "tools": "Liquidity Mapping · CVD · Funding"
+      },
+      "opportunity": [
+        {"type": "Aggressive", "zone": "Sweep wick rejection > 67,292", "status": "Approaching", "reason": "No sweep yet — needs price to run the high first"},
+        {"type": "Balanced", "zone": "Reclaim back below the swept high", "status": "Unavailable", "reason": "Requires Mature — sweep hasn't occurred"},
+        {"type": "Confirmation", "zone": "Break of the reaction low", "status": "Unavailable", "reason": "Requires Ready/Triggered — no SFP structure yet"}
+      ],
+      "evidence": [
+        "A clean, obvious swing high at 67,292 makes overhead liquidity an easy target for a stop-run.",
+        "Flat-to-negative funding with declining OI is the backdrop where a failed push above the high can snap back quickly."
+      ],
+      "missing": [
+        "No sweep and no reclaim — the defining events haven't happened, so there is nothing to act on.",
+        "A decisive break that holds above 67,292 is acceptance, not a trap — that negates the SFP entirely."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": ["Obvious liquidity above 67,292", "Funding/OI backdrop favours a snap-back"],
+        "warnings": ["No sweep yet", "No reclaim — watch-only"]
+      }
+    }
+  ]
+}

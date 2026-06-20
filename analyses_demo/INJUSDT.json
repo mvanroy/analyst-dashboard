@@ -1,0 +1,163 @@
+{
+  "schema_version": 1,
+  "framework_version": "pattern-v1",
+  "symbol": "INJ/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-18T07:15:00Z",
+  "data_sources": [
+    "Bybit INJUSDT.P (TradingView MCP) — Daily / 4H / 1H / 15m",
+    "Bybit public REST (OI / Funding / 24h stats)",
+    "manual chart read"
+  ],
+  "price": "$5.27",
+  "change_pct_24h": -4.35,
+  "market_bias": "NEUTRAL",
+  "bias_qualifier": "RANGE BOUND — mid-range, no clean edge",
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H + 1H + 15m",
+    "analysis_time": "Jun 18, 2026 07:15 UTC",
+    "market_state": "RANGE BOUND",
+    "volatility_state": "NEUTRAL",
+    "current_phase": "Rotating toward the low end of the range",
+    "market_state_note": "4H is rotating inside $4.88-5.62 (spike to $6.10 -> sharp drop -> chop); the bounce into $5.6 just failed, so it's rotation, not trend. The 1H/15m downtrend off $6.10 has dragged price to the lower third ($5.27), now decelerating on the $5.19-5.23 shelf with volume drying up. Daily is a broader +70% recovery off the $2.7 base, but it stalled at $6.10 and is pulling back. Thin liquidity ($30M turnover) and a soft BTC (-1.9%) mean no clean edge here — trade the edges, not the middle."
+  },
+  "snapshot": [
+    {"label": "Current Price", "value": "$5.27"},
+    {"label": "24H High", "value": "$5.62"},
+    {"label": "24H Low", "value": "$5.19"},
+    {"label": "24H Volume", "value": "$30M"},
+    {"label": "Funding Rate", "value": "+0.0031%"},
+    {"label": "Open Interest", "value": "$13M"}
+  ],
+  "derivatives": [
+    {"metric": "Open Interest", "tone": "neutral", "signal": "Flat ~2.40M contracts", "note": "OI hasn't moved through the decline — no fresh shorts pressing and no longs capitulating. Positioning is idle, so the move down is drift, not conviction"},
+    {"metric": "Funding", "tone": "neutral", "signal": "Oscillating around zero (+0.0031%)", "note": "Neither side is crowded — no squeeze fuel either way, consistent with a balanced range"},
+    {"metric": "Liquidity / Volume", "tone": "bear", "signal": "Thin: $30M 24h turnover, ~$13M OI", "note": "Bybit INJ is thin — moves can over-extend on low participation, which lowers the quality of any single setup here"}
+  ],
+  "derivatives_summary": "Positioning is idle and liquidity is thin. OI sat flat through the drop and funding is pinned near zero — the slide off $6.10 is low-conviction drift inside a range, not a fresh short campaign. With no crowded side to squeeze and only $30M of 24h turnover, derivatives offer no edge — this is a chart-structure trade, not a positioning one.",
+  "convergence": {
+    "title": "Decision Zone — $5.19 shelf vs $5.60 range top",
+    "note": "Everything pivots on the range box. The $5.19-5.23 shelf (with $4.88 the deeper floor) is where longs rotate; the $5.55-5.62 top is where shorts fade. Price is mid-range at $5.27 with selling drying up but still under falling EMAs — genuinely two-sided and low-conviction. Don't take the middle: long the $5.19 hold + reclaim of $5.39, or short a bounce into $5.40-5.45. A clean loss of $4.88 flips the box bearish."
+  },
+  "pattern_candidates": [
+    {
+      "name": "Resistance Rejection / Range Rotation",
+      "qualifier": "4H/1H — rejected the $5.6 range top, rolling to support",
+      "summary": "Lower highs $6.10 -> 5.62 -> 5.42 with price under falling 1H/4H EMAs and weak RSI — the trend-aligned side of the range. But price is already $5.27 with the floor only ~$0.30 below, so it's a late rotation; the clean short is on a bounce into the EMAs, not mid-range.",
+      "grade": "C",
+      "maturity": "Mature",
+      "classification": "Range Rotation",
+      "entry": {
+        "model": "Fade the EMA retest",
+        "direction": "short",
+        "zone": {"low": 5.39, "high": 5.45, "label": "$5.39 – $5.45", "subtitle": "Retest of the broken 1H/4H EMAs"},
+        "stop": {"value": 5.63, "label": "$5.63", "note": "Above the range top — acceptance there breaks the box bullish"},
+        "risk": {"label": "~$0.21", "unit": "per INJ"},
+        "t1": {"value": 5.19, "label": "$5.19", "rr": "~1 : 1.1"},
+        "t2": {"value": 4.90, "label": "$4.90", "rr": "~1 : 2.5"},
+        "alignment": 50,
+        "tools": "Falling EMAs · Lower highs · BTC weakness"
+      },
+      "opportunity": [
+        {"type": "Aggressive", "zone": "Chase the roll-over at $5.25", "status": "Unavailable", "reason": "Floor only ~$0.30 below — almost no room from here"},
+        {"type": "Balanced", "zone": "Bounce into $5.39-5.45", "status": "Approaching", "reason": "Wait for a retest of the broken EMAs to short with room"},
+        {"type": "Confirmation", "zone": "Loss of $5.19 + acceptance", "status": "Approaching", "reason": "Shelf break opens the $4.88 floor"}
+      ],
+      "evidence": [
+        "Lower highs $6.10 -> 5.62 -> 5.42, price under falling 1H ($5.39) and 4H ($5.45) EMAs — sellers control the rotation.",
+        "4H RSI 43.8 / 1H RSI 38.4, both below their MAs — momentum weak, no bullish divergence yet.",
+        "The $5.6 range top rejected on the last test — supply defending the ceiling.",
+        "BTC soft (-1.9%) and thin INJ liquidity ($30M) amplify downside drift."
+      ],
+      "missing": [
+        "A better entry — at $5.27 most of the drop to $5.19 is already done; chasing here is poor R:R.",
+        "Acceptance below $5.19 to extend toward the $4.88 floor.",
+        "Fresh short positioning — OI is flat, so this is drift not conviction."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": ["Lower highs under falling EMAs", "Weak RSI on 4H + 1H", "Range top rejected", "BTC weak + thin liquidity"],
+        "warnings": ["Floor only ~$0.30 below", "Late in the rotation", "Flat OI = low conviction"]
+      }
+    },
+    {
+      "name": "Range Support Hold / Bullish SFP",
+      "qualifier": "1H/15m — holding the $5.19-5.23 shelf, selling drying up",
+      "summary": "Price is defending the $5.19-5.23 shelf (1H support + PR lower band) as selling volume collapses and 15m prints tiny higher lows — supply exhausting at range support. It's a tight-risk counter-trend rotation scalp, but it needs the shelf to hold and a reclaim of $5.39 to confirm; until then it's a falling knife.",
+      "grade": "B-",
+      "maturity": "Developing",
+      "classification": "Liquidity Reversal / Range Rotation",
+      "entry": {
+        "model": "Support hold + reclaim",
+        "direction": "long",
+        "zone": {"low": 5.18, "high": 5.27, "label": "$5.18 – $5.27", "subtitle": "Hold the shelf, reclaim $5.39 to confirm"},
+        "stop": {"value": 5.08, "label": "$5.08", "note": "Below the shelf — range support failed"},
+        "risk": {"label": "~$0.15", "unit": "per INJ"},
+        "t1": {"value": 5.45, "label": "$5.45", "rr": "~1 : 1.4"},
+        "t2": {"value": 5.60, "label": "$5.60", "rr": "~1 : 2.4"},
+        "alignment": 48,
+        "tools": "Range support · Volume exhaustion · PR lower band"
+      },
+      "opportunity": [
+        {"type": "Aggressive", "zone": "Buy the $5.19 shelf hold", "status": "Available", "reason": "Price on the shelf with selling drying up — live but unconfirmed"},
+        {"type": "Balanced", "zone": "Reclaim of $5.39 (1H EMA)", "status": "Approaching", "reason": "Reclaim confirms rotation back toward the range mid"},
+        {"type": "Confirmation", "zone": "Break $5.45 + hold", "status": "Approaching", "reason": "Clears the 4H EMA toward the $5.6 top"}
+      ],
+      "evidence": [
+        "Holding the $5.19-5.23 shelf (1H support + PR lower band) with selling volume collapsing (15m down to ~14-16k).",
+        "15m printing tiny higher lows / a curl off $5.19 — first sign buyers are responding.",
+        "Funding flat/neutral (+0.0031%) — no crowded-long risk into a bounce.",
+        "Range structure favours a rotation back to the mid once the floor holds."
+      ],
+      "missing": [
+        "A reclaim of $5.39 (1H EMA) to confirm rotation — still trading below it.",
+        "A clean rejection wick / higher high on 15m — base is forming but unconfirmed.",
+        "Trend alignment — this is counter to the 1H downtrend."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": ["Range support defended", "Selling volume exhausting", "Funding non-crowded", "Tight, defined risk"],
+        "warnings": ["Counter to the 1H downtrend", "Below falling EMAs", "BTC soft"]
+      }
+    },
+    {
+      "name": "Failed Breakdown / Double Bottom",
+      "qualifier": "4H — watch the $4.88-5.00 range floor",
+      "summary": "$4.88-5.00 is the 4H range floor and prior swing low with obvious liquidity beneath — a sweep-and-reclaim there would be the highest-R long in the box. It doesn't exist yet: price is ~$0.40 above with no flush and no reclaim, so it's a watch level, not a trade.",
+      "grade": "C",
+      "maturity": "Emerging",
+      "classification": "Liquidity Reversal",
+      "entry": {
+        "model": "Sweep + reclaim of the floor",
+        "direction": "long",
+        "zone": {"low": 4.88, "high": 5.00, "label": "$4.88 – $5.00", "subtitle": "Flush the floor and reclaim"},
+        "stop": {"value": 4.78, "label": "$4.78", "note": "Acceptance below the floor — box breaks bearish"},
+        "risk": {"label": "~$0.17", "unit": "per INJ"},
+        "t1": {"value": 5.25, "label": "$5.25", "rr": "~1 : 1.6"},
+        "t2": {"value": 5.60, "label": "$5.60", "rr": "~1 : 3.4"},
+        "alignment": 40,
+        "tools": "Range-floor liquidity · Volume · Reclaim candle"
+      },
+      "opportunity": [
+        {"type": "Aggressive", "zone": "Sweep + reclaim of $4.88", "status": "Unavailable", "reason": "Price is ~$0.40 above the floor — no sweep yet"},
+        {"type": "Balanced", "zone": "Reclaim + higher low", "status": "Unavailable", "reason": "Requires the floor event to develop first"},
+        {"type": "Confirmation", "zone": "Reclaim $5.10 + hold", "status": "Unavailable", "reason": "Nothing to confirm until the floor is tested"}
+      ],
+      "evidence": [
+        "$4.88-5.00 is the 4H range floor and prior swing low — obvious liquidity resting below.",
+        "Range-bound structure makes a floor sweep-and-reclaim the highest-R long if it develops.",
+        "Deeper discount would offer the cleanest risk-to-reward in the box."
+      ],
+      "missing": [
+        "It doesn't exist yet — price is ~$0.40 above the floor, no sweep, no reclaim.",
+        "Any sign of seller exhaustion at $4.88 specifically.",
+        "A reclaim candle to trigger — purely a watch level."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": ["Range floor + liquidity pool below", "Highest-R long if it triggers"],
+        "warnings": ["Not present — watch only", "Needs a flush that hasn't happened", "Range could break down instead"]
+      }
+    }
+  ]
+}

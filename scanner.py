@@ -329,6 +329,32 @@ def taker_ratio(symbols):
     return asyncio.run(_scan_taker(symbols))
 
 
+# ---------------- single-symbol live ticker (Binance USDⓈ-M futures) ----------
+def live_ticker(symbol):
+    """Live 24h ticker for one Binance perp. Returns {"last": float,
+    "pct": float, "high": float, "low": float} or None on any failure.
+    Used to surface a frequently-updating mark price (not the static value
+    baked into an analysis JSON)."""
+    try:
+        r = httpx.get(
+            BASE + "/fapi/v1/ticker/24hr",
+            params={"symbol": symbol.upper()},
+            headers={"User-Agent": "orion-lite/1.0"},
+            timeout=6,
+        )
+        r.raise_for_status()
+        d = r.json()
+        return {
+            "last": float(d["lastPrice"]),
+            "pct": float(d["priceChangePercent"]),
+            "high": float(d["highPrice"]),
+            "low": float(d["lowPrice"]),
+            "vol": float(d["volume"]),  # 24h base-asset volume (in coins)
+        }
+    except Exception:
+        return None
+
+
 # ---------------- S&P 500 futures sentiment (Yahoo Finance) ----------------
 def sp500_futures():
     """Day change for E-mini S&P 500 futures (ES=F) from Yahoo Finance.

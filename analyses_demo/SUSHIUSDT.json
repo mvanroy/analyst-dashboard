@@ -1,0 +1,181 @@
+{
+  "schema_version": 1,
+  "framework_version": "v1",
+  "symbol": "SUSHI/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-08T10:01:24Z",
+  "data_sources": ["Bybit USDⓈ-M perp (TradingView MCP)", "manual chart read"],
+
+  "price": "$0.1706",
+  "change_pct_24h": -0.3,
+  "headline": "Basing above $0.16064 swept low after a capitulation flush",
+  "levels": {"direction": "long", "entry": 0.166, "stop": 0.159, "target1": 0.178, "target2": 0.196},
+
+  "market_bias": "BEARISH",
+  "bias_qualifier": "",
+
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H",
+    "analysis_time": "Jun 08, 2026 10:01 UTC",
+    "market_state": "TRANSITIONAL",
+    "market_state_note": "Climactic capitulation + sweep/reclaim of $0.16064 into a tight base — the freefall paused but nothing's reclaimed. The setup is a tactical countertrend bounce, not actionable at spot ($0.171); wait for a dip to $0.165-0.167 or a reclaim of $0.178.",
+    "current_phase": "Countertrend Bounce"
+  },
+
+  "snapshot": [
+    {"label": "Current Price", "value": "$0.1706"},
+    {"label": "24H High", "value": "$0.1744"},
+    {"label": "24H Low", "value": "$0.1658", "tone": "bear"},
+    {"label": "24H Volume", "value": "5.1M"},
+    {"label": "Funding Rate", "value": "N/A"},
+    {"label": "Open Interest", "value": "N/A"}
+  ],
+
+  "daily": {
+    "lean": "BEARISH",
+    "count": "6 Bearish / 0 Neutral / 0 Bullish",
+    "factors": [
+      {"factor": "Structure", "reading": "LH + LL", "evidence": "Severe long-term downtrend — -80% over the window ($0.88 → $0.15). The recent local top $0.26 failed, an orderly grind followed, then a violent liquidation cascade $0.24 → $0.16064. Clean LH/LL.", "call": "Bearish"},
+      {"factor": "20 EMA", "reading": "~$0.196", "evidence": "Price $0.171 below the 20 EMA (computed from daily closes).", "call": "Bearish"},
+      {"factor": "50 EMA", "reading": "~$0.207", "evidence": "Price below; 20 EMA ($0.196) below 50 EMA ($0.207) — bearish stack.", "call": "Bearish"},
+      {"factor": "AVWAP", "reading": "~$1.42", "evidence": "Price ~88% below AVWAP — though the anchor is a far-back cycle high (see Analyst Notes); directionally bearish but not an actionable near-term level.", "call": "Bearish"},
+      {"factor": "RSI regime", "reading": "~38", "evidence": "Below the midline, bearish territory; not at an oversold extreme.", "call": "Bearish"},
+      {"factor": "Volume trend", "reading": "Climactic on decline", "evidence": "The capitulation days carried ~10x normal volume (36.6M, 19.3M vs ~3M avg); today's bounce light (~5M).", "call": "Bearish"}
+    ]
+  },
+
+  "h4": {
+    "lean": "BEARISH",
+    "count": "2 Bearish / 3 Neutral / 0 Bullish",
+    "factors": [
+      {"factor": "Structure", "reading": "LL, basing", "evidence": "Markdown $0.243 → $0.16064; last ~2.5 days a tight base ($0.165-0.176) holding higher lows above the low. No swing-high reclaim; lower highs intact.", "call": "Bearish"},
+      {"factor": "20 EMA", "reading": "~$0.171", "evidence": "Price $0.1706 is sitting right on the 4H 20 EMA.", "call": "Neutral"},
+      {"factor": "AVWAP", "reading": "~$1.42", "evidence": "Far below; not reclaimed (stale anchor).", "call": "Bearish"},
+      {"factor": "Momentum", "reading": "RSI ~40, > its MA", "evidence": "RSI rising off the low and above its MA (34.8); mild bullish divergence (price LL $0.16064 then higher lows).", "call": "Neutral"},
+      {"factor": "Volume", "reading": "Capitulation → dry-up", "evidence": "Flush bars ran 6-8M; base bars contracted to 1-3M — sell-side exhaustion.", "call": "Neutral"}
+    ]
+  },
+
+  "setup": {
+    "type": "Bullish Divergence Reversal (Countertrend)",
+    "thesis": "Long the oversold divergence / failed-breakdown reversal off the $0.16064 swept capitulation low, targeting mean-reversion into $0.178 then the daily 20 EMA ~$0.196. Tactical, countertrend, unconfirmed.",
+    "not": "Not Trend Continuation (you'd be shorting into exhaustion at the low); not a clean Pullback (the decline was a breakdown, not an orderly retrace)."
+  },
+
+  "verdict": {
+    "action": "WAIT",
+    "rationale": "Tactical countertrend bounce, not a high-conviction trade — it's against a 7/0 bearish bias and unconfirmed. Don't chase at $0.171: wait for a dip into the $0.165-0.167 base to long the bounce, or a confirmed 4H reclaim of $0.178. Invalidation is a close below $0.16064 — and if that gives way, the trade flips to a continuation short toward $0.1506."
+  },
+
+  "scorecard": {
+    "factors": [
+      {"factor": "Daily Structure", "call": "Bearish"},
+      {"factor": "Daily EMA Position", "call": "Bearish"},
+      {"factor": "Daily AVWAP Position", "call": "Bearish"},
+      {"factor": "Daily RSI Regime", "call": "Bearish"},
+      {"factor": "Daily Volume Trend", "call": "Bearish"},
+      {"factor": "4H Structure", "call": "Bearish"},
+      {"factor": "4H EMA Position", "call": "Neutral"},
+      {"factor": "4H AVWAP Position", "call": "Bearish"},
+      {"factor": "4H Momentum", "call": "Neutral"},
+      {"factor": "4H Volume", "call": "Neutral"}
+    ],
+    "count": {"bullish": 0, "neutral": 3, "bearish": 7}
+  },
+
+  "evidence_matrix": [
+    {"factor": "Daily Structure", "timeframe": "Daily", "reading": "-80% downtrend, LH/LL; cascade to $0.16064", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Daily EMA Position", "timeframe": "Daily", "reading": "Price $0.171 below 20 ($0.196) & 50 ($0.207); bearish stack", "interpretation": "Bearish", "impact": "down", "weight": "Medium"},
+    {"factor": "Capitulation Volume", "timeframe": "Daily", "reading": "Climactic ~10x spike (36.6M) then dry-up — exhaustion", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "4H RSI Divergence", "timeframe": "4H", "reading": "Price LL $0.16064 then higher lows; RSI ~40 rising above its MA", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Liquidity Sweep", "timeframe": "4H", "reading": "$0.16064 swept then reclaimed (long lower wick)", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Support Confluence", "timeframe": "Daily + 4H", "reading": "Basing on $0.16064 swept low, above $0.1506 cycle low", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Volume Profile", "timeframe": "Daily", "reading": "Cascade-origin supply $0.20-0.24 overhead; thin below $0.20", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "VWAP / AVWAP", "timeframe": "Daily + 4H", "reading": "Price ~88% below AVWAP; stale far-back anchor, not reclaimed", "interpretation": "Neutral", "impact": "flat", "weight": "Medium"},
+    {"factor": "Open Interest / Funding / CVD", "timeframe": "—", "reading": "Not available in feed", "interpretation": "Neutral", "impact": "flat", "weight": "Low"}
+  ],
+
+  "analyst_summary": [
+    "SUSHI is structurally bearish — 7 bearish scorecard factors, zero bullish, price ~-80% and below every mean after a violent liquidation cascade.",
+    "But the decline ended in a climactic ~10x capitulation with a long-wick sweep + reclaim of $0.16064, a mild 4H RSI divergence, and selling exhausted into a 2.5-day base — the ingredients for a tactical relief bounce toward $0.178 then the daily 20 EMA ~$0.196.",
+    "This is a countertrend, unconfirmed play: long the bounce off the swept low, but a 4H close below $0.16064 flips the bias to a continuation short toward the $0.1506 cycle low.",
+    "Caveats: the AVWAP (~$1.42) is a stale far-back anchor and not a usable near-term level; OI/Funding/CVD were unavailable (the climactic volume implies a liquidation flush but can't be confirmed); SUSHI is a high-beta DeFi alt — check BTC before timing entry, as a BTC bounce would fuel the move and continued weakness would kill it."
+  ],
+  "bottom_line": "Countertrend / reversal attempt — a tactical post-capitulation bounce, not trend-following. Buy the dip into $0.165-0.167 or a confirmed reclaim of $0.178; if $0.16064 fails, flip to a short.",
+
+  "what_changes_my_mind": {
+    "bullish_upgrade": {
+      "title": "Bullish Confirmation",
+      "subtitle": "Confirms the Bounce",
+      "checks": [
+        "4H close above $0.178 (PR avg)",
+        "Reclaim of daily 20 EMA $0.196",
+        "Volume expansion on the upside",
+        "4H higher high"
+      ],
+      "result": "Tactical bounce confirmed; extends toward $0.196."
+    },
+    "bearish_confirmation": {
+      "title": "Bearish Invalidation",
+      "subtitle": "Thesis Invalidated",
+      "checks": [
+        "4H close below $0.16064 (sweep low)",
+        "Loss of $0.1506 cycle low",
+        "Volume expands on the breakdown"
+      ],
+      "result": "Long invalidated; flips to continuation short toward $0.1506."
+    }
+  },
+
+  "bull_case": "Climactic 10x capitulation with a long-wick sweep + reclaim of $0.16064, mild 4H divergence and exhausted selling — fuel for a relief bounce to $0.178 then $0.196.",
+  "bear_case": "-80% downtrend below every mean with cascade-origin supply $0.20-0.24 overhead — the 2.5-day base is likely a pause before continuation to the $0.1506 cycle low.",
+
+  "trade_plan": {
+    "direction": "Countertrend Long",
+    "rows": [
+      {"label": "Entry Zone", "value": "$0.165 - $0.167", "note": "Base above the swept low", "tone": "bull"},
+      {"label": "Stop Loss", "value": "< $0.160", "note": "Below $0.16064 sweep low", "tone": "bear"},
+      {"label": "Risk", "value": "~$0.007 per SUSHI", "note": ""},
+      {"label": "Target 1", "value": "$0.178", "note": "4H PR avg / bounce highs", "tone": "blue"},
+      {"label": "Target 2", "value": "$0.196", "note": "Daily 20 EMA", "tone": "blue"}
+    ],
+    "rr": [
+      {"label": "To Target 1", "value": "~1 : 1.7"},
+      {"label": "To Target 2", "value": "~1 : 4.3"}
+    ]
+  },
+
+  "key_levels": {
+    "resistance": [
+      {"price": "$0.20 - $0.24", "label": "Cascade-Origin Supply"},
+      {"price": "$0.207", "label": "Daily 50 EMA"},
+      {"price": "$0.196", "label": "Daily 20 EMA / Target 2"},
+      {"price": "$0.178", "label": "4H PR Average / Target 1"},
+      {"price": "$0.176", "label": "Recent Bounce Highs"}
+    ],
+    "support": [
+      {"price": "$0.171", "label": "4H 20 EMA"},
+      {"price": "$0.1657", "label": "Base Floor"},
+      {"price": "$0.16064", "label": "Sweep Low / Invalidation"},
+      {"price": "$0.1506", "label": "Cycle Low"}
+    ]
+  },
+
+  "probability_distribution": [
+    {"scenario": "Bullish Bounce (Reclaims $0.178)", "pct": 35, "tone": "bull"},
+    {"scenario": "Range / Chop ($0.160-$0.178)", "pct": 25, "tone": "neutral"},
+    {"scenario": "Bearish Continuation (Loses $0.16064)", "pct": 40, "tone": "bear"}
+  ],
+
+  "failure_scenario": "The bounce stalls into the $0.176-0.178 supply, rolls over, the bearish bias reasserts, and price loses $0.16064 toward the $0.1506 cycle low and fresh lows — i.e. the base was a pause, not a bottom.",
+
+  "additional_data": [
+    {"label": "Open Interest", "value": "N/A"},
+    {"label": "Funding Rate", "value": "N/A"},
+    {"label": "CVD", "value": "N/A"},
+    {"label": "Volume Profile", "value": "Supply $0.20-0.24; thin below $0.20"},
+    {"label": "VWAP / AVWAP", "value": "Far below (stale anchor ~$1.42)"}
+  ],
+
+  "conclusion": "Countertrend / Mean-Reversion Reversal Attempt — explicitly not trend-following."
+}

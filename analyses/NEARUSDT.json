@@ -1,0 +1,224 @@
+{
+  "schema_version": 2,
+  "framework_version": "Trade Setup Framework v1",
+  "symbol": "NEAR/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-19T00:00:00Z",
+  "price": "$2.22",
+  "change_pct_24h": -0.6,
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H + 1H",
+    "analysis_time": "Jun 20, 2026, 2:51 PM AEST"
+  },
+  "snapshot": [
+    {
+      "label": "Current Price",
+      "value": "$2.22"
+    },
+    {
+      "label": "24H High",
+      "value": "$2.297"
+    },
+    {
+      "label": "24H Low",
+      "value": "$2.132"
+    },
+    {
+      "label": "24H Volume",
+      "value": "—"
+    }
+  ],
+  "market_structure": {
+    "state": "Transition",
+    "volatility": "Compression",
+    "bias": "Neutral",
+    "structure": [
+      "Recovery off the 1.83 low topped at the 2.54/2.56 double top and broke its neckline — the uptrend is damaged and price now hinges on the 2.13 pivot."
+    ],
+    "volatility_note": "The sharp drop off 2.56 has coiled into a tight 2.13–2.24 base — contracting, not expanding.",
+    "bias_note": "Two-sided at 2.13 — the higher-EV lean is long only if 2.13 holds; this is a level test, not a trend."
+  },
+  "intermarket": {
+    "cor": 0.94,
+    "cor_tf": "15M",
+    "note": "NEAR is tracking BTC almost tick-for-tick (COR 15M +0.94) — both topped and sold off in the same window. With BTC now in a 4H downtrend near its lows (67.3k→63k), that tight correlation pressures NEAR: it favours the 2.13 break and works against the long until BTC stabilises."
+  },
+  "pattern_candidates": [
+    {
+      "name": "Double Top",
+      "maturity": "Triggered",
+      "entry_mode": "Chasing",
+      "classification": "Reversal",
+      "qualifier": "neckline broke · target met",
+      "grade": "C",
+      "summary": "The 2.54/2.56 double top broke its neckline and the measured move to ~2.12 is already complete — the reversal was right, but the move is largely spent; only a bounce to the neckline offers a fresh short.",
+      "entry": {
+        "direction": "short",
+        "zone": {
+          "low": 2.3,
+          "high": 2.34,
+          "label": "$2.30 – $2.34",
+          "subtitle": "Retest of the broken neckline"
+        },
+        "stop": {
+          "value": 2.46,
+          "label": "$2.46",
+          "note": "Reclaim of the post-break lower high negates the top"
+        },
+        "risk": {
+          "label": "~$0.13",
+          "unit": "per NEAR"
+        },
+        "t1": {
+          "value": 2.13,
+          "label": "$2.13",
+          "rr": "~1 : 1.4",
+          "note": "Measured-move target / base"
+        },
+        "t2": {
+          "value": 1.98,
+          "label": "$1.98",
+          "rr": "~1 : 2.4",
+          "note": "PR Lower-2 extension"
+        },
+        "tools": "Measured move · broken neckline · PR levels"
+      },
+      "evidence": [
+        "Two equal highs at 2.543 / 2.563, the second a marginal sweep that rejected — demand failed twice at the same level.",
+        "Neckline (~2.34) broke on the 2.44→2.31 4H candle, confirming the reversal.",
+        "Measured target (~2.12) already reached at 2.132 — the thesis has played out."
+      ],
+      "missing": [
+        "Fresh downside — a new short here bets on extension below a target already met (lower probability)."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": [
+          "Neckline break confirmed",
+          "PR Upper-1 (2.591) capped the highs",
+          "Broken neckline now overhead resistance"
+        ],
+        "warnings": [
+          "Measured move already complete — limited room",
+          "Needs a bounce to the neckline to enter"
+        ]
+      }
+    },
+    {
+      "name": "Failed Breakdown / Double Bottom",
+      "maturity": "Forming",
+      "entry_mode": "Aggressive",
+      "classification": "Liquidity / Reversal",
+      "qualifier": "live at the 2.13 base",
+      "grade": "B",
+      "summary": "Price flushed the 2.13 measured-move target twice and is basing, not breaking — supply is exhausting at a triple-confluence level; needs a reclaim of 2.285 to confirm.",
+      "entry": {
+        "direction": "long",
+        "zone": {
+          "low": 2.13,
+          "high": 2.18,
+          "label": "$2.13 – $2.18",
+          "subtitle": "Measured-move base · PR Lower-1"
+        },
+        "stop": {
+          "value": 2.08,
+          "label": "$2.08",
+          "note": "Acceptance below the flush low kills the higher-low thesis"
+        },
+        "risk": {
+          "label": "~$0.08",
+          "unit": "per NEAR"
+        },
+        "t1": {
+          "value": 2.285,
+          "label": "$2.285",
+          "rr": "~1 : 1.8",
+          "note": "PR Average — first pivot to bank into"
+        },
+        "t2": {
+          "value": 2.44,
+          "label": "$2.44",
+          "rr": "~1 : 3.5",
+          "note": "Broken neckline reclaim into pre-top supply"
+        },
+        "tools": "Predictive Ranges · 1H RSI divergence · horizontal S/R"
+      },
+      "evidence": [
+        "Flushed to 2.132 twice and is basing — sellers can't get acceptance below the measured target.",
+        "1H RSI held ~49 while price retested the low — momentum no longer confirming downside (early bullish divergence).",
+        "The 2.10–2.15 shelf is prior resistance turned support — a structural floor."
+      ],
+      "missing": [
+        "No confirmation yet — needs a reclaim and hold of 2.285 / 2.34 to prove demand."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": [
+          "PR Lower-1 (2.132) = exact support",
+          "Daily higher-low above 1.92",
+          "Compression base building"
+        ],
+        "warnings": [
+          "BTC risk-off, COR +0.94 — correlation is a headwind"
+        ]
+      }
+    },
+    {
+      "name": "Bearish Breakdown",
+      "maturity": "Nascent",
+      "entry_mode": "Aggressive",
+      "classification": "Continuation",
+      "qualifier": "pending a 2.13 break",
+      "grade": "C",
+      "summary": "If 2.13 gives way on a 4H close, the compression resolves down and the double-top reversal extends toward the next daily shelf — a scenario short, not yet live.",
+      "entry": {
+        "direction": "short",
+        "zone": {
+          "low": 2.1,
+          "high": 2.13,
+          "label": "$2.10 – $2.13",
+          "subtitle": "On acceptance below the pivot"
+        },
+        "stop": {
+          "value": 2.2,
+          "label": "$2.20",
+          "note": "Back inside the base = failed breakdown (flips to the long)"
+        },
+        "risk": {
+          "label": "~$0.08",
+          "unit": "per NEAR"
+        },
+        "t1": {
+          "value": 1.98,
+          "label": "$1.98",
+          "rr": "~1 : 1.75",
+          "note": "PR Lower-2"
+        },
+        "t2": {
+          "value": 1.92,
+          "label": "$1.92",
+          "rr": "~1 : 2.5",
+          "note": "Daily higher-low — don't press below"
+        },
+        "tools": "PR Lower-2 · daily higher-low · range S/R"
+      },
+      "evidence": [
+        "A 4H close below 2.13 breaks the measured-move base and the compression resolves down.",
+        "BTC risk-off (COR +0.94) is pulling NEAR toward the break — correlation favours the downside."
+      ],
+      "missing": [
+        "The break itself — nothing to do while 2.13 holds."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": [
+          "PR Lower-2 (1.979) and the 1.92 daily HL define the downside"
+        ],
+        "warnings": [
+          "Limited room into a known support shelf",
+          "Pending — not live until 2.13 breaks"
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>v3 Dashboard Wireframe — AR/USDT</title>
+<style>
+  :root{
+    --bg:#0d1117; --card:#161b22; --card2:#1c2330; --line:#2a313c;
+    --tx:#e6edf3; --mut:#8b949e; --dim:#6e7681;
+    --bull:#2ebd85; --bear:#f6465d; --neu:#8b949e; --blue:#4493f8;
+    --amber:#e3a008; --grade:#2ebd85;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--tx);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;font-size:13px;line-height:1.45;padding:18px;max-width:1280px;margin:0 auto}
+  .muted{color:var(--mut)} .dim{color:var(--dim)} .b{font-weight:700}
+  .bull{color:var(--bull)} .bear{color:var(--bear)} .neu{color:var(--neu)} .blue{color:var(--blue)} .amber{color:var(--amber)}
+  .grid{display:grid;gap:14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px}
+  .card h3{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mut);margin-bottom:12px;font-weight:600}
+  .chip{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.03em}
+  .chip.range{background:rgba(228,160,8,.15);color:#e3a008;border:1px solid rgba(228,160,8,.4)}
+  .chip.comp{background:rgba(68,147,248,.15);color:var(--blue);border:1px solid rgba(68,147,248,.4)}
+  .chip.neu{background:rgba(139,148,158,.15);color:var(--mut);border:1px solid rgba(139,148,158,.35)}
+  .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:8px;font-weight:800;font-size:12px;letter-spacing:.04em}
+  .pill.wait{background:rgba(227,160,8,.16);color:#e3a008;border:1px solid rgba(227,160,8,.5)}
+  table{width:100%;border-collapse:collapse;font-size:12px}
+  th,td{text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{color:var(--dim);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em}
+  td.call{font-weight:700;white-space:nowrap}
+  .tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px}
+  .tag.bull{background:rgba(46,189,133,.15);color:var(--bull)}
+  .tag.bear{background:rgba(246,70,93,.15);color:var(--bear)}
+  .tag.neu{background:rgba(139,148,158,.13);color:var(--mut)}
+  .tag.crit{background:rgba(246,70,93,.13);color:#ff8a98}
+  .tag.high{background:rgba(227,160,8,.14);color:#e3a008}
+  .tag.med{background:rgba(68,147,248,.13);color:var(--blue)}
+  .tag.low{background:rgba(139,148,158,.12);color:var(--mut)}
+  /* header */
+  .hdr{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:14px;margin-bottom:16px}
+  .hdr .sym{font-size:22px;font-weight:800}
+  .hdr .sub{color:var(--mut);font-size:11px;letter-spacing:.05em}
+  .px{font-size:30px;font-weight:800;letter-spacing:-.01em}
+  .px small{font-size:14px;font-weight:700;margin-left:8px}
+  .gradebox{display:flex;align-items:center;gap:14px}
+  .grade{width:62px;height:62px;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(160deg,#1f2a23,#16201b);border:1.5px solid var(--bull)}
+  .grade .g{font-size:28px;font-weight:900;color:var(--bull);line-height:1}
+  .grade .l{font-size:8px;color:var(--mut);letter-spacing:.1em;margin-top:2px}
+  .snap{display:flex;gap:22px;flex-wrap:wrap;padding:12px 16px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:14px}
+  .snap div{font-size:11px}
+  .snap .v{font-size:15px;font-weight:700;display:block;margin-top:1px}
+  /* layout cols */
+  .cols{grid-template-columns:1fr 1fr 1fr}
+  .cols2{grid-template-columns:1.15fr 1fr}
+  /* gauge */
+  .gauge-wrap{display:flex;align-items:center;gap:18px}
+  .counts{display:flex;flex-direction:column;gap:6px;font-size:12px}
+  .counts .row{display:flex;align-items:center;gap:8px}
+  .dot{width:9px;height:9px;border-radius:50%;display:inline-block}
+  /* fib ladder */
+  .fib{position:relative;margin:6px 0}
+  .fib .lvl{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line);font-size:12px}
+  .fib .pct{width:46px;color:var(--mut);font-weight:600}
+  .fib .price{width:64px;font-weight:700}
+  .fib .bar{flex:1;height:6px;border-radius:3px;background:var(--card2);position:relative;overflow:hidden}
+  .fib .fill{position:absolute;top:0;left:0;bottom:0;border-radius:3px}
+  .marker{font-size:9.5px;font-weight:800;padding:1px 6px;border-radius:4px}
+  .marker.entry{background:rgba(246,70,93,.18);color:#ff8a98}
+  .marker.stop{background:rgba(139,148,158,.18);color:var(--mut)}
+  .marker.tgt{background:rgba(46,189,133,.18);color:var(--bull)}
+  /* plan rows */
+  .plan .r{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line);font-size:12px}
+  .plan .r .lab{color:var(--mut)} .plan .r .val{font-weight:700}
+  .rr{display:flex;gap:10px;margin-top:10px}
+  .rr div{flex:1;background:var(--card2);border-radius:8px;padding:8px;text-align:center}
+  .rr .n{font-size:16px;font-weight:800;color:var(--bull)}
+  .rr .l{font-size:10px;color:var(--mut)}
+  /* confirmation */
+  .conf .r{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--line);font-size:12px}
+  .conf .r .m{width:64px;font-weight:700}
+  .conf .r .note{flex:1;color:var(--mut);font-size:11px}
+  /* wcmm */
+  .wcmm{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .wbox{background:var(--card2);border-radius:10px;padding:12px}
+  .wbox.up{border-left:3px solid var(--bull)} .wbox.dn{border-left:3px solid var(--bear)}
+  .wbox h4{font-size:12px;margin-bottom:2px} .wbox .st{font-size:10.5px;color:var(--mut);margin-bottom:8px}
+  .wbox li{font-size:11px;margin:4px 0 4px 16px;color:#c9d1d9}
+  .res{font-size:11px;margin-top:8px;padding-top:7px;border-top:1px solid var(--line);color:var(--mut)}
+  .flag{font-size:11.5px;color:#c9d1d9;padding:6px 0}
+  .flag b{color:var(--amber)}
+  .qscore{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+  .qchip{background:var(--card2);border-radius:7px;padding:6px 9px;font-size:11px}
+  .qchip .pts{font-weight:800;color:var(--bull)}
+  .miss{color:#ff8a98;font-weight:700}
+  .ftnote{color:var(--dim);font-size:10.5px;margin-top:14px;text-align:center}
+  .wmark{display:inline-block;font-size:9px;color:var(--dim);border:1px solid var(--line);border-radius:4px;padding:1px 6px;margin-left:8px;letter-spacing:.08em}
+</style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div>
+      <div class="sym">AR / USDT <span class="sub">PERP · Daily + 4H</span> <span class="wmark">v3 WIREFRAME</span></div>
+      <div class="px">$2.026 <small class="bull">+5.64%</small></div>
+      <div class="muted" style="margin-top:4px">Low-volume base breakout running into daily EMA resistance · <span class="amber">⚠ thin liquidity (~$2.5M OI)</span></div>
+    </div>
+    <div class="gradebox">
+      <span class="pill wait">● WAIT · short on confirmation</span>
+      <div class="grade">
+        <div class="g">B</div><div class="l">QUALITY</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SNAPSHOT -->
+  <div class="snap">
+    <div class="muted">Current Price<span class="v">$2.026</span></div>
+    <div class="muted">24H High<span class="v">$2.036</span></div>
+    <div class="muted">24H Low<span class="v">$1.860</span></div>
+    <div class="muted">Funding<span class="v neu">+0.01%</span></div>
+    <div class="muted">Open Interest<span class="v">$2.55M</span></div>
+    <div class="muted">Bias<span class="v neu">NEUTRAL</span></div>
+  </div>
+
+  <!-- ROW 1: market condition / gauge / setup -->
+  <div class="grid cols" style="margin-bottom:14px">
+
+    <!-- NEW: Market Condition (split) -->
+    <div class="card">
+      <h3>◆ Market Condition <span class="dim" style="text-transform:none;letter-spacing:0">(v3)</span></h3>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <div>
+          <div class="dim" style="font-size:9.5px;margin-bottom:4px">MARKET STATE</div>
+          <span class="chip range">RANGE BOUND</span>
+        </div>
+        <div>
+          <div class="dim" style="font-size:9.5px;margin-bottom:4px">VOLATILITY</div>
+          <span class="chip comp">COMPRESSION</span>
+        </div>
+      </div>
+      <div class="muted" style="font-size:11.5px">Oscillating $1.76 floor ↔ $2.05–2.09 EMA ceiling; price at the upper boundary. Compressed base, light-volume pop. <span class="b" style="color:#c9d1d9">Favours range-rotation fades; disfavours chasing into resistance.</span></div>
+    </div>
+
+    <!-- Bias gauge -->
+    <div class="card">
+      <h3>Bias Scorecard</h3>
+      <div class="gauge-wrap">
+        <svg width="150" height="92" viewBox="0 0 150 92">
+          <path d="M12 84 A63 63 0 0 1 138 84" fill="none" stroke="#2a313c" stroke-width="12" stroke-linecap="round"/>
+          <path d="M12 84 A63 63 0 0 1 60 26" fill="none" stroke="#f6465d" stroke-width="12" stroke-linecap="round" opacity=".85"/>
+          <path d="M92 26 A63 63 0 0 1 138 84" fill="none" stroke="#2ebd85" stroke-width="12" stroke-linecap="round" opacity=".55"/>
+          <g transform="rotate(-16 75 84)">
+            <line x1="75" y1="84" x2="75" y2="34" stroke="#e6edf3" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="75" cy="84" r="5" fill="#e6edf3"/>
+          </g>
+          <text x="75" y="60" text-anchor="middle" fill="#e6edf3" font-size="16" font-weight="800">NEUTRAL</text>
+          <text x="75" y="76" text-anchor="middle" fill="#8b949e" font-size="9">slight bearish tilt</text>
+        </svg>
+        <div class="counts">
+          <div class="row"><span class="dot" style="background:var(--bull)"></span> Bullish <span class="b">2</span></div>
+          <div class="row"><span class="dot" style="background:var(--neu)"></span> Neutral <span class="b">5</span></div>
+          <div class="row"><span class="dot" style="background:var(--bear)"></span> Bearish <span class="b">3</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Setup thesis -->
+    <div class="card">
+      <h3>Setup Thesis</h3>
+      <div class="b" style="font-size:15px;margin-bottom:6px">Range Rotation — fade the boundary <span class="tag bear">SHORT</span></div>
+      <div class="muted" style="font-size:11.5px">Bounce into $2.05–2.09 resistance on weak internals (CVD at lows, OI short-covering, light volume). Fade — but the rejection trigger isn't live yet.</div>
+      <div class="dim" style="font-size:11px;margin-top:8px"><b class="dim">Not:</b> Breakout Continuation (no close above the EMAs) · not a confirmed reversal.</div>
+    </div>
+  </div>
+
+  <!-- ROW 2: bias tables -->
+  <div class="grid cols2" style="margin-bottom:14px">
+    <div class="card">
+      <h3>Daily Timeframe</h3>
+      <table>
+        <tr><th>Factor</th><th>Reading</th><th>Call</th></tr>
+        <tr><td>Structure</td><td class="muted">Basing under a downtrend; lower high, under EMAs</td><td class="call neu">Neutral</td></tr>
+        <tr><td>EMA Position</td><td class="muted">$2.026 below 20 ($2.054) & 50 ($2.086)</td><td class="call bear">Bearish</td></tr>
+        <tr><td>AVWAP</td><td class="muted">Not on chart</td><td class="call neu">Neutral</td></tr>
+        <tr><td>RSI Regime</td><td class="muted">48.3 — sub-midline</td><td class="call neu">Neutral</td></tr>
+        <tr><td>Volume Trend</td><td class="muted">Bounce 2.3M vs 12–15M decline days</td><td class="call bear">Bearish</td></tr>
+      </table>
+    </div>
+    <div class="card">
+      <h3>4-Hour Timeframe</h3>
+      <table>
+        <tr><th>Factor</th><th>Reading</th><th>Call</th></tr>
+        <tr><td>Structure</td><td class="muted">Base breakout, HH, reclaimed 4H EMAs</td><td class="call bull">Bullish</td></tr>
+        <tr><td>EMA Position</td><td class="muted">Above 20 ($1.918) & 50 ($1.993)</td><td class="call bull">Bullish</td></tr>
+        <tr><td>AVWAP</td><td class="muted">Not on chart</td><td class="call neu">Neutral</td></tr>
+        <tr><td>Momentum</td><td class="muted">RSI 60.3 but CVD divergence</td><td class="call bear">Bearish</td></tr>
+        <tr><td>Volume</td><td class="muted">0.99M/0.72M vs ~0.5M base</td><td class="call neu">Neutral</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- ROW 3: NEW validation scoring + patterns -->
+  <div class="grid cols2" style="margin-bottom:14px">
+    <div class="card">
+      <h3>◆ Setup Validation <span class="dim" style="text-transform:none;letter-spacing:0">(v3 — critical gates)</span></h3>
+      <table>
+        <tr><th>Variable</th><th>Priority</th><th>Status</th></tr>
+        <tr><td>Defined range</td><td><span class="tag crit">CRITICAL</span></td><td class="bull b">✓ pass</td></tr>
+        <tr><td>Range boundary</td><td><span class="tag crit">CRITICAL</span></td><td class="bull b">✓ pass</td></tr>
+        <tr><td>Rejection signal</td><td><span class="tag high">HIGH</span></td><td class="bear b">✗ missing</td></tr>
+        <tr><td>Volume profile</td><td><span class="tag high">HIGH</span></td><td class="dim">— n/a</td></tr>
+        <tr><td>CVD</td><td><span class="tag med">MED</span></td><td class="bull b">✓ supports</td></tr>
+        <tr><td>OI</td><td><span class="tag med">MED</span></td><td class="bull b">✓ supports</td></tr>
+        <tr><td>Funding</td><td><span class="tag low">LOW</span></td><td class="neu">○ neutral</td></tr>
+      </table>
+      <div class="muted" style="font-size:11px;margin-top:9px">Criticals pass → setup valid, but the <span class="bear b">rejection trigger is absent</span> → <b>pending, not live.</b></div>
+    </div>
+
+    <div class="card">
+      <h3>◆ Patterns Identified <span class="dim" style="text-transform:none;letter-spacing:0">(v3)</span></h3>
+      <div style="display:flex;flex-direction:column;gap:9px;margin-top:2px">
+        <div><span class="tag bear" style="font-size:11px;padding:4px 9px">Range-High Rejection / Lower High</span> <span class="muted" style="font-size:11px">primary — bounce into the EMAs</span></div>
+        <div><span class="tag bear" style="font-size:11px;padding:4px 9px">Failed Breakout risk</span> <span class="muted" style="font-size:11px">poke above $2.09 that can't hold</span></div>
+        <div><span class="tag bull" style="font-size:11px;padding:4px 9px">4H EMA Reclaim</span> <span class="muted" style="font-size:11px">micro-bullish, but into daily supply</span></div>
+      </div>
+      <div class="res" style="margin-top:14px"><b style="color:#c9d1d9">Watch:</b> descending daily highs keep the lower-high structure intact; a rejection here continues it. A daily close > $2.09 flips the read bullish.</div>
+    </div>
+  </div>
+
+  <!-- ROW 4: NEW fib ladder + trade plan -->
+  <div class="grid cols2" style="margin-bottom:14px">
+    <div class="card">
+      <h3>◆ Fibonacci Ladder <span class="dim" style="text-transform:none;letter-spacing:0">(v3 · decline $2.677 → $1.763)</span></h3>
+      <div class="fib">
+        <div class="lvl"><span class="pct">0.50</span><span class="price">$2.220</span><span class="bar"><span class="fill" style="width:88%;background:#2a313c"></span></span><span class="dim" style="font-size:10px">if it breaks out</span></div>
+        <div class="lvl"><span class="pct">0.382</span><span class="price bear">$2.112</span><span class="bar"><span class="fill" style="width:74%;background:rgba(246,70,93,.4)"></span></span><span class="marker stop">STOP &gt;2.11</span></div>
+        <div class="lvl"><span class="pct b">EMA</span><span class="price bear">$2.05–2.09</span><span class="bar"><span class="fill" style="width:66%;background:rgba(246,70,93,.6)"></span></span><span class="marker entry">ENTRY (fade)</span></div>
+        <div class="lvl"><span class="pct">0.236</span><span class="price">$1.979</span><span class="bar"><span class="fill" style="width:55%;background:#2a313c"></span></span><span class="dim" style="font-size:10px">spot $2.026</span></div>
+        <div class="lvl"><span class="pct">T1</span><span class="price bull">$1.930</span><span class="bar"><span class="fill" style="width:40%;background:rgba(46,189,133,.5)"></span></span><span class="marker tgt">TARGET 1</span></div>
+        <div class="lvl"><span class="pct">T2</span><span class="price bull">$1.900</span><span class="bar"><span class="fill" style="width:32%;background:rgba(46,189,133,.5)"></span></span><span class="marker tgt">TARGET 2</span></div>
+        <div class="lvl"><span class="pct">T3</span><span class="price bull">$1.870</span><span class="bar"><span class="fill" style="width:24%;background:rgba(46,189,133,.5)"></span></span><span class="marker tgt">TARGET 3</span></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Trade Plan <span class="dim" style="text-transform:none;letter-spacing:0">— Range-Rotation Short (on confirmation)</span></h3>
+      <div class="plan">
+        <div class="r"><span class="lab">Entry Zone</span><span class="val bear">$2.05 – $2.09</span></div>
+        <div class="r"><span class="lab">Trigger</span><span class="val">4H rejection / failed breakout</span></div>
+        <div class="r"><span class="lab">Stop Loss</span><span class="val">4H close &gt; $2.11</span></div>
+        <div class="r"><span class="lab">Risk</span><span class="val">~$0.05</span></div>
+        <div class="r"><span class="lab">Target 1 → 3</span><span class="val blue">$1.93 · $1.90 · $1.87</span></div>
+      </div>
+      <div class="rr">
+        <div><div class="n">1 : 2.6</div><div class="l">to Target 1</div></div>
+        <div><div class="n">1 : 3.8</div><div class="l">to Target 3</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 5: confirmation modifiers + trade quality -->
+  <div class="grid cols2" style="margin-bottom:14px">
+    <div class="card conf">
+      <h3>Confirmation Analysis <span class="dim" style="text-transform:none;letter-spacing:0">(modifiers — don't create setups)</span></h3>
+      <div class="r"><span class="dot" style="background:var(--bear)"></span><span class="m">OI</span><span class="note">Flat/declining as price rose — short-covering, not new longs</span><span class="tag bear">supports fade</span></div>
+      <div class="r"><span class="dot" style="background:var(--bear)"></span><span class="m">CVD</span><span class="note">−1.27M, at its lows while price bounced — distribution</span><span class="tag bear">supports fade</span></div>
+      <div class="r"><span class="dot" style="background:var(--neu)"></span><span class="m">Funding</span><span class="note">+0.01%/8h — balanced</span><span class="tag neu">neutral</span></div>
+      <div class="r"><span class="dot" style="background:var(--bear)"></span><span class="m">Volume</span><span class="note">Light bounce vs heavy decline volume</span><span class="tag bear">supports fade</span></div>
+      <div class="r"><span class="dot" style="background:var(--neu)"></span><span class="m">RSI</span><span class="note">Daily 48 / 4H 60 — near-term bounce, not strong</span><span class="tag neu">neutral</span></div>
+    </div>
+
+    <div class="card">
+      <h3>◆ Trade Quality Score <span class="dim" style="text-transform:none;letter-spacing:0">(v3)</span></h3>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:10px">
+        <div class="grade" style="width:54px;height:54px"><div class="g" style="font-size:24px">B</div></div>
+        <div class="muted" style="font-size:11.5px">Strong fade ingredients into clear resistance, <span class="miss">but the rejection trigger isn't present</span> — so it grades B / pending, not actionable yet.</div>
+      </div>
+      <div class="qscore">
+        <span class="qchip">Light volume <span class="pts">+3</span></span>
+        <span class="qchip">Fib/EMA confluence <span class="pts">+3</span></span>
+        <span class="qchip">CVD at lows <span class="pts">+2</span></span>
+        <span class="qchip">OI short-cover <span class="pts">+2</span></span>
+        <span class="qchip" style="opacity:.6">Rejection trigger <span class="miss">missing</span></span>
+      </div>
+      <div class="res">Grade bands: C 0–3 · B 4–6 · A 7–9 · A+ 10+</div>
+    </div>
+  </div>
+
+  <!-- ROW 6: what changes my mind -->
+  <div class="card" style="margin-bottom:14px">
+    <h3>What Changes the Read</h3>
+    <div class="wcmm">
+      <div class="wbox dn">
+        <h4 class="bear">Bearish Confirmation</h4>
+        <div class="st">Triggers the fade short</div>
+        <ul>
+          <li>4H rejection candle / lower high at $2.05–2.09</li>
+          <li>Failed poke above $2.09 that reclaims below</li>
+          <li>CVD stays at lows on the bounce</li>
+        </ul>
+        <div class="res">→ Short toward $1.93 → $1.90 → $1.87</div>
+      </div>
+      <div class="wbox up">
+        <h4 class="bull">Bullish Invalidation</h4>
+        <div class="st">Cancels the fade</div>
+        <ul>
+          <li>Daily close above $2.09 (reclaims 50 EMA)</li>
+          <li>Volume expansion + CVD turning up</li>
+          <li>Holds $2.05 as support on a retest</li>
+        </ul>
+        <div class="res">→ Stand aside / breakout long toward $2.22</div>
+      </div>
+    </div>
+    <div class="flag" style="margin-top:10px">⚑ <b>Bull case:</b> 4H base breakout + EMA reclaim could carry to $2.22 if volume confirms. &nbsp;&nbsp; ⚑ <b>Bear case:</b> low-conviction bounce into daily EMA supply with CVD at lows — a textbook lower-high fade.</div>
+  </div>
+
+  <div class="ftnote">Standalone v3 wireframe · sample data = AR/USDT live read · ◆ marks panels new vs the v2 dashboard · not wired to the live app</div>
+
+</body>
+</html>

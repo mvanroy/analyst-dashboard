@@ -14,13 +14,48 @@
         "--browser.gatherUsageStats",
         "false"
       ],
-      "port": 8501
+      "port": 8501,
+      "autoPort": false
+    },
+    {
+      "name": "v3-demo",
+      "runtimeExecutable": ".venv/bin/streamlit",
+      "runtimeArgs": [
+        "run",
+        "app.py",
+        "--server.headless",
+        "true",
+        "--server.port",
+        "8521",
+        "--server.fileWatcherType",
+        "none",
+        "--browser.gatherUsageStats",
+        "false"
+      ],
+      "port": 8521,
+      "autoPort": false
     },
     {
       "name": "static",
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8765"],
       "port": 8765
+    },
+    {
+      "name": "orion-verify",
+      "runtimeExecutable": ".venv/bin/streamlit",
+      "runtimeArgs": [
+        "run",
+        "app.py",
+        "--server.headless",
+        "true",
+        "--server.port",
+        "8511",
+        "--browser.gatherUsageStats",
+        "false"
+      ],
+      "port": 8511,
+      "autoPort": false
     }
   ]
 }

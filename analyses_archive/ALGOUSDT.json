@@ -1,0 +1,183 @@
+{
+  "schema_version": 1,
+  "framework_version": "v1",
+  "symbol": "ALGO/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-08T09:12:39Z",
+  "data_sources": ["Bybit USDⓈ-M perp (TradingView MCP)", "manual chart read"],
+
+  "price": "$0.0931",
+  "change_pct_24h": -1.7,
+  "headline": "Basing above $0.0879 low after 66% markdown",
+  "levels": {"direction": "short", "entry": 0.100, "stop": 0.108, "target1": 0.0791, "target2": 0.0735},
+
+  "market_bias": "BEARISH",
+  "bias_qualifier": "",
+
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H",
+    "analysis_time": "Jun 08, 2026 09:12 UTC",
+    "market_state": "TRENDING DOWN",
+    "market_state_note": "Downtrend intact; the $0.088-0.097 base is a pause below heavy supply. Setup is valid but not actionable at spot — favour shorting a rally into $0.097-0.105 or a confirmed break of $0.0879, not chasing at $0.093.",
+    "current_phase": "Bearish Continuation"
+  },
+
+  "snapshot": [
+    {"label": "Current Price", "value": "$0.0931"},
+    {"label": "24H High", "value": "$0.0957"},
+    {"label": "24H Low", "value": "$0.0916", "tone": "bear"},
+    {"label": "24H Volume", "value": "17.8M"},
+    {"label": "Funding Rate", "value": "N/A"},
+    {"label": "Open Interest", "value": "N/A"}
+  ],
+
+  "daily": {
+    "lean": "BEARISH",
+    "count": "6 Bearish / 0 Neutral / 0 Bullish",
+    "factors": [
+      {"factor": "Structure", "reading": "LH + LL", "evidence": "Multi-month markdown from ~$0.29 to $0.079 (-66% over the window). The recent local top $0.139 failed, then an 8-session impulse broke the $0.105-0.108 range floor and printed fresh lows at $0.088. Clean LH/LL.", "call": "Bearish"},
+      {"factor": "20 EMA", "reading": "~$0.107", "evidence": "Price $0.093 is below the 20 EMA (computed from daily closes).", "call": "Bearish"},
+      {"factor": "50 EMA", "reading": "~$0.110", "evidence": "Price below; 20 EMA ($0.107) is below 50 EMA ($0.110) — bearish stack.", "call": "Bearish"},
+      {"factor": "AVWAP (cycle anchor)", "reading": "~$0.242", "evidence": "Price is ~62% below AVWAP; never reclaimed.", "call": "Bearish"},
+      {"factor": "RSI regime", "reading": "~35", "evidence": "Below the midline, in bearish territory; not yet at an oversold extreme (30).", "call": "Bearish"},
+      {"factor": "Volume trend", "reading": "Expanding on declines", "evidence": "The breakdown days carried the heaviest volume (115M, 138M); today's bounce is light (~18M).", "call": "Bearish"}
+    ]
+  },
+
+  "h4": {
+    "lean": "BEARISH",
+    "count": "2 Bearish / 3 Neutral / 0 Bullish",
+    "factors": [
+      {"factor": "Structure", "reading": "LL, basing", "evidence": "Persistent 4H downtrend $0.139→$0.0879; last ~2.5 days chopping sideways $0.088-0.097 just above the low. No reclaim of any swing high; lower highs intact.", "call": "Bearish"},
+      {"factor": "20 EMA", "reading": "~$0.0934", "evidence": "Price $0.0931 is hugging / just below the 4H 20 EMA.", "call": "Neutral"},
+      {"factor": "AVWAP", "reading": "~$0.242", "evidence": "Price far below; not reclaimed.", "call": "Bearish"},
+      {"factor": "Momentum", "reading": "RSI ~40, > its MA", "evidence": "RSI rising off the lows; a mild bullish divergence (price HL $0.090 vs $0.0879, RSI HL). Below 50 but stabilising.", "call": "Neutral"},
+      {"factor": "Volume", "reading": "Selling drying up", "evidence": "Decline bars ran 29-34M; the base bars have collapsed to 3-10M — sell-side exhaustion into the low.", "call": "Neutral"}
+    ]
+  },
+
+  "setup": {
+    "type": "Trend Continuation (Bearish)",
+    "thesis": "Short the bearish trend continuation — preferably on a rally into the $0.097-0.105 supply, or on a confirmed 4H break/acceptance below $0.0879 — targeting the $0.0791 cycle low, then a measured extension toward $0.072-0.075.",
+    "not": "Not a Breakout/Reversal (no bullish structure); only superficially a Range (the range is a pause inside a trend)."
+  },
+
+  "scorecard": {
+    "factors": [
+      {"factor": "Daily Structure", "call": "Bearish"},
+      {"factor": "Daily EMA Position", "call": "Bearish"},
+      {"factor": "Daily AVWAP Position", "call": "Bearish"},
+      {"factor": "Daily RSI Regime", "call": "Bearish"},
+      {"factor": "Daily Volume Trend", "call": "Bearish"},
+      {"factor": "4H Structure", "call": "Bearish"},
+      {"factor": "4H EMA Position", "call": "Neutral"},
+      {"factor": "4H AVWAP Position", "call": "Bearish"},
+      {"factor": "4H Momentum", "call": "Neutral"},
+      {"factor": "4H Volume", "call": "Neutral"}
+    ],
+    "count": {"bullish": 0, "neutral": 3, "bearish": 7}
+  },
+
+  "evidence_matrix": [
+    {"factor": "Daily Structure", "timeframe": "Daily", "reading": "LH + LL; broke $0.105-0.108 range floor, fresh lows $0.088", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Daily EMA Position", "timeframe": "Daily", "reading": "Price $0.093 below 20 ($0.107) & 50 ($0.110); bearish stack", "interpretation": "Bearish", "impact": "down", "weight": "Medium"},
+    {"factor": "Daily Volume Trend", "timeframe": "Daily", "reading": "Expanding on declines (115M, 138M); bounce light (~18M)", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Daily RSI", "timeframe": "Daily", "reading": "~35, below midline (bearish regime)", "interpretation": "Bearish", "impact": "down", "weight": "Medium"},
+    {"factor": "AVWAP Position", "timeframe": "Daily + 4H", "reading": "Price ~62% below AVWAP (~$0.242); never reclaimed", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Volume Profile", "timeframe": "4H", "reading": "Heavy supply $0.105-0.110; thin air $0.088→$0.079", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Support / Resistance", "timeframe": "Daily + 4H", "reading": "On $0.088 support, capped by $0.097 then $0.105-0.110", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "4H RSI Divergence", "timeframe": "4H", "reading": "Mild bullish divergence (price HL / RSI HL) at the lows", "interpretation": "Bullish", "impact": "up", "weight": "Medium"},
+    {"factor": "Liquidity / Sweeps", "timeframe": "4H", "reading": "$0.0879 sweep held; $0.0791 cycle low = sell-side liquidity below", "interpretation": "Neutral", "impact": "flat", "weight": "High"},
+    {"factor": "Open Interest / Funding / CVD", "timeframe": "—", "reading": "Not available in feed", "interpretation": "Neutral", "impact": "flat", "weight": "Low"}
+  ],
+
+  "analyst_summary": [
+    "ALGO is uniformly bearish — 7 bearish scorecard factors and zero bullish, with price below every EMA and ~62% under AVWAP after a 66% markdown.",
+    "The $0.088-0.097 chop is a pause within the downtrend (a bear flag), not a reversal: no structure reclaimed and lower highs intact, with heavy supply at $0.105-0.110 overhead and open sell-side liquidity at the $0.0791 cycle low.",
+    "The read is unambiguously bearish, but $0.093 is the worst spot to initiate — price is on support with selling exhausting and a minor 4H divergence; the edge is the rally short or the breakdown short, not the chase.",
+    "BTC caveat: ALGO is a high-beta alt that will follow BTC — a BTC bounce could power the relief rally into the $0.097-0.105 short zone, whereas a BTC breakdown sends ALGO straight through $0.0879. OI, Funding and CVD were unavailable in the feed; EMAs were computed directly from daily closes as the study-window readout proved crosshair-sensitive."
+  ],
+  "bottom_line": "Trend-Following (short) — not a reversal or mean-reversion long. The edge is the rally short into $0.097-0.105 or a confirmed breakdown of $0.0879, not chasing price at $0.093.",
+
+  "what_changes_my_mind": {
+    "bullish_upgrade": {
+      "title": "Bullish Invalidation",
+      "subtitle": "Invalidates Bearish Bias",
+      "checks": [
+        "4H close back above $0.105-0.108 (range floor + daily 20/50 EMA)",
+        "Reclaim of $0.097-0.098 short-term",
+        "Volume expansion on the upside",
+        "Reclaim of daily / 4H AVWAP"
+      ],
+      "result": "Bearish continuation thesis breaks; bias upgrades from Bearish to Neutral."
+    },
+    "bearish_confirmation": {
+      "title": "Bearish Confirmation",
+      "subtitle": "Continuation Triggered",
+      "checks": [
+        "4H acceptance below $0.0879 sweep low",
+        "Volume expands on the breakdown",
+        "Rejection from a rally into $0.097-0.105"
+      ],
+      "result": "Continuation toward $0.0791 cycle low, then $0.072-0.075."
+    }
+  },
+
+  "bull_case": "Deeply oversold (-66%) with sell-volume drying into the $0.088 base and a mild 4H higher-low divergence — fuel for a relief bounce to $0.097-0.105.",
+  "bear_case": "Intact downtrend below every mean with heavy supply overhead — the $0.088-0.097 base is a bear flag resolving toward the $0.0791 cycle low.",
+
+  "verdict": {
+    "action": "WAIT",
+    "rationale": "Conditional short, not a trade to put on now at $0.093 — you're mid-range, sitting on support with selling drying up (the worst spot to enter). It becomes a take on a rally into $0.097-0.105 to short, or a confirmed 4H break below $0.0879. Until one fires: no position."
+  },
+
+  "trade_plan": {
+    "direction": "Trend Short",
+    "rows": [
+      {"label": "Entry Zone", "value": "$0.097 - $0.105", "note": "Sell the rally / supply shelf (or break < $0.0879)", "tone": "bear"},
+      {"label": "Stop Loss", "value": "> $0.108", "note": "Invalidation (range-floor reclaim)", "tone": "bear"},
+      {"label": "Risk", "value": "~$0.008 per ALGO", "note": ""},
+      {"label": "Target 1", "value": "$0.0791", "note": "Cycle low / sell-side liquidity", "tone": "blue"},
+      {"label": "Target 2", "value": "$0.072 - $0.075", "note": "Measured extension", "tone": "blue"}
+    ],
+    "rr": [
+      {"label": "To Target 1", "value": "~1 : 2.6"},
+      {"label": "To Target 2", "value": "~1 : 3.3"}
+    ]
+  },
+
+  "key_levels": {
+    "resistance": [
+      {"price": "$0.110", "label": "Daily 50 EMA"},
+      {"price": "$0.107", "label": "Daily 20 EMA"},
+      {"price": "$0.105", "label": "Former Range Floor (Supply)"},
+      {"price": "$0.0976", "label": "4H PR Average"},
+      {"price": "$0.0972", "label": "Recent Bounce High"}
+    ],
+    "support": [
+      {"price": "$0.0934", "label": "4H 20 EMA"},
+      {"price": "$0.0879", "label": "Swing Low / Sweep (Trigger)"},
+      {"price": "$0.0791", "label": "Cycle Low / Target 1"},
+      {"price": "$0.0780", "label": "4H PR Lower-2"},
+      {"price": "$0.072 - $0.075", "label": "Measured Extension / Target 2"}
+    ]
+  },
+
+  "probability_distribution": [
+    {"scenario": "Bearish Continuation (Breaks $0.0879)", "pct": 50, "tone": "bear"},
+    {"scenario": "Range / Chop ($0.088-$0.105)", "pct": 35, "tone": "neutral"},
+    {"scenario": "Bullish Relief (Reclaims $0.105)", "pct": 15, "tone": "bull"}
+  ],
+
+  "failure_scenario": "The oversold $0.088 base produces a relief squeeze back into the $0.097-0.105 supply — trapping shorts entered at the lows — before the trend resumes; or, less likely, $0.088/$0.0791 holds as a double-bottom and a genuine reversal begins.",
+
+  "additional_data": [
+    {"label": "Open Interest", "value": "N/A"},
+    {"label": "Funding Rate", "value": "N/A"},
+    {"label": "CVD", "value": "N/A"},
+    {"label": "Volume Profile", "value": "Supply $0.105-0.110; thin below $0.088"},
+    {"label": "VWAP / AVWAP", "value": "Below (Not Reclaimed)"}
+  ],
+
+  "conclusion": "Trend-Following (Short) — Bearish Trend Continuation, explicitly not a reversal or mean-reversion long."
+}

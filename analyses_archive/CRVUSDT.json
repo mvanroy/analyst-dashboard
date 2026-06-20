@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "framework_version": "v2",
+  "symbol": "CRV/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-13T09:57:25Z",
+  "data_sources": ["Bybit USDⓈ-M perp (OI/Funding REST)", "Binance USDⓈ-M futures (kline-computed EMA/RSI/CVD)", "TradingView MCP chart read"],
+
+  "price": "$0.2340",
+  "change_pct_24h": -5.72,
+  "headline": "Pullback after a 371M-volume impulse, resting on the 4H 20 EMA / breakout retest",
+  "levels": {"direction": "long", "entry": 0.238, "stop": 0.2295, "target1": 0.2653, "target2": 0.2929},
+
+  "market_bias": "NEUTRAL",
+  "bias_qualifier": "TRANSITIONAL",
+
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H",
+    "analysis_time": "Jun 13, 2026 09:57 UTC",
+    "market_state": "TRANSITIONAL",
+    "market_state_note": "A young recovery met immediate supply — favours a pullback or failed-breakout resolution, not a clean trend trade; no edge at spot until the $0.230–0.236 pivot resolves.",
+    "current_phase": "Transitional Pullback"
+  },
+
+  "snapshot": [
+    {"label": "Current Price", "value": "$0.2340"},
+    {"label": "24H High", "value": "$0.2501"},
+    {"label": "24H Low", "value": "$0.2317", "tone": "bear"},
+    {"label": "24H Volume", "value": "$240M"},
+    {"label": "Funding Rate", "value": "+0.007%"},
+    {"label": "Open Interest", "value": "$15.7M"}
+  ],
+
+  "daily": {
+    "lean": "BULLISH",
+    "count": "3 Bullish / 1 Bearish / 2 Neutral",
+    "factors": [
+      {"factor": "Structure", "reading": "Recovery, capped LH", "evidence": "Based at $0.1696 (06-06), reclaimed the $0.20–0.22 congestion on a huge 06-11 impulse, peaked $0.2653 — but that's a lower high vs the $0.2929 60-day high, and 06-12 rejected hard.", "call": "Neutral"},
+      {"factor": "20 EMA", "reading": "$0.2178", "evidence": "Price $0.234 above.", "call": "Bullish"},
+      {"factor": "50 EMA", "reading": "$0.2234", "evidence": "Price above — but 20<50 (stack still bearish; reclaim unconfirmed).", "call": "Bullish"},
+      {"factor": "AVWAP", "reading": "$0.7538 (stale cycle anchor)", "evidence": "Price far below; anchor is from a much higher prior regime — not a reliable read here, flagged.", "call": "Bearish"},
+      {"factor": "RSI regime", "reading": "55.99 (MA 42.25)", "evidence": "Recovered from oversold, above its MA — momentum has turned up.", "call": "Bullish"},
+      {"factor": "Volume trend", "reading": "Two-sided", "evidence": "06-11 impulse was 371M (3.3× avg) = genuine demand; but 06-12 rejection was also high (179M).", "call": "Neutral"}
+    ]
+  },
+
+  "h4": {
+    "lean": "NEUTRAL",
+    "count": "0 Bullish / 1 Bearish / 4 Neutral",
+    "factors": [
+      {"factor": "Structure", "reading": "Impulse → pullback, softening", "evidence": "Clean HH/HL into $0.2653, then orderly pullback; today's low $0.2317 dipped under the $0.2349 impulse HL — minor structure crack.", "call": "Neutral"},
+      {"factor": "20 EMA", "reading": "$0.2334", "evidence": "Price $0.234 sitting exactly on the 20 EMA — testing it from above.", "call": "Neutral"},
+      {"factor": "AVWAP", "reading": "stale anchor", "evidence": "Chart anchor unreliable; a proper $0.1696-low anchor would sit ~$0.22 (price above) but unconfirmed in feed.", "call": "Neutral"},
+      {"factor": "Momentum", "reading": "RSI 54, rolling", "evidence": "RSI fading with price; CVD bearish divergence at the high (see Phase 4).", "call": "Bearish"},
+      {"factor": "Volume", "reading": "Contracting on pullback", "evidence": "Pullback volume bled 45M → 4M = constructive contraction; offset by aggressive CVD taker-selling.", "call": "Neutral"}
+    ]
+  },
+
+  "setup": {
+    "type": "Pullback (unconfirmed) — Failed Breakout the bear alternative",
+    "thesis": "No clean trade yet. The pullback-long is the nearer structure but is unconfirmed and fought by CVD distribution. Wait for the $0.2300–0.2360 zone to resolve rather than pre-positioning into a coin-flip.",
+    "not": "Not Trend Continuation (trend too young), not yet a confirmed Failed Breakout (support not lost)."
+  },
+
+  "verdict": {
+    "action": "WAIT",
+    "rationale": "Transitional — no actionable trade at $0.234. If it confirms long (reclaim/hold $0.236+ on volume) it becomes a Pullback / trend-following entry; if it loses $0.230 it becomes a Failed Breakout. Wait for the $0.2300–0.2360 zone to resolve rather than pre-position into a coin-flip."
+  },
+
+  "scorecard": {
+    "factors": [
+      {"factor": "Daily Structure", "call": "Neutral"},
+      {"factor": "Daily EMA Position", "call": "Bullish"},
+      {"factor": "Daily AVWAP Position", "call": "Bearish"},
+      {"factor": "Daily RSI Regime", "call": "Bullish"},
+      {"factor": "Daily Volume Trend", "call": "Neutral"},
+      {"factor": "4H Structure", "call": "Neutral"},
+      {"factor": "4H EMA Position", "call": "Neutral"},
+      {"factor": "4H AVWAP Position", "call": "Neutral"},
+      {"factor": "4H Momentum", "call": "Bearish"},
+      {"factor": "4H Volume", "call": "Neutral"}
+    ],
+    "count": {"bullish": 2, "neutral": 6, "bearish": 2}
+  },
+
+  "evidence_matrix": [
+    {"factor": "Daily Structure", "timeframe": "Daily", "reading": "Recovered above $0.20–0.22 congestion on a 371M impulse but capped at a lower high ($0.2653 < $0.2929) with a fresh rejection", "interpretation": "Neutral", "impact": "flat", "weight": "High"},
+    {"factor": "4H Structure", "timeframe": "4H", "reading": "Clean HH/HL impulse then orderly pullback; today's $0.2317 low dipped under the $0.2349 impulse HL — structure softening", "interpretation": "Neutral", "impact": "flat", "weight": "High"},
+    {"factor": "RSI Divergence", "timeframe": "4H", "reading": "4H RSI fading with price; CVD bearish divergence at the $0.2653 high", "interpretation": "Bearish", "impact": "down", "weight": "Medium"},
+    {"factor": "Volume Expansion / Contraction", "timeframe": "4H", "reading": "Pullback volume contracted 45M→4M (constructive)", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Open Interest", "timeframe": "4H", "reading": "Rose to 70.1M on the rally (new longs), fell ~3M on the pullback = profit-taking, not fresh shorts", "interpretation": "Bullish", "impact": "up", "weight": "Medium"},
+    {"factor": "Funding Rate", "timeframe": "—", "reading": "+0.0069%/8h, near neutral; no crowded longs, no squeeze risk", "interpretation": "Neutral", "impact": "flat", "weight": "Medium"},
+    {"factor": "CVD", "timeframe": "1H", "reading": "−2.86M near its lows; −3.78M in 24h while price flat = heavy distribution", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Volume Profile", "timeframe": "Daily", "reading": "Not available in feed", "interpretation": "Neutral", "impact": "flat", "weight": "Low"},
+    {"factor": "VWAP / AVWAP", "timeframe": "Daily + 4H", "reading": "Chart anchor stale ($0.7538 deep cycle); proper swing-anchored read unavailable", "interpretation": "Neutral", "impact": "flat", "weight": "High"},
+    {"factor": "Liquidity Sweeps", "timeframe": "4H", "reading": "06-12 swept the $0.2653 highs then rejected = sweep-and-fail of the highs", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Support / Resistance", "timeframe": "4H", "reading": "Holding the 4H 20 EMA ($0.2334) + breakout-retest shelf", "interpretation": "Bullish", "impact": "up", "weight": "High"}
+  ],
+
+  "analyst_summary": [
+    "CRV is Neutral / Transitional: a young recovery that produced one violent 371M-volume demand impulse off $0.1696, immediately met by a high-volume rejection at a lower high ($0.2653 < $0.2929) and CVD distribution — two-sided, with neither edge yet in control.",
+    "The pullback-long is the nearer structure — price holds the 4H 20 EMA ($0.2334) and breakout-retest shelf on contracting volume with neutral funding and OI profit-taking — but it is unconfirmed and fought by the single strongest tell, CVD (−3.78M distribution in 24h).",
+    "Net read is WAIT: no edge at $0.234. A 4H reclaim/hold of $0.236+ on volume confirms the pullback long ($0.2653 → $0.2929); a 4H close below $0.2300 flips it to a failed breakout toward the $0.218–0.223 EMA cluster.",
+    "Notes: CVD is the swing tell — price holding while CVD bleeds is either bid absorption (resolves up) or quiet distribution (resolves down); if price reclaims $0.236 but CVD keeps falling, fade the long. CRV rode BTC's bounce ($61.5k→$63.7k) and is high-beta — a BTC roll-over would override the long and accelerate the failed-breakout path."
+  ],
+  "bottom_line": "Transitional coin-flip — no actionable trade at $0.234; wait for the $0.230–0.236 pivot to resolve before taking either the pullback long or the failed-breakout short.",
+
+  "what_changes_my_mind": {
+    "bullish_upgrade": {
+      "title": "Bullish Confirmation",
+      "subtitle": "Confirms the Pullback Long",
+      "checks": [
+        "4H close back above $0.2360–0.2400 on rising volume",
+        "CVD stabilises / prints a higher low on the bounce",
+        "Holds the 4H 20 EMA ($0.2334) as support",
+        "BTC holds its range"
+      ],
+      "result": "Pullback long active → $0.2653 retest, then $0.2929."
+    },
+    "bearish_confirmation": {
+      "title": "Failed Breakout",
+      "subtitle": "Bear Path",
+      "checks": [
+        "4H close below $0.2300 (loses 4H 20 EMA + breakout retest)",
+        "CVD keeps bleeding on any bounce",
+        "Loss of the $0.2234 / $0.2199 EMA cluster",
+        "BTC rolls over"
+      ],
+      "result": "Failed breakout toward $0.2199 → $0.2108 / $0.20."
+    }
+  },
+
+  "bull_case": "30%-impulse off $0.1696 on 371M demand volume, price above both daily EMAs with RSI turned up, pulling back on contracting volume into the 4H 20 EMA + breakout retest with neutral funding and OI profit-taking — holds → $0.2653 → $0.29.",
+  "bear_case": "High-volume daily rejection (shooting star) at a lower high ($0.2653 < $0.2929), CVD bearish divergence + −3.78M distribution in 24h, daily EMA stack still bearish, high-sweep-and-fail — loses $0.230 → $0.218–0.223 EMA cluster → $0.21/$0.20.",
+
+  "trade_plan": {
+    "direction": "Pullback Long (on confirmation)",
+    "rows": [
+      {"label": "Entry Zone", "value": "$0.2360 - $0.2400", "note": "Reclaim & hold the breakout-retest zone on volume — don't pre-position", "tone": "bull"},
+      {"label": "Stop Loss", "value": "< $0.2300", "note": "4H close below 4H 20 EMA + breakout retest = failed breakout", "tone": "bear"},
+      {"label": "Risk", "value": "~$0.0085 per CRV", "note": ""},
+      {"label": "Target 1", "value": "$0.2653", "note": "Recent swing high / rejection", "tone": "blue"},
+      {"label": "Target 2", "value": "$0.2929", "note": "60-day high (extension)", "tone": "blue"}
+    ],
+    "rr": [
+      {"label": "To Target 1", "value": "~1 : 3.2"},
+      {"label": "To Target 2", "value": "~1 : 6.5"}
+    ]
+  },
+
+  "key_levels": {
+    "resistance": [
+      {"price": "$0.2929", "label": "60-Day High / Target 2"},
+      {"price": "$0.2653", "label": "Recent Swing High / Rejection — Target 1"},
+      {"price": "$0.2595", "label": "06-11 Impulse High"},
+      {"price": "$0.2360 - $0.2400", "label": "Breakout-Retest Reclaim Zone (long trigger)"}
+    ],
+    "support": [
+      {"price": "$0.2334", "label": "4H 20 EMA (current pivot)"},
+      {"price": "$0.2300", "label": "Invalidation — 4H close below = failed breakout"},
+      {"price": "$0.2234", "label": "Daily 50 EMA"},
+      {"price": "$0.2199", "label": "4H 50 EMA"},
+      {"price": "$0.2178", "label": "Daily 20 EMA"},
+      {"price": "$0.2108", "label": "Breakout Origin (06-10 close)"}
+    ]
+  },
+
+  "probability_distribution": [
+    {"scenario": "Bullish Continuation (reclaim $0.236+, → $0.2653 / $0.29)", "pct": 32, "tone": "bull"},
+    {"scenario": "Range / Chop ($0.230-$0.240, pivot unresolved)", "pct": 36, "tone": "neutral"},
+    {"scenario": "Failed Breakout (lose $0.230, → $0.218-0.223 / $0.20)", "pct": 32, "tone": "bear"}
+  ],
+
+  "failure_scenario": "Price chops the $0.230–0.240 zone, the CVD distribution wins, $0.230 gives way, and it back-fills to the daily-EMA cluster ($0.218–0.223) — turning the would-be pullback into a failed breakout.",
+
+  "additional_data": [
+    {"label": "Volume Profile", "value": "Not available in feed"},
+    {"label": "VWAP / AVWAP", "value": "Chart anchor stale ($0.7538 deep cycle anchor); proper swing-anchored read unavailable"}
+  ],
+
+  "derivatives": [
+    {"metric": "OI", "signal": "Profit-Taking", "note": "No fresh shorts", "tone": "bull"},
+    {"metric": "Funding", "signal": "Neutral Positioning", "note": "No squeeze risk", "tone": "neutral"},
+    {"metric": "CVD", "signal": "Heavy Distribution", "note": "Rally being sold", "tone": "bear"}
+  ],
+  "derivatives_summary": "OI and funding show no aggressive new shorting and no crowded longs, but CVD reveals heavy distribution into the move — the rally is being quietly sold, so the pullback is not yet a confirmed dip-buy.",
+
+  "conclusion": "Transitional — Pullback (trend-following) on confirmation above $0.236, or Failed Breakout (countertrend) below $0.230; not trend-following until the breakout proves it holds."
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "framework_version": "v1",
+  "symbol": "BTC/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-12T23:23:50Z",
+  "data_sources": ["Bybit USDⓈ-M perp (TradingView MCP)", "Bybit OI/Funding REST", "Binance USDⓈ-M (kline-computed EMA/CVD)", "manual chart read"],
+
+  "price": "$63,540",
+  "change_pct_24h": 1.5,
+  "headline": "Mid-bounce off the $59,081 capitulation low, stalling at the mean",
+  "levels": {"direction": "long", "entry": 61000, "stop": 59081, "target1": 64600, "target2": 66700},
+
+  "market_bias": "BEARISH",
+  "bias_qualifier": "TRANSITIONAL",
+
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H",
+    "analysis_time": "Jun 12, 2026 23:23 UTC",
+    "market_state": "TRANSITIONAL",
+    "market_state_note": "Daily downtrend just flushed to a capitulation low and is now mid-relief-bounce — favours mean-reversion / divergence-reversal setups, but the bounce is mature and stalling at the mean, so the long is valid yet not actionable at spot ($63.5k).",
+    "current_phase": "Countertrend Bounce"
+  },
+
+  "snapshot": [
+    {"label": "Current Price", "value": "$63,540"},
+    {"label": "24H High", "value": "$64,372"},
+    {"label": "24H Low", "value": "$62,810", "tone": "bear"},
+    {"label": "24H Volume", "value": "$4.05B"},
+    {"label": "Funding Rate", "value": "+0.002%"},
+    {"label": "Open Interest", "value": "$3.36B"}
+  ],
+
+  "daily": {
+    "lean": "BEARISH",
+    "count": "4 Bearish / 0 Neutral / 1 Bullish",
+    "factors": [
+      {"factor": "Structure", "reading": "LH + LL", "evidence": "Topped ~$82.8k, set a lower high ~$74k, then a high-volume breakdown from the $73-74k shelf to a $59,081 low. Clean LH/LL downtrend; bouncing but no reclaim of the $66.7k breakdown origin.", "call": "Bearish"},
+      {"factor": "20 EMA", "reading": "$67,140", "evidence": "Price $63.5k well below the 20 EMA.", "call": "Bearish"},
+      {"factor": "50 EMA", "reading": "$71,239", "evidence": "Price below; 20 < 50 bearish stack.", "call": "Bearish"},
+      {"factor": "AVWAP", "reading": "$50,263 (deep cycle anchor)", "evidence": "Price above the cycle-anchor AVWAP — the lone supportive factor, but the anchor is far below and not relevant near-term value.", "call": "Bullish"},
+      {"factor": "RSI regime", "reading": "32.9", "evidence": "Oversold, sub-40 — bearish regime, but stretched.", "call": "Bearish"},
+      {"factor": "Volume trend", "reading": "Expanding on declines", "evidence": "The four largest daily bars (158k / 126k / 163k / 208k) were all crash down-days; bounce volume lighter (108k → 60k).", "call": "Bearish"}
+    ]
+  },
+
+  "h4": {
+    "lean": "NEUTRAL",
+    "count": "0 Bearish / 3 Neutral / 2 Bullish",
+    "factors": [
+      {"factor": "Structure", "reading": "Basing off the low", "evidence": "$59,081 flush → short-term higher lows ($60.6k) → bounce to $64,371; constructive but inside the larger downtrend, capped under $64.6k.", "call": "Neutral"},
+      {"factor": "EMA position", "reading": "20 EMA $62,992 / 50 EMA $63,665", "evidence": "Price $63.5k just above the 20 EMA, just below the 50 EMA — mid-stack.", "call": "Neutral"},
+      {"factor": "AVWAP", "reading": "$50,959 (deep anchor)", "evidence": "Price above the AVWAP — slow, low-weight factor given the deep anchor.", "call": "Bullish"},
+      {"factor": "Momentum", "reading": "RSI 54.7, rising", "evidence": "Reclaimed the midline and pushing up off oversold.", "call": "Bullish"},
+      {"factor": "Volume", "reading": "Fading into the stall", "evidence": "Impulse-up bar carried volume (23k), but the last two bars thinned out (8.5k → 2.2k) into resistance.", "call": "Neutral"}
+    ]
+  },
+
+  "setup": {
+    "type": "Mean Reversion — countertrend relief bounce",
+    "thesis": "The oversold relief bounce off $59,081 can mean-revert toward the $66.7-67.1k breakdown origin — but it is mature and stalling at the mean, so there is no high-quality fresh entry at $63.5k. Tactically WAIT for one of two defined edges: a pullback-long that holds $60.5-61.5k with continued CVD support, or a rejection-short at the $66-67k supply / a failed bounce that loses $60.6k for continuation to new lows.",
+    "not": "Not Trend Continuation (no clean trend to ride mid-bounce off capitulation support); not a confirmed Bullish Reversal (no daily break of structure)."
+  },
+
+  "verdict": {
+    "action": "WAIT",
+    "rationale": "The bounce is genuine (capitulation + CVD absorption) but mature and capped by a bearish daily trend; buying $63.5k mid-range into the $64.6-66.7k supply is poor R:R (~1:1). The disciplined stance is to WAIT — buy a pullback that holds $60.5-61.5k (stop < $59,081, targets $64.6k then $66.7k), or fade a rejection at $66-67k."
+  },
+
+  "scorecard": {
+    "factors": [
+      {"factor": "Daily Structure", "call": "Bearish"},
+      {"factor": "Daily EMA Position", "call": "Bearish"},
+      {"factor": "Daily AVWAP Position", "call": "Bullish"},
+      {"factor": "Daily RSI Regime", "call": "Bearish"},
+      {"factor": "Daily Volume Trend", "call": "Bearish"},
+      {"factor": "4H Structure", "call": "Neutral"},
+      {"factor": "4H EMA Position", "call": "Neutral"},
+      {"factor": "4H AVWAP Position", "call": "Bullish"},
+      {"factor": "4H Momentum", "call": "Bullish"},
+      {"factor": "4H Volume", "call": "Neutral"}
+    ],
+    "count": {"bullish": 3, "neutral": 3, "bearish": 4}
+  },
+
+  "evidence_matrix": [
+    {"factor": "Daily Structure", "timeframe": "Daily", "reading": "LH/LL downtrend; high-volume breakdown from $73-74k to a $59,081 low, no reclaim of the $66.7k breakdown origin", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "4H Structure", "timeframe": "4H", "reading": "Basing off $59,081 with short-term higher lows, but capped under $64.6k inside the larger downtrend", "interpretation": "Neutral", "impact": "flat", "weight": "High"},
+    {"factor": "RSI Divergence", "timeframe": "Daily + 4H", "reading": "Daily RSI 32.9 oversold; CVD higher-low at the $59,081 price low (bullish divergence)", "interpretation": "Bullish", "impact": "up", "weight": "Medium"},
+    {"factor": "Volume Expansion / Contraction", "timeframe": "Daily", "reading": "Crash on 208k volume; bounce volume lighter and fading into the stall", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Open Interest", "timeframe": "4H", "reading": "OI fell ~56k → 53k as price rose (price ↑ / OI ↓) = short-covering, not new longs", "interpretation": "Bearish", "impact": "down", "weight": "Medium"},
+    {"factor": "Funding Rate", "timeframe": "—", "reading": "+0.0019% ≈ neutral — no crowded longs, but also no squeeze fuel", "interpretation": "Neutral", "impact": "flat", "weight": "Medium"},
+    {"factor": "CVD", "timeframe": "1H", "reading": "-2,975 → +17,125 on the bounce + higher-low at the price low = genuine taker buying / absorption", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Volume Profile", "timeframe": "4H", "reading": "Stalling at 4H PR average $63,241; supply shelf $64.6k → $66.7k overhead", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "VWAP / AVWAP", "timeframe": "Daily + 4H", "reading": "Above daily ($50,263) & 4H ($50,959) AVWAP — deep cycle anchors, slow/mild factor", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Liquidity Sweeps", "timeframe": "Daily", "reading": "$59,081 capitulation swept sell-side stops then reclaimed", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Support / Resistance", "timeframe": "Daily + 4H", "reading": "Support $60.5-60.6k (4H PR L1 + swing low); resistance $64.6k then $66.7k", "interpretation": "Neutral", "impact": "flat", "weight": "High"}
+  ],
+
+  "analyst_summary": [
+    "BTC is bearish-transitional (4 bearish / 3 neutral / 3 bullish): the daily owns a broken, high-volume downtrend below a bearishly-stacked 20/50 EMA, while the 4H is in an oversold relief bounce off the $59,081 capitulation low with RSI reclaimed above 50 and price back above both AVWAPs.",
+    "The actionable event is a genuine capitulation-and-bounce: the largest volume bar of the cycle (208k) flushed to $59,081, a bullish CVD divergence printed at the low, and CVD rose hard on the bounce (-2,975 → +17,125) — real taker buying. But OI fell as price rose (short-covering, not fresh longs) and funding is neutral, so this is mechanical mean-reversion, not a conviction reversal.",
+    "Net read is WAIT — the bounce ($59k → $64.4k) is mature and stalling at the mean ($63.2k PR avg / $63.7k 4H 50 EMA), so buying $63.5k into the $64.6-66.7k supply is poor R:R. Buy a pullback that holds $60.5-61.5k (stop < $59,081, targets $64.6k then $66.7k), or fade a rejection at $66-67k.",
+    "Notes: this IS the market beta — the quality of BTC's bounce sets the tone for every alt, and $66,700 (the breakdown-origin candle) is the single line between relief-rally and real reversal. Caveat: the on-screen AVWAP (~$50k) is a deep cycle anchor, so 'above AVWAP' is a low-weight bullish factor; the layout's EMA studies weren't returning data-window values, so the 20/50 EMAs were computed directly from Bybit klines."
+  ],
+  "bottom_line": "Countertrend mean-reversion bounce — not trend-following; the discipline is to wait and buy a $60.5-61.5k pullback (or fade $66-67k) rather than chase a mature bounce mid-range where R:R is unfavourable.",
+
+  "what_changes_my_mind": {
+    "bullish_upgrade": {
+      "title": "Bullish Reversal",
+      "subtitle": "Upgrades the Bounce",
+      "checks": [
+        "Reclaim and accept above $66,700 (breakdown origin) + daily 20 EMA",
+        "Daily break of structure above $64,600",
+        "CVD keeps printing higher highs on continuation",
+        "OI expands on the rally (fresh longs commit, not just short-covering)"
+      ],
+      "result": "Relief bounce upgrades to a trend reversal; long extends beyond the mean toward $67k+."
+    },
+    "bearish_confirmation": {
+      "title": "Bearish Continuation",
+      "subtitle": "Resumes the Downtrend",
+      "checks": [
+        "Rejection at the $64.6-66.7k supply shelf",
+        "Loss of $60,471 (4H PR Lower-1 / swing low)",
+        "4H close below $59,081 (capitulation low)",
+        "Bounce volume keeps fading / CVD rolls over"
+      ],
+      "result": "Continuation to new lows toward PR Lower-2 / ~$55k."
+    }
+  },
+
+  "bull_case": "Capitulation low at $59,081 on the cycle's largest volume bar, with a bullish CVD divergence and strong taker buying on the bounce, neutral funding, and a reclaim of the 4H 20 EMA + both AVWAPs — an oversold snapback with room toward the mean at $66.7-67.1k.",
+  "bear_case": "Daily downtrend fully intact, price below a bearishly-stacked 20/50 EMA with RSI 32.9 and volume expanding on every decline, and the bounce is short-covering (OI falling) into the $64.6-66.7k supply shelf — a relief rally to be sold for continuation below $59k.",
+
+  "trade_plan": {
+    "direction": "Countertrend Long (mean reversion) — buy the pullback",
+    "rows": [
+      {"label": "Entry Zone", "value": "$60,500 - $61,500", "note": "Pullback into 4H PR Lower-1 / swing low — buy the dip, don't chase $63.5k", "tone": "bull"},
+      {"label": "Stop Loss", "value": "< $59,081", "note": "4H close below the capitulation low = invalidation", "tone": "bear"},
+      {"label": "Risk", "value": "~$1,900 per BTC", "note": ""},
+      {"label": "Target 1", "value": "$64,600", "note": "Daily PR Lower-1 / recent high", "tone": "blue"},
+      {"label": "Target 2", "value": "$66,700", "note": "Breakdown origin + daily 20 EMA (extension)", "tone": "blue"}
+    ],
+    "rr": [
+      {"label": "To Target 1", "value": "~1 : 1.9"},
+      {"label": "To Target 2", "value": "~1 : 3.0"}
+    ]
+  },
+
+  "key_levels": {
+    "resistance": [
+      {"price": "$66,700", "label": "Breakdown Origin / Daily 20 EMA — Target 2"},
+      {"price": "$64,600", "label": "Daily PR Lower-1 / Recent High — Target 1"},
+      {"price": "$63,665", "label": "4H 50 EMA (immediate)"},
+      {"price": "$63,241", "label": "4H PR Average — current stall"}
+    ],
+    "support": [
+      {"price": "$62,992", "label": "4H 20 EMA"},
+      {"price": "$60,471 - $60,614", "label": "4H PR Lower-1 / Swing Low — Pullback Entry"},
+      {"price": "$59,081", "label": "Capitulation Low — Invalidation"},
+      {"price": "$54,971", "label": "Daily PR Lower-2 (downside target if it breaks)"}
+    ]
+  },
+
+  "probability_distribution": [
+    {"scenario": "Bullish Reversal (reclaim $66.7k, bounce upgrades)", "pct": 25, "tone": "bull"},
+    {"scenario": "Range / Chop ($60.6-66.7k, bounce stalls at the mean)", "pct": 35, "tone": "neutral"},
+    {"scenario": "Bearish Continuation (loss of $59k toward ~$55k)", "pct": 40, "tone": "bear"}
+  ],
+
+  "failure_scenario": "Bounce stalls in the $64.6-66.7k supply, the bearish daily trend reasserts, price loses $60.6k and breaks to a new low below $59,081 toward PR Lower-2 / ~$55k.",
+
+  "additional_data": [
+    {"label": "Volume Profile", "value": "Stalling at 4H PR average $63,241; supply shelf $64.6k-66.7k overhead"},
+    {"label": "VWAP / AVWAP", "value": "Above daily ($50,263) & 4H ($50,959) AVWAP — deep cycle anchors, slow/mild factor"}
+  ],
+
+  "derivatives": [
+    {"metric": "OI", "signal": "Short Covering", "note": "Bounce lacks fresh longs", "tone": "bear"},
+    {"metric": "Funding", "signal": "Neutral Positioning", "note": "No squeeze fuel", "tone": "neutral"},
+    {"metric": "CVD", "signal": "Buyers Absorbing", "note": "Real bid + higher low at the low", "tone": "bull"}
+  ],
+  "derivatives_summary": "Sellers were flushed at the low and buyers are actively absorbing (CVD), but the bounce is short-covering with neutral funding — a genuine relief rally, not yet a conviction reversal.",
+
+  "conclusion": "Countertrend / Mean-Reversion relief bounce — explicitly not trend-following."
+}

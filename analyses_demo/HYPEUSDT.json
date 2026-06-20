@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "framework_version": "pattern-v1",
+  "symbol": "HYPE/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-18T06:45:00Z",
+  "data_sources": [
+    "Bybit HYPEUSDT.P (TradingView MCP) — Daily / 4H / 1H / 15m (not listed on Binance)",
+    "Bybit public REST (OI / Funding / 24h stats)",
+    "manual chart read"
+  ],
+  "price": "$70.7",
+  "change_pct_24h": -3.76,
+  "market_bias": "LONG",
+  "bias_qualifier": "TRENDING UP — pullback digesting at the highs",
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H + 1H + 15m",
+    "analysis_time": "Jun 18, 2026 06:45 UTC",
+    "market_state": "TRENDING UP",
+    "volatility_state": "NEUTRAL",
+    "current_phase": "Reclaiming the $69 shelf after a sweep",
+    "market_state_note": "Daily is a clean uptrend (HH/HL, +79% off the $34 low) holding above a rising EMA20 ($63.7). The 4H pushed into the $77 highs, rejected, and posted its first lower high (77 -> 73.7) — a pullback at the highs, not structural damage (the $62 higher low is intact). 15m just swept $68.5 below the $69-70 shelf and reclaimed. Expansion leg into $77 is over; price coils $69-73 = healthy digestion, not a top yet."
+  },
+  "snapshot": [
+    {"label": "Current Price", "value": "$70.7"},
+    {"label": "24H High", "value": "$76.64"},
+    {"label": "24H Low", "value": "$68.53"},
+    {"label": "24H Volume", "value": "$833M"},
+    {"label": "Funding Rate", "value": "-0.0078%"},
+    {"label": "Open Interest", "value": "$229M"}
+  ],
+  "derivatives": [
+    {"metric": "Open Interest", "tone": "bear", "signal": "Fell $3.37M -> $3.23M on the pullback", "note": "OI built into the $77 push then bled out as price fell — longs de-risking / conviction leaving, not aggressive fresh shorting. Pullback reads as positioning unwind"},
+    {"metric": "Funding", "tone": "bull", "signal": "Flipped slightly negative (-0.0078%)", "note": "Rally is NOT crowded-long — flipping negative near the highs means no euphoric long stack to flush, so a squeeze higher still has fuel"},
+    {"metric": "Volume (flow proxy)", "tone": "bull", "signal": "Push to $77 on peak volume, pullback lighter", "note": "The impulse carried the heavy volume; the retrace is on lighter participation — profit-taking signature, not distribution. (HYPE not on Binance — no taker-CVD feed)"}
+  ],
+  "derivatives_summary": "Positioning is cooling, not flipping. OI bled out of the highs (de-leveraging) while funding turned slightly negative — the move off $77 is a long unwind, not a fresh short campaign, and the rally isn't crowded. Lighter pullback volume supports digestion over distribution. Net: derivatives lean mildly bullish-continuation, but falling OI says wait for fresh demand before trusting the next leg.",
+  "convergence": {
+    "title": "Decision Zone — $69 shelf vs $77 supply",
+    "note": "Every candidate pivots on the same two lines. The $69-70 shelf was just swept and reclaimed (bullish) — hold it and the uptrend digests and resumes. The $76.5-77 supply has rejected twice (bearish cap). Trade the edges, not the middle: long the shelf reclaim (live now), upgrade on a $73.7 reclaim, and only fade the short on a fresh $77 re-tap OR a clean loss of $69."
+  },
+  "pattern_candidates": [
+    {
+      "name": "Bullish SFP / Failed Breakdown",
+      "qualifier": "15m — swept $68.5 below the $69-70 shelf, reclaimed",
+      "summary": "Price ran the stops below the $69.5-70 equal-lows shelf to $68.5, then reclaimed $70 on the 4H EMA — a failed breakdown that traps shorts and aligns with the dominant daily uptrend. It's the one entry on the chart with a tight structural stop, but upside is capped by $73.7 then the $77 supply, so it's a momentum reclaim, not a fresh trend leg yet.",
+      "grade": "B+",
+      "maturity": "Mature",
+      "classification": "Liquidity Reversal (continuation-aligned)",
+      "entry": {
+        "model": "Sweep + Reclaim",
+        "direction": "long",
+        "zone": {"low": 70.0, "high": 71.0, "label": "$70.0 – $71.0", "subtitle": "Hold above the reclaimed $69 shelf / 4H EMA20"},
+        "stop": {"value": 68.3, "label": "$68.30", "note": "Below the $68.5 sweep low — reclaim invalidated"},
+        "risk": {"label": "~$2.50", "unit": "per HYPE"},
+        "t1": {"value": 73.7, "label": "$73.70", "rr": "~1 : 1.1"},
+        "t2": {"value": 76.5, "label": "$76.50", "rr": "~1 : 2.3"},
+        "alignment": 62,
+        "tools": "Liquidity · 4H EMA20 · Funding"
+      },
+      "opportunity": [
+        {"type": "Aggressive", "zone": "Reclaim of $70 off the sweep", "status": "Available", "reason": "Sweep + reclaim already printed — entry is live at the shelf"},
+        {"type": "Balanced", "zone": "Hold $70 + break $71.2", "status": "Available", "reason": "Price back to $71.1; needs to clear the 1H EMA ($71.8)"},
+        {"type": "Confirmation", "zone": "Acceptance above $73.7", "status": "Approaching", "reason": "Reclaim of the 4H lower-high promotes it to the Bull Flag"}
+      ],
+      "evidence": [
+        "15m swept $68.5 — below the $69.5-70 equal-lows shelf — then reclaimed $70: shorts trapped, failed breakdown confirmed.",
+        "Reclaim landed on the rising 4H EMA20 ($70.08) — dynamic trend support held on the first test.",
+        "Funding flipped slightly negative (-0.0078%) — longs not crowded, so a squeeze higher has fuel.",
+        "Buyers responded straight back to $71.1 — demand active off the sweep."
+      ],
+      "missing": [
+        "Acceptance back above the 1H EMA ($71.8) — still trading just under it.",
+        "A reclaim of $72.8-73.7 to prove follow-through, not just a bounce.",
+        "Fresh OI to back the next leg — OI is still bleeding, so demand is unconfirmed."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": ["Swept liquidity + clean reclaim", "Held the rising 4H EMA20", "Funding non-crowded (squeeze fuel)", "Trend-aligned with daily uptrend"],
+        "warnings": ["Capped by $73.7 then $77 supply", "OI still falling", "Below the 1H EMA"]
+      }
+    },
+    {
+      "name": "Double Top / Equal-High Sweep",
+      "qualifier": "4H/1H — two rejections at $76.5-77, lower highs since",
+      "summary": "Two 4H pushes into $76.6-77 both rejected, with 1H lower highs developing since (77 -> 75 -> 73.7) — a supply rejection at the highs. But it's a countertrend fade at fresh ATHs with strong daily momentum, and the $69 neckline just held against breakdown, so the reversal is unconfirmed and not actionable mid-range.",
+      "grade": "C",
+      "maturity": "Developing",
+      "classification": "Liquidity Reversal",
+      "entry": {
+        "model": "Fade re-test / neckline break",
+        "direction": "short",
+        "zone": {"low": 76.3, "high": 77.0, "label": "$76.3 – $77.0", "subtitle": "Rejection on a re-tap of the swept highs"},
+        "stop": {"value": 77.8, "label": "$77.80", "note": "Above the $76.99 high — equal highs reclaimed = thesis dead"},
+        "risk": {"label": "~$1.30", "unit": "per HYPE"},
+        "t1": {"value": 69.7, "label": "$69.70", "rr": "~1 : 5.0"},
+        "t2": {"value": 61.5, "label": "$61.50", "rr": "~1 : 11"},
+        "alignment": 44,
+        "tools": "Liquidity · Falling OI · BTC weakness"
+      },
+      "opportunity": [
+        {"type": "Aggressive", "zone": "Fade a re-tap of $76.3-77", "status": "Approaching", "reason": "Needs a ~$5 rally back to the highs to offer the entry"},
+        {"type": "Balanced", "zone": "Lower high + rejection below $73.7", "status": "Approaching", "reason": "Lower highs forming but no clean rejection signal yet"},
+        {"type": "Confirmation", "zone": "Acceptance below $69", "status": "Unavailable", "reason": "Neckline just held — the $68.5 reclaim weakened the breakdown"}
+      ],
+      "evidence": [
+        "Two 4H pushes into $76.6-77 both rejected — supply active at the highs, upside momentum fading.",
+        "1H lower highs (77 -> 75 -> 73.7) — sellers gaining short-term initiative.",
+        "OI fell $3.37M -> $3.23M into the pullback — conviction leaving as price drops.",
+        "BTC rolled from $66.3k to $64.1k (-2.3% 24h) — mild macro headwind capping upside."
+      ],
+      "missing": [
+        "A neckline break — the $69 shelf just held, and the $68.5 reclaim is a failed breakdown that weakens this thesis.",
+        "No fresh entry: price is mid-range, not at the highs and not below the neckline.",
+        "Selling confirmation — falling OI is de-risking, not an aggressive short campaign."
+      ],
+      "confluence": {
+        "strength": "WEAK",
+        "checks": ["Two rejections at obvious highs", "1H lower highs developing", "Falling OI + BTC weakness"],
+        "warnings": ["Countertrend at fresh ATHs", "Neckline ($69) defended", "Strong daily momentum against it"]
+      }
+    },
+    {
+      "name": "Bull Flag",
+      "qualifier": "4H — pullback from $77 holding above the $70 shelf",
+      "summary": "A powerful $62 -> $77 impulse (+24%) followed by a pullback that holds above rising daily/4H EMAs, with $77 a fresh ATH leaving clean air above. The flag is loose and unconfirmed — it only earns the high-R trade on acceptance above $73.7 then a break of $77; until then its best-priced entry is the shelf reclaim above.",
+      "grade": "B-",
+      "maturity": "Developing",
+      "classification": "Continuation",
+      "entry": {
+        "model": "Breakout (accept > $73.7)",
+        "direction": "long",
+        "zone": {"low": 73.9, "high": 74.3, "label": "$73.9 – $74.3", "subtitle": "15m close above the 4H lower-high"},
+        "stop": {"value": 69.8, "label": "$69.80", "note": "Below the $70 shelf / last higher low — flag broken"},
+        "risk": {"label": "~$4.30", "unit": "per HYPE"},
+        "t1": {"value": 76.9, "label": "$76.90", "rr": "~1 : 0.7"},
+        "t2": {"value": 80.0, "label": "$80.00+", "rr": "~1 : 1.3"},
+        "alignment": 52,
+        "tools": "EMA stack · Measured Move · Fresh ATH"
+      },
+      "opportunity": [
+        {"type": "Aggressive", "zone": "Pullback to the $70 shelf", "status": "Available", "reason": "Overlaps the SFP reclaim — best-priced flag entry"},
+        {"type": "Balanced", "zone": "Break + accept above $73.7", "status": "Approaching", "reason": "Needs a 15m close above the lower-high"},
+        {"type": "Confirmation", "zone": "Break + hold above $77", "status": "Approaching", "reason": "Daily acceptance into clean ATH air toward $80+"}
+      ],
+      "evidence": [
+        "Strong impulse foundation ($62 -> $77, +24%) with the pullback holding above rising daily/4H EMAs.",
+        "$77 is a fresh ATH — clean air above, no historical supply once it breaks.",
+        "Pullback volume below the breakout volume — profit-taking, not distribution.",
+        "HYPE made new highs while BTC stalled — relative strength."
+      ],
+      "missing": [
+        "A confirmed higher low + reclaim of $73.7 — structure not yet clean.",
+        "Tighter compression — flag is deep (~55% of the leg) and loose.",
+        "Better R:R — chasing the $73.7 break is poor (1:0.7 to TP1) with $77 right overhead."
+      ],
+      "confluence": {
+        "strength": "MODERATE",
+        "checks": ["Strong impulse + controlled pullback", "Above rising daily/4H EMAs", "Fresh ATH = clean air above", "Relative strength vs BTC"],
+        "warnings": ["$73.7 / $77 not reclaimed", "Loose, deep flag", "Poor R:R if chased"]
+      }
+    }
+  ]
+}

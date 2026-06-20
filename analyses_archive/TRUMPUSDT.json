@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "framework_version": "v1",
+  "symbol": "TRUMP/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-14T03:26:50Z",
+  "data_sources": ["Bybit USDⓈ-M perp (OI/Funding REST)", "Binance USDⓈ-M futures (kline-computed CVD)", "TradingView MCP chart read"],
+
+  "price": "$2.097",
+  "change_pct_24h": -8.19,
+  "headline": "Mid-pullback after a parabolic 2-day rally off the $1.49 low",
+  "levels": {"direction": "long", "entry": 1.98, "stop": 1.88, "target1": 2.29, "target2": 2.40},
+
+  "market_bias": "BULLISH",
+  "bias_qualifier": "",
+
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H",
+    "analysis_time": "Jun 14, 2026 03:26 UTC",
+    "market_state": "VOLATILITY EXPANSION",
+    "market_state_note": "Explosive 2-day expansion off the low, now in its first pullback — favours a pullback-continuation long, but post-parabolic dips overshoot, so the setup is valid yet not actionable at spot. Wait for the retest.",
+    "current_phase": "Pullback Continuation"
+  },
+
+  "snapshot": [
+    {"label": "Current Price", "value": "$2.097"},
+    {"label": "24H High", "value": "$2.321"},
+    {"label": "24H Low", "value": "$2.063", "tone": "bear"},
+    {"label": "24H Volume", "value": "$107M"},
+    {"label": "Funding Rate", "value": "-0.03%"},
+    {"label": "Open Interest", "value": "$28.7M"}
+  ],
+
+  "daily": {
+    "lean": "BULLISH",
+    "count": "3 Bullish / 3 Neutral / 0 Bearish",
+    "factors": [
+      {"factor": "Structure", "reading": "Downtrend + fresh bullish BOS", "evidence": "60-day trend is down (3.126 → 1.487, -28%), but the last 3 days printed an explosive reversal that broke the local lower-high sequence and reclaimed $2.00+. Larger trend down, near-term structure flipped up.", "call": "Neutral"},
+      {"factor": "20 EMA", "reading": "$1.927", "evidence": "Price $2.097 above the fast EMA.", "call": "Bullish"},
+      {"factor": "50 EMA", "reading": "~$2.0-2.2 (proxy)", "evidence": "Price hovering around the slower EMA after the rally; not cleanly above.", "call": "Neutral"},
+      {"factor": "AVWAP", "reading": "Below price from $1.49 low; above from $3.13 high", "evidence": "Anchored to the cycle low, price is well above AVWAP (bullish); anchored to the high, still below. Direction-dependent.", "call": "Neutral"},
+      {"factor": "RSI regime", "reading": "55.83", "evidence": "Recovered off oversold back above the midline — regime turning up.", "call": "Bullish"},
+      {"factor": "Volume trend", "reading": "Huge expansion on the rally", "evidence": "The two rally days printed 213M & 215M vs 41M avg (~5x) — overwhelming buy-side participation.", "call": "Bullish"}
+    ]
+  },
+
+  "h4": {
+    "lean": "BULLISH",
+    "count": "3 Bullish / 2 Neutral / 0 Bearish",
+    "factors": [
+      {"factor": "Structure", "reading": "Uptrend, first pullback", "evidence": "+31% on the week with HH/HL; now making a lower high (2.396 → 2.288) and pulling back. Trend intact, momentum stalling.", "call": "Bullish"},
+      {"factor": "20 EMA", "reading": "$2.014", "evidence": "Price $2.097 still above it (barely).", "call": "Bullish"},
+      {"factor": "AVWAP", "reading": "From $1.587 low — well below price", "evidence": "Price holds above the rally AVWAP.", "call": "Bullish"},
+      {"factor": "Momentum", "reading": "RSI 59.3, below its MA (69.7)", "evidence": "Above midline but rolling over from overbought — cooling, not yet bearish.", "call": "Neutral"},
+      {"factor": "Volume", "reading": "Pullback ~ in line with rally bars", "evidence": "Down bar 23M vs up bars ~25M — no clean contraction yet; pullback isn't fully exhausted.", "call": "Neutral"}
+    ]
+  },
+
+  "setup": {
+    "type": "Pullback / Trend Continuation — long, WAIT for the retest",
+    "thesis": "Long the pullback into the $1.93–2.01 breakout/EMA shelf (on a hold/reclaim, not a falling-knife grab), targeting the retest of the $2.29 supply and then the $2.40 high. No entry at $2.097 — it's mid-air.",
+    "not": "Not a Breakout (no fresh push); not a Failed Breakout (no acceptance back below the shelf)."
+  },
+
+  "verdict": {
+    "action": "WAIT",
+    "rationale": "The metrics are on the bulls' side; the location is not. Don't chase $2.10 mid-air — let price come into $1.93–2.01 and hold before engaging; chasing the middle of a post-parabolic pullback is the trap."
+  },
+
+  "scorecard": {
+    "factors": [
+      {"factor": "Daily Structure", "call": "Neutral"},
+      {"factor": "Daily EMA Position", "call": "Bullish"},
+      {"factor": "Daily AVWAP Position", "call": "Neutral"},
+      {"factor": "Daily RSI Regime", "call": "Bullish"},
+      {"factor": "Daily Volume Trend", "call": "Bullish"},
+      {"factor": "4H Structure", "call": "Bullish"},
+      {"factor": "4H EMA Position", "call": "Bullish"},
+      {"factor": "4H AVWAP Position", "call": "Bullish"},
+      {"factor": "4H Momentum", "call": "Neutral"},
+      {"factor": "4H Volume", "call": "Neutral"}
+    ],
+    "count": {"bullish": 6, "neutral": 4, "bearish": 0}
+  },
+
+  "evidence_matrix": [
+    {"factor": "Daily Structure", "timeframe": "Daily", "reading": "60-day trend down (3.126 → 1.487), but a 3-day explosive reversal broke the local LH sequence and reclaimed $2.00+", "interpretation": "Neutral", "impact": "flat", "weight": "High"},
+    {"factor": "4H Structure", "timeframe": "4H", "reading": "+31% week with HH/HL; first pullback off a lower high (2.396 → 2.288), still above the 4H 20 EMA", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "RSI Divergence", "timeframe": "4H", "reading": "RSI 59.3 rolling below its MA (69.7) from overbought — momentum cooling on the pullback", "interpretation": "Bearish", "impact": "down", "weight": "Medium"},
+    {"factor": "Volume Expansion / Contraction", "timeframe": "Daily", "reading": "~5x volume on the rally impulse (213M & 215M vs 41M avg); pullback volume not yet contracted", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Open Interest", "timeframe": "4H", "reading": "+43% into the rally (9.8M → 15.3M, real new money); now easing to 14.1M on the dip = long deleveraging, not fresh shorts", "interpretation": "Bullish", "impact": "up", "weight": "Medium"},
+    {"factor": "Funding Rate", "timeframe": "—", "reading": "-0.031% (mildly negative) — no euphoric longs; slight short-crowding = squeeze fuel", "interpretation": "Bullish", "impact": "up", "weight": "Medium"},
+    {"factor": "CVD", "timeframe": "1H", "reading": "Strongly positive, rose with price across the week — real buying drove the move", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Volume Profile", "timeframe": "Daily", "reading": "Breakout from the $1.74–1.94 base; fresh supply overhead at $2.29–2.40", "interpretation": "Neutral", "impact": "flat", "weight": "High"},
+    {"factor": "VWAP / AVWAP", "timeframe": "Daily + 4H", "reading": "Above the 4H rally AVWAP from the $1.587 low; near/above the daily means", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Liquidity Sweeps", "timeframe": "4H", "reading": "Today's drop to $2.063 swept intraday lows then recovered — minor, not a clean structural sweep", "interpretation": "Neutral", "impact": "flat", "weight": "High"},
+    {"factor": "Support / Resistance", "timeframe": "Daily + 4H", "reading": "Defined shelf $1.93–2.01 (breakout + EMAs) below; supply $2.29–2.40 above", "interpretation": "Bullish", "impact": "up", "weight": "High"}
+  ],
+
+  "analyst_summary": [
+    "TRUMP is bullish (6/10, zero bearish factors): a violent 2-day rally took it from ~$1.64 to a $2.40 high on ~5x normal volume, and price still holds above both the daily ($1.927) and 4H ($2.014) fast EMAs. The caveat is that this is a fresh, stretched impulse sitting inside a still-down 60-day trend — not an established uptrend.",
+    "The flow confirms the move: OI expanded +43% into the rally (real new money), CVD rose strongly with price (real buying), and the current pullback is deleveraging (OI easing, not fresh shorts) into mildly-negative funding (squeeze fuel). The dominant edge is a pullback-continuation long.",
+    "Net read is WAIT — at $2.097 price is mid-air between the $2.29 supply and the $1.93–2.01 support shelf, with no clean entry. Buy a hold/reclaim of the $1.93–2.01 shelf (stop <$1.88, targets $2.29 then $2.40); a 4H close below $1.90 says the parabola failed and it's mean-reverting to $1.74.",
+    "Notes: this is a news/event-driven coin — the +45% spike on 5x volume is catalyst-driven, so headline risk cuts both ways and can void any level instantly; size accordingly. The OI signature is the standout tell — OI expanded into the rally and is only contracting on the pullback (profit-taking, not distribution); watch for OI to re-expand as price reclaims $2.20 to confirm the second leg. The week-long CVD direction is reliable; the precise per-bar low-vs-now divergence read was noisy in the feed, so I'm leaning on the directional conclusion."
+  ],
+  "bottom_line": "Bullish pullback-continuation long — but a WAIT: the metrics back the bulls, the location doesn't. Let price come into $1.93–2.01 and hold; chasing $2.10 mid-air is the trap.",
+
+  "what_changes_my_mind": {
+    "bullish_upgrade": {
+      "title": "Bullish Continuation",
+      "subtitle": "Confirms the Pullback Long",
+      "checks": [
+        "Price pulls into $1.93–2.01 and holds (reclaim candle, not a slice)",
+        "OI starts re-expanding as price reclaims $2.20 (fresh buyers commit)",
+        "4H RSI stabilises above 50 and turns back up",
+        "CVD holds its higher low / resumes rising"
+      ],
+      "result": "Continuation long toward $2.29, then the $2.40 high."
+    },
+    "bearish_confirmation": {
+      "title": "Bullish Failure",
+      "subtitle": "Parabola Mean-Reverts",
+      "checks": [
+        "4H close below $1.90 (loss of the daily 20 EMA + breakout shelf)",
+        "Pullback slices the $1.93–2.01 shelf without a bounce",
+        "OI re-expands on the downside (fresh shorts commit)",
+        "CVD rolls over to fresh lows"
+      ],
+      "result": "Mean reversion toward the $1.74 breakout base."
+    }
+  },
+
+  "bull_case": "Volume-, OI- and CVD-confirmed breakout off the $1.49 low holding above the 4H 20 EMA, with a deleveraging pullback into mildly-negative funding — a dip into $1.93–2.01 is a high-quality continuation-long location toward $2.29/$2.40.",
+  "bear_case": "Parabolic blow-off inside a still-bearish 60-day trend — a 4H lower high, rolling RSI and today's −8% rejection bar warn of exhaustion, with post-parabolic pullbacks prone to overshoot toward the $1.74 origin.",
+
+  "trade_plan": {
+    "direction": "Pullback / Trend Continuation Long (buy the retest)",
+    "rows": [
+      {"label": "Entry Zone", "value": "$1.93 - $2.01", "note": "Breakout/EMA shelf — buy a hold/reclaim, don't grab the knife", "tone": "bull"},
+      {"label": "Stop Loss", "value": "< $1.88", "note": "4H close below the $1.90 shelf / daily 20 EMA = invalidation", "tone": "bear"},
+      {"label": "Risk", "value": "~$0.10 per TRUMP", "note": ""},
+      {"label": "Target 1", "value": "$2.29", "note": "4H lower-high supply", "tone": "blue"},
+      {"label": "Target 2", "value": "$2.40", "note": "Rally high (extension)", "tone": "blue"}
+    ],
+    "rr": [
+      {"label": "To Target 1", "value": "~1 : 3.1"},
+      {"label": "To Target 2", "value": "~1 : 4.2"}
+    ]
+  },
+
+  "key_levels": {
+    "resistance": [
+      {"price": "$2.396", "label": "Rally High / Target 2"},
+      {"price": "$2.288", "label": "4H Lower-High Supply / Target 1 zone"},
+      {"price": "$2.29 - $2.40", "label": "Overhead Supply Band"},
+      {"price": "$2.205", "label": "Today's High"}
+    ],
+    "support": [
+      {"price": "$2.063", "label": "Today's Low / Intraday Support"},
+      {"price": "$2.014", "label": "4H 20 EMA"},
+      {"price": "$1.987", "label": "4H Predictive Range Avg"},
+      {"price": "$1.93 - $2.01", "label": "Breakout/EMA Shelf — Long Entry Zone"},
+      {"price": "$1.927", "label": "Daily 20 EMA"},
+      {"price": "$1.90", "label": "Invalidation (loss of shelf)"},
+      {"price": "$1.74", "label": "Breakout Base / Failure Target"}
+    ]
+  },
+
+  "probability_distribution": [
+    {"scenario": "Bullish Continuation (shelf holds → $2.29 / $2.40)", "pct": 45, "tone": "bull"},
+    {"scenario": "Range / Chop ($2.00-$2.29, digest the spike)", "pct": 30, "tone": "neutral"},
+    {"scenario": "Bearish Failure (slice the shelf → $1.74 base)", "pct": 25, "tone": "bear"}
+  ],
+
+  "failure_scenario": "The pullback doesn't stop at the shelf — post-parabolic momentum carries it straight through $2.01–1.93, longs from the spike capitulate, and price retraces to the $1.74 base before any bid returns.",
+
+  "additional_data": [
+    {"label": "Volume Profile", "value": "Breakout from the $1.74–1.94 base; fresh supply overhead at $2.29–2.40"},
+    {"label": "VWAP / AVWAP", "value": "Above the 4H rally AVWAP from the $1.587 low; near/above the daily means"}
+  ],
+
+  "derivatives": [
+    {"metric": "OI", "signal": "Bullish Expansion", "note": "Rose into rally, easing on dip", "tone": "bull"},
+    {"metric": "Funding", "signal": "Squeeze Fuel", "note": "Mildly negative — shorts crowded", "tone": "bull"},
+    {"metric": "CVD", "signal": "Confirming Buyers", "note": "Rose with price — real bid", "tone": "bull"}
+  ],
+  "derivatives_summary": "OI expanded on the rally and is only deleveraging on the dip, funding is mildly negative (squeeze fuel), and CVD confirms real buying — the flow backs the bulls, and the pullback reads as profit-taking, not distribution.",
+
+  "conclusion": "Trend-Following pullback entry on a fresh impulse — bullish, but a WAIT until price reaches and holds the $1.93–2.01 shelf; not a trade to chase at $2.10."
+}

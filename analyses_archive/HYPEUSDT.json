@@ -1,0 +1,188 @@
+{
+  "schema_version": 1,
+  "framework_version": "v1",
+  "symbol": "HYPE/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-10T22:32:43Z",
+  "data_sources": ["Bybit USDⓈ-M perp / Binance USDⓈ-M (kline-computed EMA/RSI/CVD)", "Bybit OI/Funding REST", "KuCoin spot chart (TradingView MCP)", "manual chart read"],
+
+  "price": "$53.20",
+  "change_pct_24h": -8.27,
+  "headline": "Active breakdown — lost the $55 shelf and daily 50 EMA to a fresh low",
+  "levels": {"direction": "short", "entry": 55.5, "stop": 58.5, "target1": 49.0, "target2": 44.0},
+
+  "market_bias": "BEARISH",
+  "bias_qualifier": "",
+
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H",
+    "analysis_time": "Jun 10, 2026 22:32 UTC",
+    "market_state": "TRENDING DOWN",
+    "market_state_note": "Established downtrend in an active volatility-expansion breakdown leg — favours continuation shorts, but oversold RSI argues against chasing the low; sell the rally.",
+    "current_phase": "Breakdown Continuation"
+  },
+
+  "snapshot": [
+    {"label": "Current Price", "value": "$53.20"},
+    {"label": "24H High", "value": "$58.36"},
+    {"label": "24H Low", "value": "$52.64", "tone": "bear"},
+    {"label": "24H Volume", "value": "$1.27B"},
+    {"label": "Funding Rate", "value": "+0.01%"},
+    {"label": "Open Interest", "value": "$177M"}
+  ],
+
+  "daily": {
+    "lean": "BEARISH",
+    "count": "4 Bearish / 1 Neutral / 1 Bullish",
+    "factors": [
+      {"factor": "Structure", "reading": "LH + LL", "evidence": "Rally topped 75.9, then a clean lower-high sequence broke down through 67 → 60 → 56; price now $52.7, a fresh multi-week low. Downtrend intact.", "call": "Bearish"},
+      {"factor": "20 EMA", "reading": "$59.87", "evidence": "Price $52.7 is well below the 20 EMA.", "call": "Bearish"},
+      {"factor": "50 EMA", "reading": "$53.55", "evidence": "Price has just lost the 50 EMA (52.7 < 53.55) — a fresh bearish development.", "call": "Bearish"},
+      {"factor": "AVWAP", "reading": "$28.8 (deep cycle anchor)", "evidence": "Price is above the cycle-low AVWAP — the lone supportive factor, but the anchor is far below and not relevant as near-term value.", "call": "Bullish"},
+      {"factor": "RSI regime", "reading": "44.1", "evidence": "Below the midline, no longer in bullish regime.", "call": "Neutral"},
+      {"factor": "Volume trend", "reading": "Expanding on declines", "evidence": "The largest recent daily bars (24M, 22M, 19M) are all down/distribution days; rallies under-volumed.", "call": "Bearish"}
+    ]
+  },
+
+  "h4": {
+    "lean": "BEARISH",
+    "count": "5 Bearish / 0 Neutral / 0 Bullish",
+    "factors": [
+      {"factor": "Structure", "reading": "LL, active breakdown", "evidence": "Lost the 55.1/54.9 shelf and the $55.4 prior swing low; printed new low 52.69. No reclaim.", "call": "Bearish"},
+      {"factor": "EMA position", "reading": "20 EMA $58.31 / 50 EMA $60.98", "evidence": "Price below both; 20 < 50 (bearish stack / death cross).", "call": "Bearish"},
+      {"factor": "AVWAP", "reading": "From $75.8 top — well overhead", "evidence": "Price far below any swing-anchored AVWAP from the highs.", "call": "Bearish"},
+      {"factor": "Momentum", "reading": "RSI 31.9, falling", "evidence": "RSI making a lower low with price — no bullish divergence. Oversold but confirming, not diverging.", "call": "Bearish"},
+      {"factor": "Volume", "reading": "Expanded on the break", "evidence": "Breakdown bars printed elevated sell volume (22M, 16M TV units) vs ~3.5M average.", "call": "Bearish"}
+    ]
+  },
+
+  "setup": {
+    "type": "Breakdown / Trend Continuation — short",
+    "thesis": "Short the trend continuation — but sell the rally, don't chase the low. Ideal entry is a backtest of broken support / 4H 20 EMA at $55.0–56.0, targeting the $49 band and below.",
+    "not": "Not a Divergence Reversal (the required divergence is absent); not a Failed Breakdown (no reclaim)."
+  },
+
+  "verdict": {
+    "action": "WAIT",
+    "rationale": "The structure, momentum and CVD all point down, but chasing $52.7 at a fresh low with RSI 31.9 oversold and OI not confirming fresh shorts is poor R:R — wait to short strength into the broken $55–56 shelf rather than chase the low."
+  },
+
+  "scorecard": {
+    "factors": [
+      {"factor": "Daily Structure", "call": "Bearish"},
+      {"factor": "Daily EMA Position", "call": "Bearish"},
+      {"factor": "Daily AVWAP Position", "call": "Bullish"},
+      {"factor": "Daily RSI Regime", "call": "Neutral"},
+      {"factor": "Daily Volume Trend", "call": "Bearish"},
+      {"factor": "4H Structure", "call": "Bearish"},
+      {"factor": "4H EMA Position", "call": "Bearish"},
+      {"factor": "4H AVWAP Position", "call": "Bearish"},
+      {"factor": "4H Momentum", "call": "Bearish"},
+      {"factor": "4H Volume", "call": "Bearish"}
+    ],
+    "count": {"bullish": 1, "neutral": 1, "bearish": 8}
+  },
+
+  "evidence_matrix": [
+    {"factor": "Daily Structure", "timeframe": "Daily", "reading": "Rally topped 75.9, lower-high sequence broke 67 → 60 → 56; fresh multi-week low $52.7", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "4H Structure", "timeframe": "4H", "reading": "Lost the 55.1/54.9 shelf and $55.4 swing low; printed new low 52.69, no reclaim", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "RSI Divergence", "timeframe": "4H", "reading": "Price LL / RSI LL — no bullish divergence; oversold (31.9) but confirming", "interpretation": "Bearish", "impact": "down", "weight": "Medium"},
+    {"factor": "Volume Expansion / Contraction", "timeframe": "4H", "reading": "Sell volume expanded on the breakdown bars (22M, 16M vs ~3.5M avg)", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Open Interest", "timeframe": "4H", "reading": "3.42M → 3.38M, flat-to-falling through the drop → longs deleveraging, not fresh shorts", "interpretation": "Bullish", "impact": "up", "weight": "Medium"},
+    {"factor": "Funding Rate", "timeframe": "—", "reading": "+0.0001 (0.01%) — baseline neutral, no squeeze fuel either way", "interpretation": "Neutral", "impact": "flat", "weight": "Medium"},
+    {"factor": "CVD", "timeframe": "1H", "reading": "New lows alongside price, no absorption / no divergence — real selling", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Volume Profile", "timeframe": "Daily", "reading": "Broke below the $55–61 HVN into thinner air toward $49", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "VWAP / AVWAP", "timeframe": "Daily + 4H", "reading": "Below all swing AVWAPs (overhead resistance); above only the deep $28.8 cycle anchor", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Liquidity Sweeps", "timeframe": "4H", "reading": "Sell-side stops < $55.4 taken, no reclaim — but liquidity now spent (bounce fuel)", "interpretation": "Neutral", "impact": "flat", "weight": "High"},
+    {"factor": "Support / Resistance", "timeframe": "Daily + 4H", "reading": "Lost PR Lower-1 ($54.06) + daily 50 EMA ($53.55); next support PR Lower-2 $48.99", "interpretation": "Bearish", "impact": "down", "weight": "High"}
+  ],
+
+  "analyst_summary": [
+    "HYPE is clearly bearish (8/10): daily and 4H structure are both broken, price is below every meaningful EMA/AVWAP, and it has just lost the $55 support shelf and the daily 50 EMA to a fresh low at $52.7 — a genuine downtrend, not a transitional pause.",
+    "The actionable event is a confirmed breakdown with volume and CVD agreement: sell volume expanded on the break, CVD is at fresh lows with no absorption and no divergence anywhere, and price is accepting below the broken shelf. The dominant edge is a continuation short.",
+    "Net read is WAIT — chasing $52.7 at a fresh low with RSI 31.9 oversold is poor R:R. Sell strength into the broken $55–56 shelf / 4H 20 EMA (stop ~$58.5, target $49 then $44); a 4H close back above ~$58.5 negates the breakdown.",
+    "Caveats: OI fell as price fell (this leg is partly longs capitulating, raising bounce risk — why chasing scores poorly); a BTC bounce is the most likely trigger for a snapback, so check BTC before sizing; the chart's on-screen AVWAP ($28.8) is a deep cycle anchor, not relevant resistance; prices align across Binance/Bybit perps (~$53.2) and KuCoin spot."
+  ],
+  "bottom_line": "Trend-following continuation short — not a reversal; the discipline is to short strength into $55–56 rather than chase the fresh low where R:R is unfavourable and a bounce is overdue.",
+
+  "what_changes_my_mind": {
+    "bullish_upgrade": {
+      "title": "Bullish Reclaim",
+      "subtitle": "Invalidates the Breakdown",
+      "checks": [
+        "4H close back above ~$58.5 (reclaim 4H 20 EMA + broken shelf)",
+        "RSI bullish divergence forms on a retest of the low",
+        "CVD prints a higher low against price (absorption)",
+        "OI expands on a reclaim (fresh buyers commit)"
+      ],
+      "result": "Breakdown continuation negated; stand aside / no short."
+    },
+    "bearish_confirmation": {
+      "title": "Bearish Continuation",
+      "subtitle": "Short the Rally",
+      "checks": [
+        "Rally rejected at the broken $55–56 shelf / 4H 20 EMA",
+        "4H close stays below $54.06 (PR Lower-1) and the 50 EMA",
+        "CVD keeps printing new lows on the bounce",
+        "Loss of $52.69 with acceptance"
+      ],
+      "result": "Continuation toward $48.99 (PR Lower-2), then the $44 cycle pivot."
+    }
+  },
+
+  "bull_case": "4H oversold (RSI 31.9) at the daily 50 EMA / PR Lower-1 confluence with sell-side stops swept and OI falling — ingredients for a sharp oversold bounce back toward the broken $55–56 shelf, though no divergence supports an actual trend change.",
+  "bear_case": "Bearish bias 8/10, $55 support and daily 50 EMA broken with acceptance, price below every EMA/AVWAP, sell volume expanding and CVD at fresh lows with no absorption — continuation into the $49 PR Lower-2 band and potentially the $44 cycle pivot.",
+
+  "trade_plan": {
+    "direction": "Trend Continuation Short (sell the rally)",
+    "rows": [
+      {"label": "Entry Zone", "value": "$55.00 - $56.00", "note": "Backtest of broken support / 4H 20 EMA — short strength, don't chase the low", "tone": "bear"},
+      {"label": "Stop Loss", "value": "> $58.50", "note": "4H close above the 4H 20 EMA / broken shelf = invalidation", "tone": "bull"},
+      {"label": "Risk", "value": "~$3.00 per HYPE", "note": ""},
+      {"label": "Target 1", "value": "$48.99", "note": "4H PR Lower-2", "tone": "blue"},
+      {"label": "Target 2", "value": "$44.00", "note": "Prior cycle pivot (extension)", "tone": "blue"}
+    ],
+    "rr": [
+      {"label": "To Target 1", "value": "~1 : 2.2"},
+      {"label": "To Target 2", "value": "~1 : 3.8"}
+    ]
+  },
+
+  "key_levels": {
+    "resistance": [
+      {"price": "$60.98", "label": "4H 50 EMA"},
+      {"price": "$59.87", "label": "Daily 20 EMA"},
+      {"price": "$58.50", "label": "4H 20 EMA / Broken Shelf — Invalidation"},
+      {"price": "$55.00 - $56.00", "label": "Broken Support — Short-the-Rally Zone"}
+    ],
+    "support": [
+      {"price": "$54.06", "label": "4H PR Lower-1 (lost)"},
+      {"price": "$53.55", "label": "Daily 50 EMA (lost)"},
+      {"price": "$52.69", "label": "Fresh Local Low"},
+      {"price": "$48.99", "label": "4H PR Lower-2 / Target 1"},
+      {"price": "$44.00", "label": "Prior Cycle Pivot / Target 2"}
+    ]
+  },
+
+  "probability_distribution": [
+    {"scenario": "Bullish Reclaim (back above $58.5, breakdown negated)", "pct": 25, "tone": "bull"},
+    {"scenario": "Range / Chop ($52-$56, oversold bounce then stall)", "pct": 25, "tone": "neutral"},
+    {"scenario": "Bearish Continuation (toward $49 / $44)", "pct": 50, "tone": "bear"}
+  ],
+
+  "failure_scenario": "Oversold snapback — RSI 31.9 + swept sell-side liquidity + deleveraging OI fuel a sharp bounce back into $55–56 that traps anyone short at the low, before continuation resumes (or before a larger base forms).",
+
+  "additional_data": [
+    {"label": "Volume Profile", "value": "Below the $55–61 HVN into thinner air toward $49"},
+    {"label": "VWAP / AVWAP", "value": "Below all swing AVWAPs; above only the deep $28.8 cycle anchor"}
+  ],
+
+  "derivatives": [
+    {"metric": "OI", "signal": "Longs Deleveraging", "note": "Falling, not fresh shorts", "tone": "bull"},
+    {"metric": "Funding", "signal": "Neutral Positioning", "note": "No squeeze fuel", "tone": "neutral"},
+    {"metric": "CVD", "signal": "Confirming Lows", "note": "Real selling, no absorption", "tone": "bear"}
+  ],
+  "derivatives_summary": "CVD confirms the breakdown with no absorption and funding is neutral, but falling OI shows this leg is partly longs capitulating — so the trend is down with an elevated risk of a counter-bounce before continuation.",
+
+  "conclusion": "Trend Following (continuation short) — explicitly not a reversal; short strength into $55–56, don't chase the low."
+}

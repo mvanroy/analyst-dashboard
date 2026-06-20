@@ -16,24 +16,17 @@ from st_aggrid import AgGrid, JsCode
 import icons
 import rules
 import scanner
+import chrome  # shared nav/clocks/brand chrome (single source of truth)
 
 GREEN = "#0ecb81"
 RED = "#f6465d"
 NEUTRAL = "#848e9c"
 
-LOGO_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "logo.png")
-
-
-@st.cache_data(show_spinner=False)
-def logo_data_uri():
-    try:
-        with open(LOGO_PATH, "rb") as f:
-            return "data:image/png;base64," + base64.b64encode(f.read()).decode()
-    except OSError:
-        return ""
-
+LOGO_PATH = chrome.LOGO_PATH
 
 st.set_page_config(page_title="Market Scanner", layout="wide", page_icon=LOGO_PATH)
+
+chrome.inject_background()
 
 # ---------------- Orion-style chrome ----------------
 st.markdown(
@@ -56,6 +49,9 @@ st.markdown(
       .block-container {padding-top: 1.6rem; padding-bottom: 1rem; max-width: 100%;}
       .orion-brand {display: flex; align-items: center; gap: .7rem;}
       .orion-brand img {width: 54px; height: 54px;}
+      /* align the page heading vertically with the other pages (Trade Dashboard /
+         Position Calculator) so it doesn't jump when switching pages */
+      [data-testid="stHorizontalBlock"]:has(.orion-brand) {margin-top: 12px !important;}
       .orion-logo {font-size: 1.7rem; font-weight: 800; letter-spacing: .04em; color: #e6e8eb; line-height: 1.1;}
       .orion-logo .accent {color: #4c8dff;}
       .orion-logo .sub {display: block; font-size: .8rem; font-weight: 400; color: #848e9c; letter-spacing: .02em;}
@@ -148,124 +144,6 @@ def taker_map(symbols):
 # S&P 500 futures sentiment — refreshes at most every 5 min, and on Run Market
 # Scan. Only the % is fetched here; the live clocks tick client-side (see below).
 @st.cache_data(ttl=300, show_spinner=False)
-def sp_futures():
-    return scanner.sp500_futures()
-
-
-# Live session-clock strip (Tokyo / London / NYSE) + S&P 500 futures tile.
-# Everything ticks in the BROWSER via setInterval — no Streamlit reruns, no
-# flicker. Only SP_PCT is injected from Python. {pct} -> "null" or a number.
-CLOCKS_HTML = """
-<!DOCTYPE html><html><head><meta charset="utf-8"><style>
-  html,body { margin:0; padding:0; background:transparent;
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
-  .strip { display:flex; justify-content:flex-end; align-items:stretch;
-    gap:7px; flex-wrap:wrap; }
-  .tile { background:#15181f; border:1px solid #2a2f37; border-radius:9px;
-    padding:6px 10px; min-width:84px; display:flex; flex-direction:column;
-    justify-content:center; }
-  .top { display:flex; justify-content:space-between; align-items:baseline;
-    gap:14px; }
-  .tile.live { background:rgba(14,203,129,0.13); border-color:rgba(14,203,129,0.55); }
-  .name { color:#c5ccd4; font-size:11px; font-weight:800; letter-spacing:.04em;
-    text-transform:uppercase; }
-  .when { color:#848e9c; font-size:10px; font-weight:600; white-space:nowrap;
-    font-variant-numeric:tabular-nums; }
-  .label { color:#6b747e; font-size:8px; font-weight:700; letter-spacing:.13em;
-    text-transform:uppercase; margin-top:4px; line-height:1; text-align:center; }
-  .value { font-size:16px; font-weight:800; margin-top:1px; line-height:1.15;
-    font-variant-numeric:tabular-nums; white-space:nowrap; text-align:center; }
-  .green { color:#0ecb81; }
-  .red { color:#f6465d; }
-  .muted { color:#848e9c; }
-</style></head><body>
-  <div class="strip" id="strip"></div>
-  <script>
-    var SP_PCT = __SP_PCT__;
-    // sessions are [openMin, closeMin] in local minutes-since-midnight.
-    var EX = [
-      {name:'TOKYO',  tz:'Asia/Tokyo',        sessions:[[540,690],[750,900]]}, // 9:00-11:30, 12:30-15:00 (lunch)
-      {name:'LONDON', tz:'Europe/London',     sessions:[[480,990]]},           // 8:00-16:30
-      {name:'NYSE',   tz:'America/New_York',  sessions:[[570,960]]}            // 9:30-16:00
-    ];
-    function tzParts(tz){
-      var d = new Date(new Date().toLocaleString('en-US',{timeZone:tz}));
-      return {dow:d.getDay(), sec:d.getHours()*3600 + d.getMinutes()*60 + d.getSeconds()};
-    }
-    function isWeekday(dow){ return dow>=1 && dow<=5; }
-    function statusFor(ex){
-      var p = tzParts(ex.tz), min = p.sec/60, i, s;
-      if(isWeekday(p.dow)){
-        for(i=0;i<ex.sessions.length;i++){ s=ex.sessions[i];
-          if(min>=s[0] && min<s[1]) return {open:true, secs:(s[1]*60 - p.sec)}; }
-      }
-      var best = null;                       // seconds to the next open
-      for(i=0;i<8;i++){
-        var d2 = (p.dow+i)%7;
-        if(!isWeekday(d2)) continue;
-        for(var j=0;j<ex.sessions.length;j++){
-          var off = i*86400 - p.sec + ex.sessions[j][0]*60;
-          if(off>0 && (best===null || off<best)) best = off;
-        }
-      }
-      return {open:false, secs:best};
-    }
-    function fmt(secs){
-      if(secs==null) return '--';
-      var h=Math.floor(secs/3600), m=Math.floor((secs%3600)/60), s=Math.floor(secs%60);
-      if(h>=1) return h+'h '+m+'m';
-      if(m>=1) return m+'m '+s+'s';
-      return s+'s';
-    }
-    function dayTime(tz){
-      var d=new Date();
-      var wd=new Intl.DateTimeFormat('en-US',{timeZone:tz,weekday:'short'}).format(d).toUpperCase();
-      var tm=new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',minute:'2-digit',hour12:true}).format(d);
-      return wd+' '+tm;
-    }
-    function tile(name, when, label, value, extra){
-      var top = '<div class="top"><span class="name">'+name+'</span>'
-        + (when ? '<span class="when">'+when+'</span>' : '') + '</div>';
-      return '<div class="tile'+(extra?' '+extra:'')+'">'+top
-        + '<div class="label">'+label+'</div>'+value+'</div>';
-    }
-    function render(){
-      var html='', i;
-      for(i=0;i<EX.length;i++){
-        var ex=EX[i], st=statusFor(ex), label, value, extra;
-        if(st.open){
-          label='Closes in';
-          value='<div class="value green">'+fmt(st.secs)+'</div>';
-          extra='live';
-        } else {
-          label='Opens in';
-          value='<div class="value red">'+fmt(st.secs)+'</div>';
-          extra='';
-        }
-        html += tile(ex.name, dayTime(ex.tz), label, value, extra);
-      }
-      var sp;
-      if(SP_PCT===null || isNaN(SP_PCT)){ sp='<div class="value muted">—</div>'; }
-      else {
-        var up = SP_PCT>=0, cls = up?'green':'red', dot = up?'🟢':'🔴';
-        sp='<div class="value '+cls+'">'+dot+' '+(up?'+':'')+SP_PCT.toFixed(2)+'%</div>';
-      }
-      html += tile('S&amp;P 500 Fut', '', 'Day Chg', sp, '');
-      document.getElementById('strip').innerHTML = html;
-    }
-    render(); setInterval(render, 1000);
-  </script>
-</body></html>
-"""
-
-
-def render_clocks():
-    sp = sp_futures()
-    pct = sp.get("pct") if sp else None
-    val = "null" if pct is None else f"{pct:.4f}"
-    components.html(CLOCKS_HTML.replace("__SP_PCT__", val), height=66)
-
-
 def build_full(d, icon_lookup):
     out = pd.DataFrame()
     out["fav"] = d["symbol"].isin(st.session_state.favs).values
@@ -831,18 +709,15 @@ ICONS = icon_map(tuple(df["symbol"]))
 # ---------------- top bar: page nav (left) + live clocks (right) ----------------
 navc, clockc = st.columns([1.5, 2.1])
 with navc:
-    _nav = st.container(key="topnav")
-    _nav.page_link("app.py", label="Market Scanner")
-    _nav.page_link("pages/1_Analyst_Dashboard.py", label="Analyst Dashboard")
-    _nav.page_link("pages/2_Position_Size_Calculator.py", label="Position Size Calculator")
+    chrome.render_nav(st.container(key="topnav"))
 with clockc:
-    render_clocks()
+    chrome.render_clocks()
 
 # ---------------- header: logo + refresh (left) + shortlist (right) ----------------
 left, right = st.columns([1, 3])
 
 with left:
-    _logo = logo_data_uri()
+    _logo = chrome.logo_data_uri()
     _logo_img = f'<img src="{_logo}" alt="logo">' if _logo else ""
     st.markdown(
         '<div class="orion-brand">'
@@ -881,7 +756,7 @@ with left:
         oi_map.clear()
         funding_map.clear()
         taker_map.clear()
-        sp_futures.clear()
+        chrome.sp_futures.clear()
         st.rerun()
 
     # Scan a coin — input + Scan button side by side, tucked under Run Market

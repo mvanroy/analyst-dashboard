@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "framework_version": "v1",
+  "symbol": "XRP/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-09T08:10:02Z",
+  "data_sources": ["Bybit USDⓈ-M perp (TradingView MCP)", "Bybit + Binance public REST (OI/Funding/CVD)", "manual chart read"],
+
+  "price": "$1.167",
+  "change_pct_24h": 1.7,
+  "headline": "Mid-bounce into $1.18 resistance off the $1.049 low",
+  "levels": {"direction": "short", "entry": 1.183, "stop": 1.20, "target1": 1.10, "target2": 1.049},
+
+  "market_bias": "BEARISH",
+  "bias_qualifier": "",
+
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H",
+    "analysis_time": "Jun 09, 2026 08:10 UTC",
+    "market_state": "TRANSITIONAL",
+    "market_state_note": "Capitulation low at $1.049 + counter-trend bounce into the $1.181-1.186 mean cluster; the daily is still bearish. Don't chase short below $1.18 — sell the tag of resistance on rejection, or stand aside. A held reclaim of $1.186 flips the read long toward $1.244.",
+    "current_phase": "Counter-trend Bounce"
+  },
+
+  "snapshot": [
+    {"label": "Current Price", "value": "$1.167"},
+    {"label": "24H High", "value": "$1.186"},
+    {"label": "24H Low", "value": "$1.135", "tone": "bear"},
+    {"label": "24H Volume", "value": "270M"},
+    {"label": "Funding Rate", "value": "-0.0026%"},
+    {"label": "Open Interest", "value": "$198M"}
+  ],
+
+  "daily": {
+    "lean": "BEARISH",
+    "count": "6 Bearish / 0 Neutral / 0 Bullish",
+    "factors": [
+      {"factor": "Structure", "reading": "LH + LL", "evidence": "Long grind down from $1.55 (May), then an accelerating flush $1.33 to $1.049 over ~8 sessions. Fresh lower low; no break of structure to the upside.", "call": "Bearish"},
+      {"factor": "20 EMA", "reading": "~$1.244", "evidence": "Price $1.167 well below the 20 EMA (computed from daily closes).", "call": "Bearish"},
+      {"factor": "50 EMA", "reading": "~$1.314", "evidence": "Price below; 20 EMA ($1.244) below 50 EMA ($1.314) — bearish stack.", "call": "Bearish"},
+      {"factor": "AVWAP", "reading": "$1.186", "evidence": "Price just below, not reclaimed.", "call": "Bearish"},
+      {"factor": "RSI regime", "reading": "34.3 (MA 32.2)", "evidence": "Oversold, sub-40 regime; ticking up off its MA but not out of bearish territory.", "call": "Bearish"},
+      {"factor": "Volume trend", "reading": "Expanding on declines", "evidence": "The two largest bars were the down-flush (616M, 403M) — capitulation; bounce volume fading (318 to 271 to 103M).", "call": "Bearish"}
+    ]
+  },
+
+  "h4": {
+    "lean": "MIXED",
+    "count": "2 Bullish / 1 Bearish / 2 Neutral",
+    "factors": [
+      {"factor": "Structure", "reading": "HH/HL off the low", "evidence": "Since $1.049, a clean micro-uptrend: higher lows (1.049 to 1.088 to 1.12 to 1.137 to 1.155) and higher highs to $1.186. Counter-trend bounce.", "call": "Bullish"},
+      {"factor": "20 EMA", "reading": "~$1.152", "evidence": "Price $1.167 above — bounce reclaimed it.", "call": "Neutral"},
+      {"factor": "50 EMA / AVWAP", "reading": "$1.181 / $1.185", "evidence": "Price stalling right at this cluster; not reclaimed.", "call": "Bearish"},
+      {"factor": "Momentum", "reading": "RSI 54.6, > its MA (50.3)", "evidence": "Above midline, rising.", "call": "Bullish"},
+      {"factor": "Volume", "reading": "Climax at low, fading bounce", "evidence": "Sell climax on the $1.049 print; up-bars ~50-67M but fading at resistance.", "call": "Neutral"}
+    ]
+  },
+
+  "setup": {
+    "type": "Pullback into Resistance (Trend-Continuation Short)",
+    "thesis": "Short the pullback into the $1.181-1.186 confluence (4H 50 EMA + 4H AVWAP + daily AVWAP) on rejection, targeting a retest of the $1.10 shelf and the $1.049 capitulation low. Do not chase short below $1.18, and do not flip long unless $1.186 is reclaimed and held.",
+    "not": "Not a long here (chasing +11% off the low into resistance); not mean reversion and not a reversal."
+  },
+
+  "verdict": {
+    "action": "WAIT",
+    "rationale": "This is a developing continuation short, not a trade to put on at $1.167. Wait for price to tag $1.181-1.186 (4H 50 EMA + dual AVWAP) and reject it, then short with the bearish daily bias toward $1.10 / $1.049. Don't chase short below $1.18, and flip the read only if $1.186 is reclaimed and held."
+  },
+
+  "scorecard": {
+    "factors": [
+      {"factor": "Daily Structure", "call": "Bearish"},
+      {"factor": "Daily EMA Position", "call": "Bearish"},
+      {"factor": "Daily AVWAP Position", "call": "Bearish"},
+      {"factor": "Daily RSI Regime", "call": "Bearish"},
+      {"factor": "Daily Volume Trend", "call": "Bearish"},
+      {"factor": "4H Structure", "call": "Bullish"},
+      {"factor": "4H EMA Position", "call": "Neutral"},
+      {"factor": "4H AVWAP Position", "call": "Bearish"},
+      {"factor": "4H Momentum", "call": "Bullish"},
+      {"factor": "4H Volume", "call": "Neutral"}
+    ],
+    "count": {"bullish": 2, "neutral": 2, "bearish": 6}
+  },
+
+  "evidence_matrix": [
+    {"factor": "Daily Structure", "timeframe": "Daily", "reading": "LH/LL downtrend, fresh LL at $1.049; no daily BOS up", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Daily EMA Position", "timeframe": "Daily", "reading": "Price $1.167 below 20 ($1.244) & 50 ($1.314); bearish stack", "interpretation": "Bearish", "impact": "down", "weight": "Medium"},
+    {"factor": "Daily Volume Trend", "timeframe": "Daily", "reading": "Capitulation 616M/403M on the flush; bounce volume fading", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "4H Structure", "timeframe": "4H", "reading": "HH/HL bounce off $1.049; reclaimed 4H 20 EMA — counter-trend", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Support / Resistance", "timeframe": "Daily + 4H", "reading": "Stalling at $1.181-1.186 (4H 50 EMA + dual AVWAP); supply overhead", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "VWAP / AVWAP", "timeframe": "Daily + 4H", "reading": "Below daily ($1.186) & at 4H ($1.185) AVWAP — not reclaimed", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "Liquidity Sweep", "timeframe": "4H", "reading": "$1.049 swept sell-side stops then reclaimed (failed-breakdown tell)", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Open Interest", "timeframe": "4H", "reading": "Flushed 171 to 157M into the low, rebuilt to 175M on the bounce — fresh longs into resistance", "interpretation": "Bearish", "impact": "down", "weight": "Medium"},
+    {"factor": "Funding Rate", "timeframe": "—", "reading": "-0.0026% (mildly negative) — shorts slightly crowded, modest squeeze-up risk", "interpretation": "Bullish", "impact": "up", "weight": "Low"},
+    {"factor": "CVD", "timeframe": "1H", "reading": "Higher low at the $1.049 price low (-2.16B to -1.85B), rising into the bounce = absorption", "interpretation": "Bullish", "impact": "up", "weight": "Medium"},
+    {"factor": "Momentum (RSI)", "timeframe": "Daily + 4H", "reading": "4H RSI 54 rising; daily RSI 34 turning up off oversold", "interpretation": "Bullish", "impact": "up", "weight": "Medium"},
+    {"factor": "Volume Profile (PR)", "timeframe": "4H", "reading": "PR Avg $1.13 below; PR Upper-1 $1.197 / daily 20 EMA $1.244 overhead supply", "interpretation": "Bearish", "impact": "down", "weight": "High"}
+  ],
+
+  "analyst_summary": [
+    "XRP is bearish on the swing — the daily is below every mean (20 EMA $1.244, 50 EMA $1.314, AVWAP $1.186) with a fresh lower low at the $1.049 capitulation flush — but the 4H has bounced (HH/HL, reclaimed the 4H 20 EMA) into the $1.181-1.186 mean cluster.",
+    "The play is to sell the rally into resistance with the dominant bearish bias, not to chase a +11% bounce: short the $1.181-1.186 tag on rejection, stop above $1.20, targeting $1.10 then the $1.049 low (~1:4.9 / ~1:7.9).",
+    "The real caveat is a textbook capitulation signature at $1.049 — CVD higher-low absorption, an OI long-flush, and mildly negative funding — so a held reclaim of $1.186 flips the read long toward $1.244; respect that line in both directions.",
+    "BTC dependency: the $1.049 flush looks like a broad liquidation cascade, so this short assumes BTC stays heavy — a strong BTC bid would likely drag XRP through $1.186 and invalidate it. Data caveat: the chart's EMA studies failed to load, so the 20/50 EMA values are computed from the Bybit close series."
+  ],
+  "bottom_line": "Trend-following continuation short within a bearish daily trend — but a developing one: sell the $1.181-1.186 rejection, don't short the hole. A held reclaim of $1.186 flips it long.",
+
+  "what_changes_my_mind": {
+    "bullish_upgrade": {
+      "title": "Bullish Flip",
+      "subtitle": "Invalidates the Short",
+      "checks": [
+        "4H close above $1.186 (dual AVWAP + 4H 50 EMA)",
+        "Reclaim and hold $1.196-1.20 (PR Upper-1)",
+        "OI keeps rebuilding as price rises (real demand)",
+        "CVD continues higher with price"
+      ],
+      "result": "Read flips long toward the daily 20 EMA $1.244; the short is off."
+    },
+    "bearish_confirmation": {
+      "title": "Bearish Confirmation",
+      "subtitle": "Short Triggers",
+      "checks": [
+        "Rejection wick at $1.181-1.186 on the first tag",
+        "Volume fades into resistance / expands on the turn down",
+        "4H close back below $1.152 (4H 20 EMA)"
+      ],
+      "result": "Continuation short confirmed; targets $1.10 then $1.049."
+    }
+  },
+
+  "bull_case": "Capitulation at $1.049 (climax volume + CVD higher-low absorption + OI long-flush + negative funding) plus a 4H HH/HL reclaim — a bounce that extends to the daily 20 EMA $1.244.",
+  "bear_case": "Daily below every mean with a fresh LL, and the bounce stalling dead at the $1.181-1.186 supply with OI rebuilding into it — a dead-cat to be sold for a retest of $1.10 / $1.049.",
+
+  "trade_plan": {
+    "direction": "Trend-Continuation Short",
+    "rows": [
+      {"label": "Entry Zone", "value": "$1.181 - $1.186", "note": "4H 50 EMA + 4H AVWAP + daily AVWAP (on rejection)", "tone": "bear"},
+      {"label": "Stop Loss", "value": "> $1.20", "note": "Above PR Upper-1 / invalidation", "tone": "bear"},
+      {"label": "Risk", "value": "~$0.017 per XRP", "note": ""},
+      {"label": "Target 1", "value": "$1.10", "note": "Prior 4H consolidation shelf", "tone": "blue"},
+      {"label": "Target 2", "value": "$1.049", "note": "Capitulation low (stretch ~$1.041)", "tone": "blue"}
+    ],
+    "rr": [
+      {"label": "To Target 1", "value": "~1 : 4.9"},
+      {"label": "To Target 2", "value": "~1 : 7.9"}
+    ]
+  },
+
+  "key_levels": {
+    "resistance": [
+      {"price": "$1.314", "label": "Daily 50 EMA"},
+      {"price": "$1.244", "label": "Daily 20 EMA"},
+      {"price": "$1.197", "label": "4H PR Upper-1 / Invalidation"},
+      {"price": "$1.186", "label": "Daily AVWAP / Entry top"},
+      {"price": "$1.185", "label": "4H AVWAP"},
+      {"price": "$1.181", "label": "4H 50 EMA / Entry"}
+    ],
+    "support": [
+      {"price": "$1.152", "label": "4H 20 EMA"},
+      {"price": "$1.130", "label": "4H PR Average"},
+      {"price": "$1.10", "label": "Consolidation Shelf / Target 1"},
+      {"price": "$1.049", "label": "Capitulation Low / Target 2"},
+      {"price": "$1.041", "label": "4H PR Lower-1 (stretch)"}
+    ]
+  },
+
+  "probability_distribution": [
+    {"scenario": "Bearish Continuation (Rejects $1.186, retests $1.05)", "pct": 45, "tone": "bear"},
+    {"scenario": "Range / Chop ($1.10-$1.19)", "pct": 30, "tone": "neutral"},
+    {"scenario": "Bullish Reclaim (Holds > $1.186 to $1.244)", "pct": 25, "tone": "bull"}
+  ],
+
+  "failure_scenario": "The $1.049 low holds, CVD absorption proves a real bottom, price reclaims $1.186 and squeezes the freshly-rebuilt shorts up to the daily 20 EMA ($1.244).",
+
+  "additional_data": [
+    {"label": "Volume Profile", "value": "PR Avg $1.13; supply $1.18-1.20; capitulation low $1.049"},
+    {"label": "VWAP / AVWAP", "value": "At/below daily $1.186 & 4H $1.185 (not reclaimed)"}
+  ],
+
+  "derivatives": [
+    {"metric": "OI", "signal": "Flush + Rebuild", "note": "New longs into resistance", "tone": "neutral"},
+    {"metric": "Funding", "signal": "Mildly Negative", "note": "Slight short lean, squeeze fuel", "tone": "bull"},
+    {"metric": "CVD", "signal": "Absorption Higher-Low", "note": "Real buying on the bounce", "tone": "bull"}
+  ],
+  "derivatives_summary": "Selling was flushed out at $1.049 and buyers stepped in (CVD absorption, OI long-flush, slightly negative funding) — flow leans bounce-supportive, which is the main risk to the continuation short until $1.186 rejects.",
+
+  "conclusion": "Trend-Following Continuation Short within a bearish daily trend — a developing short that needs the $1.181-1.186 rejection to confirm; explicitly not a long here and not mean reversion."
+}

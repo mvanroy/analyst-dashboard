@@ -1,0 +1,186 @@
+{
+  "schema_version": 1,
+  "framework_version": "v1",
+  "symbol": "NEAR/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-08T22:13:46Z",
+  "data_sources": ["Bybit USDⓈ-M perp (TradingView MCP)", "manual chart read"],
+
+  "price": "$2.15",
+  "change_pct_24h": 4.3,
+  "headline": "Mid-range after a blow-off top; holding the 50 EMA",
+  "levels": {"direction": "long", "entry": 1.925, "stop": 1.80, "target1": 2.40, "target2": 2.55},
+
+  "market_bias": "NEUTRAL",
+  "bias_qualifier": "TRANSITIONAL",
+
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H",
+    "analysis_time": "Jun 08, 2026 22:13 UTC",
+    "market_state": "TRANSITIONAL",
+    "market_state_note": "Parabolic blow-off → 41% crash to the 50 EMA → 4H bounce. Genuinely neutral at $2.15 (mid-range). No trade here — long the $1.90-1.95 dip, or short the $2.40-2.80 distribution supply; a break of $1.81 or $2.55 resolves it.",
+    "current_phase": "Range / Decision Point"
+  },
+
+  "snapshot": [
+    {"label": "Current Price", "value": "$2.15"},
+    {"label": "24H High", "value": "$2.263"},
+    {"label": "24H Low", "value": "$2.012", "tone": "bear"},
+    {"label": "24H Volume", "value": "76.8M"},
+    {"label": "Funding Rate", "value": "N/A"},
+    {"label": "Open Interest", "value": "N/A"}
+  ],
+
+  "daily": {
+    "lean": "NEUTRAL",
+    "count": "1 Bullish / 2 Bearish / 2 Neutral",
+    "factors": [
+      {"factor": "Structure", "reading": "Blow-off + correction", "evidence": "Parabolic rally $1.26 → $3.09 (+145% in ~5 weeks), then a violent ~41% reversal to $1.81 that broke the last higher low (BOS down) — but the drop bottomed on the rising 50 EMA and is bouncing. A damaged uptrend at a decision point.", "call": "Neutral"},
+      {"factor": "20 / 50 EMA", "reading": "~$2.17 / ~$1.82", "evidence": "Price ~at the 20 EMA, above the 50 EMA; 20 > 50 — bullish stack (computed from closes).", "call": "Bullish"},
+      {"factor": "AVWAP", "reading": "~$3.43", "evidence": "Price below AVWAP (anchored well above, off the higher cycle).", "call": "Bearish"},
+      {"factor": "RSI regime", "reading": "~51, below its MA", "evidence": "Reset from overbought to the midline; RSI below its (elevated) MA — momentum cooled off the blow-off.", "call": "Neutral"},
+      {"factor": "Volume trend", "reading": "Climactic both ways", "evidence": "Rally ran 167-187M up-days; the reversal/dump ran 127-150M (~10x the ~37M avg) — heavy distribution off the top.", "call": "Bearish"}
+    ]
+  },
+
+  "h4": {
+    "lean": "BULLISH",
+    "count": "3 Bullish / 1 Bearish / 1 Neutral",
+    "factors": [
+      {"factor": "Structure", "reading": "HH + HL (recovery)", "evidence": "Higher highs/higher lows off the $1.8143 low (1.81 → 1.88 → 1.96 → 2.09 lows; 1.95 → 2.10 → 2.23 highs). A short-term uptrend off the low.", "call": "Bullish"},
+      {"factor": "20 EMA", "reading": "~$2.10", "evidence": "Price $2.15 is above the 4H 20 EMA — reclaimed on the bounce.", "call": "Bullish"},
+      {"factor": "AVWAP", "reading": "~$3.43", "evidence": "Far below; stale far-back anchor (see Analyst Notes).", "call": "Bearish"},
+      {"factor": "Momentum", "reading": "RSI ~52, > its MA", "evidence": "RSI back above the midline and above its MA (42) — short-term momentum up.", "call": "Bullish"},
+      {"factor": "Volume", "reading": "Bounce moderate", "evidence": "Dump bars ran ~33M; bounce bars 12-20M — recovering but below the distribution.", "call": "Neutral"}
+    ]
+  },
+
+  "setup": {
+    "type": "Range Rotation (Post-Blow-off)",
+    "thesis": "No clean directional edge at $2.15 (mid-range). Trade the boundaries: a dip toward $1.90-1.95 (4H higher-low / range support) is the long-the-bounce entry toward $2.4-2.5; a rally into $2.4-2.8 (distribution supply) is the short-the-blow-off entry back toward $1.81. A decisive loss of $1.81 (bear) or reclaim of $2.5+ (bull) resolves the range and overrides the neutral stance.",
+    "not": "Not Trend Continuation (no clean trend); not Breakout/Breakdown (acceptance unconfirmed)."
+  },
+
+  "verdict": {
+    "action": "WAIT",
+    "rationale": "Genuinely neutral and no clean trade at $2.15 — price is mid-range, the worst location. Trade the boundaries: long a dip to $1.90-1.95 (stop <$1.81) toward $2.40-2.55, or short a rally into the $2.40-2.80 distribution supply back toward $1.81. A 4H close below $1.81 flips it bearish; acceptance above ~$2.55 flips it bullish. Don't trade the middle."
+  },
+
+  "scorecard": {
+    "factors": [
+      {"factor": "Daily Structure", "call": "Neutral"},
+      {"factor": "Daily EMA Position", "call": "Bullish"},
+      {"factor": "Daily AVWAP Position", "call": "Bearish"},
+      {"factor": "Daily RSI Regime", "call": "Neutral"},
+      {"factor": "Daily Volume Trend", "call": "Bearish"},
+      {"factor": "4H Structure", "call": "Bullish"},
+      {"factor": "4H EMA Position", "call": "Bullish"},
+      {"factor": "4H AVWAP Position", "call": "Bearish"},
+      {"factor": "4H Momentum", "call": "Bullish"},
+      {"factor": "4H Volume", "call": "Neutral"}
+    ],
+    "count": {"bullish": 4, "neutral": 3, "bearish": 3}
+  },
+
+  "evidence_matrix": [
+    {"factor": "Daily Structure", "timeframe": "Daily", "reading": "Blow-off top $3.09 → 41% crash, BOS down, but held the 50 EMA", "interpretation": "Neutral", "impact": "flat", "weight": "High"},
+    {"factor": "Daily EMA Position", "timeframe": "Daily", "reading": "20 ($2.17) > 50 ($1.82), price above 50 — bullish stack", "interpretation": "Bullish", "impact": "up", "weight": "Medium"},
+    {"factor": "Daily Volume Trend", "timeframe": "Daily", "reading": "Climactic distribution off the top (127-150M, ~10x avg)", "interpretation": "Bearish", "impact": "down", "weight": "High"},
+    {"factor": "4H Structure", "timeframe": "4H", "reading": "HH/HL recovery off $1.8143; reclaimed 4H 20 EMA", "interpretation": "Bullish", "impact": "up", "weight": "High"},
+    {"factor": "Momentum (RSI)", "timeframe": "Daily + 4H", "reading": "4H RSI ~52 > MA; daily ~51 < MA — split, midline", "interpretation": "Neutral", "impact": "flat", "weight": "Medium"},
+    {"factor": "Volume Profile", "timeframe": "Daily", "reading": "Distribution supply $2.4-2.9 overhead; $1.81 floor below", "interpretation": "Neutral", "impact": "flat", "weight": "High"},
+    {"factor": "Support / Resistance", "timeframe": "Daily + 4H", "reading": "$1.81 floor (tested) / $2.8-3.09 ceiling — defines range", "interpretation": "Neutral", "impact": "flat", "weight": "High"},
+    {"factor": "VWAP / AVWAP", "timeframe": "Daily + 4H", "reading": "Below AVWAP $3.43 (stale far anchor)", "interpretation": "Bearish", "impact": "down", "weight": "Medium"},
+    {"factor": "Liquidity / Sweeps", "timeframe": "4H", "reading": "$1.81 lows clustered & held", "interpretation": "Bullish", "impact": "up", "weight": "Medium"},
+    {"factor": "OI / Funding / CVD", "timeframe": "Derivs", "reading": "OI flushed 43M→33M (exhaustion); funding flat; CVD bearish divergence on the bounce", "interpretation": "Bearish", "impact": "down", "weight": "High"}
+  ],
+
+  "analyst_summary": [
+    "NEAR is the genuine neutral of the set — a parabolic leader (+145% to $3.09) that blew off, crashed 41% to its rising 50 EMA ($1.82), held it, and is bouncing. The daily EMA stack is bullish and the 4H has recovered (HH/HL, reclaimed 4H 20 EMA), but distribution volume, a structure break, and price below AVWAP keep it from being a bullish call.",
+    "Bias is Neutral/transitional (4/3/3) — a coin-flip at a decision point. No directional edge at $2.15 (mid-range).",
+    "Trade the boundaries: a dip to $1.90-1.95 is the long-the-bounce entry toward $2.40-2.50; a rally into $2.40-2.80 distribution is the short-the-blow-off entry back toward $1.81. A loss of $1.81 (bear) or reclaim of $2.55 (bull) resolves the range.",
+    "Caveats: blow-off tops deserve respect (if $1.81 breaks, downside can be fast); AVWAP (~$3.43) is a stale anchor; OI/Funding/CVD unavailable (notable on a parabolic move); high-beta to BTC — the boundary that breaks will likely follow BTC."
+  ],
+  "bottom_line": "Neutral / no clean trade at $2.15. Range rotation — long the $1.90-1.95 dip or short the $2.40-2.80 supply; a break of $1.81 or $2.55 resolves it. Don't trade the middle.",
+
+  "what_changes_my_mind": {
+    "bullish_upgrade": {
+      "title": "Bullish Resolution",
+      "subtitle": "Uptrend Resumes",
+      "checks": [
+        "4H close / acceptance above ~$2.55",
+        "Reclaim $2.4-2.5 distribution",
+        "Volume expansion on the upside",
+        "Holds above the 50 EMA ($1.82)"
+      ],
+      "result": "Uptrend resumes; bias flips bullish toward $2.8-3.09."
+    },
+    "bearish_confirmation": {
+      "title": "Bearish Resolution",
+      "subtitle": "Blow-off Top Confirmed",
+      "checks": [
+        "4H close below $1.81 (range low)",
+        "Distribution volume expands down",
+        "Lower high below $2.4"
+      ],
+      "result": "Blow-off top confirmed; downtrend toward $1.5-1.6."
+    }
+  },
+
+  "bull_case": "Parabolic leader pulled back to the rising 50 EMA ($1.82) and held, bullish EMA stack, confirmed 4H recovery — a buy-the-dip toward $2.4-2.8.",
+  "bear_case": "Parabolic blow-off top with a 41% crash on ~10x distribution volume and a structure break — the bounce is a relief rally into supply that fails toward $1.5-1.6.",
+
+  "trade_plan": {
+    "direction": "Range Rotation — Long the Dip / Short the Rally",
+    "rows": [
+      {"label": "At Spot $2.15", "value": "No trade — mid-range", "note": "Wait for a boundary", "tone": ""},
+      {"label": "Entry Zone", "value": "$1.90 - $1.95", "note": "Long: range support / 4H higher-low", "tone": "bull"},
+      {"label": "Stop Loss", "value": "< $1.81", "note": "Range low — break flips bearish", "tone": "bear"},
+      {"label": "Risk", "value": "~$0.125 per NEAR", "note": "", "tone": ""},
+      {"label": "Target 1", "value": "$2.40", "note": "Distribution supply", "tone": "blue"},
+      {"label": "Target 2", "value": "$2.55", "note": "Bull-resolution line", "tone": "blue"},
+      {"label": "Alt: Short", "value": "$2.40 - $2.80", "note": "Rally into distribution → $1.90-1.81", "tone": "bear"}
+    ],
+    "rr": [
+      {"label": "To Target 1", "value": "~1 : 3.8"},
+      {"label": "To Target 2", "value": "~1 : 5.0"}
+    ]
+  },
+
+  "key_levels": {
+    "resistance": [
+      {"price": "$3.09", "label": "Blow-off Top"},
+      {"price": "$2.80", "label": "Distribution Supply (top)"},
+      {"price": "$2.40", "label": "Distribution Supply / Short Entry"},
+      {"price": "$2.37", "label": "4H PR Upper-1"},
+      {"price": "$2.17", "label": "Daily 20 EMA"}
+    ],
+    "support": [
+      {"price": "$2.10", "label": "4H 20 EMA"},
+      {"price": "$1.90 - $1.95", "label": "Range Support / Long Entry (4H PR Lower-1 ~$1.91)"},
+      {"price": "$1.81", "label": "Range Low / 50 EMA / Invalidation"}
+    ]
+  },
+
+  "probability_distribution": [
+    {"scenario": "Range / Chop ($1.81-$2.80)", "pct": 45, "tone": "neutral"},
+    {"scenario": "Bullish Resolution (Reclaims $2.5+)", "pct": 30, "tone": "bull"},
+    {"scenario": "Bearish Resolution (Loses $1.81)", "pct": 25, "tone": "bear"}
+  ],
+
+  "failure_scenario": "A decisive directional break — most concerning, a loss of $1.81 that confirms the blow-off top and trends toward the catching-up 50 EMA / $1.5-1.6; or a reclaim of $2.5+ that resumes the uptrend and squeezes shorts.",
+
+  "derivatives": [
+    {"metric": "OI", "signal": "Exhaustion Flush", "note": "Forced longs out — bounce-prone", "tone": "bull"},
+    {"metric": "Funding", "signal": "Neutral Positioning", "note": "No leverage extreme", "tone": "neutral"},
+    {"metric": "CVD", "signal": "Weak Rally Quality", "note": "Rally lacks aggressive buying", "tone": "bear"}
+  ],
+  "derivatives_summary": "Selling pressure is being flushed out, but buyers are not yet in control.",
+
+  "additional_data": [
+    {"label": "Volume Profile", "value": "Distribution supply $2.4-2.9; range low $1.81"},
+    {"label": "VWAP / AVWAP", "value": "Below AVWAP $3.43 (stale anchor)"}
+  ],
+
+  "conclusion": "Neutral / No Clean Trade — Range Rotation; actionable only at the $1.81/$2.8 boundaries, not mid-range."
+}

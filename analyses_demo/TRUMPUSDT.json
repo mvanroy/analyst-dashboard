@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "framework_version": "v3",
+  "symbol": "TRUMP/USDT",
+  "contract": "PERP",
+  "generated_at": "2026-06-16T08:40:00Z",
+  "data_sources": [
+    "Bybit USDⓈ-M perp (TradingView MCP)",
+    "Bybit + Binance public REST (OI/Funding/CVD)",
+    "manual chart read"
+  ],
+  "price": "$1.989",
+  "change_pct_24h": -4.28,
+  "headline": "Rejected squeeze ($2.39) back-testing the $1.94-2.00 shelf",
+  "market_bias": "NEUTRAL",
+  "bias_qualifier": "TRANSITIONAL",
+  "liquidity_note": "⚠ transition — rejected squeeze, the $1.94 shelf decides the next leg",
+  "meta": {
+    "timeframe_analyzed": "Daily + 4H",
+    "analysis_time": "Jun 16, 2026 08:40 UTC",
+    "market_state": "TRANSITION",
+    "volatility_state": "EXPANSION",
+    "current_phase": "Post-Squeeze Pullback",
+    "market_state_note": "A -60% downtrend was broken by a violent +60% squeeze to $2.39, but the move was rejected at the $2.36-2.49 supply and has given back ~70%. Price is balancing on the $1.94-2.00 shelf / daily 20-EMA. Genuinely two-sided — the shelf decides the next leg."
+  },
+  "snapshot": [
+    {"label": "Current Price", "value": "$1.989"},
+    {"label": "24H High", "value": "$2.097"},
+    {"label": "24H Low", "value": "$1.940", "tone": "bear"},
+    {"label": "24H Volume", "value": "$58.9M"},
+    {"label": "Funding Rate", "value": "-0.0748%"},
+    {"label": "Open Interest", "value": "$26.1M"}
+  ],
+  "pattern_candidates": [
+    {
+      "name": "Structure Shift",
+      "qualifier": "bullish break of structure off 1.488",
+      "summary": "Regime break confirmed with strong follow-through, but price has retraced ~70% and acceptance at supply remains unproven.",
+      "grade": "B",
+      "maturity": "Triggered — acceptance failing",
+      "classification": "Transition / structure shift",
+      "evidence": [
+        "Prior downtrend clearly established; the squeeze broke its lower-high structure and cleared 1.74 and 2.00.",
+        "Printed a major higher high at 2.391 on climax volume (68M day) — a genuine regime break.",
+        "Daily 20-EMA reclaimed; daily RSI lifted out of oversold (50.9, back above its MA)."
+      ],
+      "missing": [
+        "No acceptance — rejected at supply and retraced ~70%, with no confirmed higher low yet.",
+        "Matters: a structure shift needs the new structure to hold."
+      ],
+      "confluence": "Supported by negative funding (-0.075%, crowded shorts) and an OI flush (15.3M → 13.0M, longs already out) — squeeze fuel if the shelf holds. Undercut by CVD making new lows with price (real selling, no absorption yet)."
+    },
+    {
+      "name": "Failed Breakout / Bull Trap",
+      "qualifier": "rejected at 2.391",
+      "summary": "A clean rejection at the $2.36-2.49 supply with real selling behind it, but the trap isn't complete while the $1.94 shelf holds.",
+      "grade": "B",
+      "maturity": "Mature",
+      "classification": "Transition / failed breakout",
+      "evidence": [
+        "Push into the pre-crash 2.36-2.49 supply, tagged 2.391, rejected hard.",
+        "Lower highs since (2.39 → 2.27 → 2.10) and a ~70% give-back — trapped-long behaviour.",
+        "CVD making fresh lows confirms real selling on the unwind."
+      ],
+      "missing": [
+        "Hasn't returned fully into prior structure — the 1.94 shelf / 1.74 launch zone still holds.",
+        "So the trap isn't yet completed."
+      ],
+      "confluence": "Bearish order flow (CVD) and the clean lower-high sequence support it; the negative funding / OI flush argue against follow-through."
+    },
+    {
+      "name": "Lower-High Pullback",
+      "qualifier": "corrective leg from 2.391",
+      "summary": "An orderly corrective leg into the shelf, but with no compression and the EMA cluster intact, it's only a developing pullback.",
+      "grade": "C",
+      "maturity": "Developing",
+      "classification": "Transition / corrective pullback",
+      "evidence": [
+        "Orderly LH/LL descent from 2.391 into the 1.94-2.00 shelf; price just lost the 4H 20-EMA (2.012).",
+        "4H RSI (50) rolled back under its MA (55.4) — momentum fading with the move."
+      ],
+      "missing": [
+        "No compression or flag boundaries — a steady bleed, not a tight consolidation.",
+        "Still holding the 4H 50/200-EMA cluster (1.93-1.98), so the base isn't broken."
+      ],
+      "confluence": "Supported by the fading momentum and CVD; weak because the shelf and EMA cluster are still intact."
+    }
+  ]
+}
