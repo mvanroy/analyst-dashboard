@@ -550,6 +550,31 @@ else:
     direction = (levels.get("direction") or "long").lower()
 is_long = direction != "short"
 
+# Per-setup push from the v3 pattern cards: explicit levels in the URL override the
+# file plan (backward-compatible — symbol-only pushes are unaffected).
+_qp_entry = st.query_params.get("entry")
+if _qp_entry and not _blank_mode:
+    try:
+        levels = {
+            "direction": (st.query_params.get("dir") or "long").lower(),
+            "entry": float(_qp_entry),
+            "stop": float(st.query_params.get("stop") or 0),
+            "target1": float(st.query_params.get("t1") or 0),
+            "target2": float(st.query_params.get("t2") or 0),
+        }
+        direction = levels["direction"]
+        is_long = direction != "short"
+        for _s in ("entry", "stop", "t1", "t2"):
+            st.session_state.pop(f"{_s}_{symbol}", None)
+            st.session_state.pop(f"pv_{_s}_{symbol}", None)
+        for _k in ("dir", "entry", "stop", "t1", "t2"):
+            try:
+                del st.query_params[_k]
+            except Exception:
+                pass
+    except (TypeError, ValueError):
+        pass
+
 # Level-input keys are namespaced per mode so Blank Calc levels never collide with a pushed
 # trade on the same symbol — each set persists independently across mode switches.
 _kpfx = "blank_" if _blank_mode else ""
@@ -1334,6 +1359,7 @@ def build_summary() -> str:
         skel = (
             row("Position Size", "—", "skel", "")
             + row("Position Value [exposure]" if is_exposure else "Position Value", "—", "skel", "")
+            + row("Stop Distance", "—", "skel", "")
             + row("Risk Amount", "—", "skel", "")
             + row("Reward → TP1", "—", "skel", "", tail=rp)
             + row("Reward → TP2", "—", "skel", "", tail=rp)
@@ -1362,6 +1388,8 @@ def build_summary() -> str:
         row("Position Size", f"{size:,.4f}", "white", coin)
         + row("Position Value [exposure]" if is_exposure else "Position Value",
               f"{notional:,.2f}", "blue" if is_exposure else "")
+        + row("Stop Distance", f"${stop_dist:.2f}", "",
+              unit="", tail=f"<span class='u'> · {(stop_dist / entry * 100) if entry else 0:.1f}%</span>")
         + row("Risk Amount", f"{risk_amount:,.2f}", "red", tail=risk_tail)
         + row("Reward → TP1", f"{rew1:,.2f}", "green", tail=f"<span class='rrpill'>1 : {rr1:.2f}</span>")
         + row("Reward → TP2", f"{rew2:,.2f}", "green", tail=f"<span class='rrpill'>1 : {rr2:.2f}</span>")

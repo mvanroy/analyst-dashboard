@@ -931,6 +931,7 @@ _CSS = """
 .ezstats{display:flex;align-items:center;gap:24px;}
 .hzlab{font-size:11px;color:#8b94a0;}
 .hzval{font-size:18px;font-weight:800;color:#e8edf6;margin-top:3px;display:flex;align-items:center;gap:8px;}
+.hzsub{font-size:13px;font-weight:700;color:#8b94a0;white-space:nowrap;}
 .hzval.bull{color:#2ebd85;}.hzval.bear{color:#f6465d;}.hzval.neu{color:#e8edf6;}
 .hzpill{font-size:9.5px;font-weight:700;letter-spacing:.02em;border-radius:6px;padding:2px 7px;border:1px solid currentColor;}
 .aring{position:absolute;top:14px;right:14px;width:64px;text-align:center;}
@@ -961,6 +962,7 @@ _CSS = """
 .ektp{font-size:12.5px;font-weight:800;letter-spacing:.03em;color:#4c8dff;}
 .eknote{flex:1;min-width:0;font-size:13px;color:#aab2bd;line-height:1.4;}
 .ekrr{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;font-size:13.5px;font-weight:800;letter-spacing:.02em;color:#fff;background:#3a7afe;border-radius:7px;padding:3px 10px;white-space:nowrap;}
+.ekrisk{flex:0 0 auto;display:inline-flex;align-items:center;font-size:13.5px;font-weight:800;letter-spacing:.02em;color:#e8edf6;white-space:nowrap;}
 .etiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
 .etile{border-radius:11px;padding:12px;border:1px solid;}
 .etlh{display:flex;align-items:center;gap:7px;font-size:10px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;}
@@ -1667,12 +1669,11 @@ def _pattern_entry(entry, current=None, symbol=None):
     )
 
     # Key under the trade map: a lead (stop icon, or TP1/TP2 label) · rationale,
-    # with the R:R in a solid blue box to the right of the Target rows.
-    def keyrow(lead, note, rr=""):
-        rrtxt = _e((rr or "").replace("~", "").strip())
-        if not (note or rrtxt):
+    # with a right-side chip — red risk on the stop row (the sizing input), blue
+    # R:R on the Target rows.
+    def keyrow(lead, note, chip=""):
+        if not (note or chip):
             return ""
-        rr_html = f'<span class="ekrr">{rrtxt}</span>' if rrtxt else ""
         note_html = (
             f'<span class="eknote">{_hl_numbers(note)}</span>' if note
             else '<span class="eknote"></span>'
@@ -1681,16 +1682,34 @@ def _pattern_entry(entry, current=None, symbol=None):
             '<div class="ekrow">'
             + f'<span class="eklead">{lead}</span>'
             + note_html
-            + rr_html
+            + chip
             + "</div>"
+        )
+
+    def rr_chip(rr):
+        rrtxt = _e((rr or "").replace("~", "").strip())
+        return f'<span class="ekrr">{rrtxt}</span>' if rrtxt else ""
+
+    # Stop-distance row: amber hazard icon · entry→stop distance ($ per unit + %).
+    # Computed from em0 (the entry pushed to the calculator) and the stop, so the
+    # value always matches the calculator's Stop Distance for the same setup —
+    # not the hand-rounded JSON risk label.
+    risk_row = ""
+    if sv is not None and em0:
+        _sd = abs(em0 - sv)
+        risk_row = keyrow(
+            f'<span class="ekic" style="color:#f5a623">{_IC_RISK}</span>',
+            "Entry → stop",
+            f'<span class="ekrisk">${_sd:.2f} · {_sd / em0 * 100:.1f}%</span>',
         )
 
     stop_lead = f'<span class="ekic" style="color:#f6465d">{_IC_SHIELD}</span>'
     key = (
         '<div class="ekey">'
         + keyrow(stop_lead, stop.get("note"))
-        + keyrow('<span class="ektp">TP1</span>', t1.get("note"), t1.get("rr"))
-        + keyrow('<span class="ektp">TP2</span>', t2.get("note"), t2.get("rr"))
+        + keyrow('<span class="ektp">TP1</span>', t1.get("note"), rr_chip(t1.get("rr")))
+        + keyrow('<span class="ektp">TP2</span>', t2.get("note"), rr_chip(t2.get("rr")))
+        + risk_row
         + "</div>"
     )
 
