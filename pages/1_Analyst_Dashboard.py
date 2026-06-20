@@ -103,9 +103,10 @@ if st.session_state.get("openai_analysis_error"):
 # Caption hugging the divider line, directly under the heading (no wasted space).
 if data:
     _m = data.get("meta", {})
+    _last_analysed = _m.get("analysis_time") or data.get("generated_at") or "unknown"
     _cap = (
-        f"Showing <b>{data.get('symbol', symbol)}</b> · analysis time "
-        f"{_m.get('analysis_time', '—')} · analysis performed on "
+        f"Viewing saved result for <b>{data.get('symbol', symbol)}</b> · "
+        f"<b>Last analysed:</b> {_last_analysed} · analysis performed on "
         f"{_m.get('timeframe_analyzed', '—')} · framework "
         f"{data.get('framework_version', 'Trade Setup Framework')}"
     )
