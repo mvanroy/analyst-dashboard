@@ -76,6 +76,46 @@ def _klines(client: httpx.Client, symbol: str, interval: str, limit: int = 180):
     return rows
 
 
+def _open_interest_history(client: httpx.Client, symbol: str, interval: str, limit: int = 24):
+    result = _get_json(
+        client,
+        "/v5/market/open-interest",
+        {"category": "linear", "symbol": symbol, "intervalTime": interval, "limit": limit},
+    )
+    rows = []
+    for raw in result.get("list") or []:
+        try:
+            rows.append(
+                {
+                    "ts": int(raw["timestamp"]),
+                    "open_interest": float(raw["openInterest"]),
+                }
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    return sorted(rows, key=lambda row: row["ts"])
+
+
+def _funding_history(client: httpx.Client, symbol: str, limit: int = 24):
+    result = _get_json(
+        client,
+        "/v5/market/funding/history",
+        {"category": "linear", "symbol": symbol, "limit": limit},
+    )
+    rows = []
+    for raw in result.get("list") or []:
+        try:
+            rows.append(
+                {
+                    "ts": int(raw["fundingRateTimestamp"]),
+                    "funding_rate_pct": float(raw["fundingRate"]) * 100,
+                }
+            )
+        except (KeyError, TypeError, ValueError):
+            continue
+    return sorted(rows, key=lambda row: row["ts"])
+
+
 def _ticker(client: httpx.Client, symbol: str):
     result = _get_json(
         client,
@@ -124,6 +164,195 @@ def _round(value, digits=4):
     return round(float(value), digits)
 
 
+def _pct_change(current, previous):
+    try:
+        if previous in (None, 0):
+            return None
+        return (float(current) - float(previous)) / float(previous) * 100
+    except (TypeError, ValueError):
+        return None
+
+
+def _ema(values, period: int):
+    values = [float(v) for v in values if v is not None]
+    if not values:
+        return None
+    k = 2 / (period + 1)
+    ema = values[0]
+    for value in values[1:]:
+        ema = value * k + ema * (1 - k)
+    return ema
+
+
+def _rsi(values, period: int = 14):
+    values = [float(v) for v in values if v is not None]
+    if len(values) <= period:
+        return None
+    gains = []
+    losses = []
+    for idx in range(1, len(values)):
+        change = values[idx] - values[idx - 1]
+        gains.append(max(change, 0))
+        losses.append(max(-change, 0))
+    avg_gain = sum(gains[:period]) / period
+    avg_loss = sum(losses[:period]) / period
+    for gain, loss in zip(gains[period:], losses[period:]):
+        avg_gain = (avg_gain * (period - 1) + gain) / period
+        avg_loss = (avg_loss * (period - 1) + loss) / period
+    if avg_loss == 0:
+        return 100.0
+    rs = avg_gain / avg_loss
+    return 100 - (100 / (1 + rs))
+
+
+def _atr(candles, period: int = 14):
+    if len(candles) <= 1:
+        return None
+    true_ranges = []
+    for idx in range(1, len(candles)):
+        candle = candles[idx]
+        prev_close = candles[idx - 1]["close"]
+        true_ranges.append(
+            max(
+                candle["high"] - candle["low"],
+                abs(candle["high"] - prev_close),
+                abs(candle["low"] - prev_close),
+            )
+        )
+    if len(true_ranges) < period:
+        return sum(true_ranges) / len(true_ranges) if true_ranges else None
+    return sum(true_ranges[-period:]) / period
+
+
+def _vwap(candles):
+    volume = sum(c["volume"] for c in candles if c.get("volume"))
+    if volume <= 0:
+        return None
+    turnover = sum(c["turnover"] for c in candles if c.get("turnover"))
+    if turnover > 0:
+        return turnover / volume
+    typical_turnover = sum(((c["high"] + c["low"] + c["close"]) / 3) * c["volume"] for c in candles)
+    return typical_turnover / volume
+
+
+def _anchored_vwaps(candles, label: str):
+    if not candles:
+        return {}
+    high_idx = max(range(len(candles)), key=lambda idx: candles[idx]["high"])
+    low_idx = min(range(len(candles)), key=lambda idx: candles[idx]["low"])
+    recent_idx = max(0, len(candles) - min(20, len(candles)))
+
+    def anchor(idx, name):
+        candle = candles[idx]
+        return {
+            "anchor": name,
+            "anchor_time": datetime.fromtimestamp(candle["ts"] / 1000, ZoneInfo("UTC")).strftime("%Y-%m-%d %H:%M"),
+            "anchor_price": _round(candle["high"] if "high" in name else candle["low"] if "low" in name else candle["close"], 6),
+            "vwap": _round(_vwap(candles[idx:]), 6),
+        }
+
+    return {
+        "swing_high": anchor(high_idx, f"{label} swing high"),
+        "swing_low": anchor(low_idx, f"{label} swing low"),
+        "recent_20": anchor(recent_idx, f"{label} recent 20-candle anchor"),
+    }
+
+
+def _indicator_summary(candles):
+    closes = [c["close"] for c in candles]
+    last = closes[-1] if closes else None
+    ema20 = _ema(closes[-50:], 20)
+    ema50 = _ema(closes[-90:], 50)
+    atr14 = _atr(candles, 14)
+    return {
+        "last_close": _round(last, 6),
+        "ema20": _round(ema20, 6),
+        "ema50": _round(ema50, 6),
+        "rsi14": _round(_rsi(closes, 14), 2),
+        "atr14": _round(atr14, 6),
+        "atr14_pct": _round((atr14 / last * 100) if atr14 and last else None, 2),
+        "position_vs_ema20_pct": _round(_pct_change(last, ema20), 2),
+        "position_vs_ema50_pct": _round(_pct_change(last, ema50), 2),
+    }
+
+
+def _trend_summary(rows):
+    if not rows:
+        return {}
+    current = rows[-1]["open_interest"]
+    out = {"current": _round(current, 4)}
+    offsets = {"5m": 1, "1h": 12, "4h": 48}
+    for label, offset in offsets.items():
+        if len(rows) > offset:
+            out[f"change_{label}_pct"] = _round(_pct_change(current, rows[-1 - offset]["open_interest"]), 2)
+    return out
+
+
+def _funding_summary(rows, current):
+    rates = [r["funding_rate_pct"] for r in rows]
+    avg = sum(rates) / len(rates) if rates else None
+    latest = rates[-1] if rates else current
+    return {
+        "current_pct": _round(current, 6),
+        "latest_history_pct": _round(latest, 6),
+        "history_avg_pct": _round(avg, 6),
+        "vs_history_avg_pct_points": _round((latest - avg) if latest is not None and avg is not None else None, 6),
+        "recent": [
+            {
+                "time": datetime.fromtimestamp(row["ts"] / 1000, ZoneInfo("UTC")).strftime("%Y-%m-%d %H:%M"),
+                "funding_rate_pct": _round(row["funding_rate_pct"], 6),
+            }
+            for row in rows[-8:]
+        ],
+    }
+
+
+def _volume_profile(candles, bins: int = 12):
+    if not candles:
+        return {}
+    low = min(c["low"] for c in candles)
+    high = max(c["high"] for c in candles)
+    if high <= low:
+        return {}
+    step = (high - low) / bins
+    buckets = [{"low": low + idx * step, "high": low + (idx + 1) * step, "volume": 0.0} for idx in range(bins)]
+    for candle in candles:
+        typical = (candle["high"] + candle["low"] + candle["close"]) / 3
+        idx = min(bins - 1, max(0, int((typical - low) / step)))
+        buckets[idx]["volume"] += candle["volume"]
+    total = sum(bucket["volume"] for bucket in buckets)
+    poc = max(buckets, key=lambda bucket: bucket["volume"])
+    ranked = sorted(buckets, key=lambda bucket: bucket["volume"], reverse=True)
+    value_volume = 0.0
+    selected = []
+    for bucket in ranked:
+        selected.append(bucket)
+        value_volume += bucket["volume"]
+        if total and value_volume / total >= 0.7:
+            break
+    return {
+        "range": {"low": _round(low, 6), "high": _round(high, 6)},
+        "poc": {
+            "low": _round(poc["low"], 6),
+            "high": _round(poc["high"], 6),
+            "volume_share_pct": _round((poc["volume"] / total * 100) if total else None, 2),
+        },
+        "value_area_approx": {
+            "low": _round(min(bucket["low"] for bucket in selected), 6),
+            "high": _round(max(bucket["high"] for bucket in selected), 6),
+            "volume_share_pct": _round((value_volume / total * 100) if total else None, 2),
+        },
+        "high_volume_nodes": [
+            {
+                "low": _round(bucket["low"], 6),
+                "high": _round(bucket["high"], 6),
+                "volume_share_pct": _round((bucket["volume"] / total * 100) if total else None, 2),
+            }
+            for bucket in ranked[:3]
+        ],
+    }
+
+
 def _candle_summary(candles, limit=18):
     out = []
     for c in candles[-limit:]:
@@ -154,6 +383,8 @@ def build_evidence_pack(symbol: str):
         }
         btc_15m = _klines(client, "BTCUSDT", "15", limit=CANDLE_WINDOWS["15M"])
         eth_15m = _klines(client, "ETHUSDT", "15", limit=CANDLE_WINDOWS["15M"])
+        oi_5m = _open_interest_history(client, symbol, "5min", limit=60)
+        funding = _funding_history(client, symbol, limit=24)
 
     cor = scanner._pearson(_returns(candles["15M"]), _returns(btc_15m))
     generated = datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%b %-d, %Y, %-I:%M %p %Z")
@@ -178,6 +409,27 @@ def build_evidence_pack(symbol: str):
         "execution_highlight": {
             "15M_last_18": _candle_summary(candles["15M"], limit=EXECUTION_HIGHLIGHT_CANDLES),
         },
+        "derived_indicators": {
+            "note": "Computed locally from Bybit OHLCV. Use as evidence, not as a separate trading system.",
+            "trend_momentum_volatility": {
+                label: _indicator_summary(rows) for label, rows in candles.items()
+            },
+            "open_interest_trend": {
+                "source": "Bybit open-interest history, 5-minute sampling",
+                **_trend_summary(oi_5m),
+            },
+            "funding_context": _funding_summary(funding, ticker.get("funding_rate_pct")),
+            "anchored_vwap": {
+                "1D": _anchored_vwaps(candles["1D"], "1D"),
+                "4H": _anchored_vwaps(candles["4H"], "4H"),
+                "1H": _anchored_vwaps(candles["1H"], "1H"),
+            },
+            "volume_profile_approx": {
+                "method": "Approximate profile from candle typical-price volume buckets; useful for POC/value-area context, not tick-accurate order flow.",
+                "1H_72": _volume_profile(candles["1H"]),
+                "15M_36": _volume_profile(candles["15M"]),
+            },
+        },
         "context": {
             "btc_15m_recent": _candle_summary(btc_15m, limit=CANDLE_WINDOWS["15M"]),
             "eth_15m_recent": _candle_summary(eth_15m, limit=CANDLE_WINDOWS["15M"]),
@@ -185,7 +437,8 @@ def build_evidence_pack(symbol: str):
         "limitations": [
             "This prototype uses Bybit public market data, not a TradingView chart screenshot.",
             "CVD and detailed order-flow are not included yet.",
-            "Open interest is current snapshot only in this first pass.",
+            "Volume profile is approximated from candle data, not tick-level traded volume at price.",
+            "AVWAP anchors are algorithmic swing/recent anchors; treat them as context unless they align with visible structure.",
         ],
     }
 
@@ -426,9 +679,15 @@ def generate_dashboard_analysis(symbol: str, api_key: str, model: str = DEFAULT_
         "trade-location fields. If a candidate has no clean live trade, still fill the entry object "
         "with conditional or no-trade language in labels/subtitles/notes; do not make up a clean entry.\n\n"
         "Do not mention TradingView unless the evidence supports it; this is Bybit OHLCV/ticker/OI/funding "
-        "data. Do not claim CVD, AVWAP, RSI, EMA, or volume profile unless you can derive it from the "
-        "supplied evidence. You may use support/resistance, candle swings, compression, measured moves, "
-        "funding, OI, and BTC-COR 15M.\n\n"
+        "data. Do not claim CVD or detailed order-flow because those are not supplied. You may use the "
+        "supplied derived indicators: OI trend, funding context, EMA, RSI, ATR, anchored VWAP, approximate "
+        "volume profile, support/resistance, candle swings, compression, measured moves, and BTC-COR 15M. "
+        "Treat approximate volume profile and algorithmic AVWAP anchors as contextual evidence, not as "
+        "tick-perfect confirmation.\n\n"
+        "Grade rule: A is allowed when a setup is genuinely executable now or on a very near trigger, with "
+        "clean location, clear invalidation, strong context alignment, acceptable R:R, and no major unresolved "
+        "warning. Do not reserve A for perfection; do not award A to a chase, a mid-range idea, or a setup "
+        "missing its trigger/location.\n\n"
         "Candle weighting rule: use 1D 90, 4H 90, and 1H 72 candles as the context window. "
         "Use 15M 36 candles as the execution window, with the supplied 15M last-18 highlight "
         "as the trigger/confirmation window only. Do not let the last 18 candles override the "
