@@ -22,6 +22,13 @@ import scanner
 BYBIT_BASE = "https://api.bybit.com"
 OPENAI_URL = "https://api.openai.com/v1/responses"
 DEFAULT_MODEL = "gpt-5.2"
+CANDLE_WINDOWS = {
+    "1D": 90,
+    "4H": 90,
+    "1H": 72,
+    "15M": 36,
+}
+EXECUTION_HIGHLIGHT_CANDLES = 18
 
 _ROOT = os.path.dirname(os.path.abspath(__file__))
 _FRAMEWORK_PROMPT_PATH = os.path.join(_ROOT, "framework", "openai_trade_action_prompt.txt")
@@ -141,9 +148,12 @@ def build_evidence_pack(symbol: str):
     intervals = {"1D": "D", "4H": "240", "1H": "60", "15M": "15"}
     with httpx.Client(headers={"User-Agent": "orion-lite/1.0"}) as client:
         ticker = _ticker(client, symbol)
-        candles = {label: _klines(client, symbol, interval) for label, interval in intervals.items()}
-        btc_15m = _klines(client, "BTCUSDT", "15")
-        eth_15m = _klines(client, "ETHUSDT", "15")
+        candles = {
+            label: _klines(client, symbol, interval, limit=CANDLE_WINDOWS[label])
+            for label, interval in intervals.items()
+        }
+        btc_15m = _klines(client, "BTCUSDT", "15", limit=CANDLE_WINDOWS["15M"])
+        eth_15m = _klines(client, "ETHUSDT", "15", limit=CANDLE_WINDOWS["15M"])
 
     cor = scanner._pearson(_returns(candles["15M"]), _returns(btc_15m))
     generated = datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%b %-d, %Y, %-I:%M %p %Z")
@@ -153,10 +163,24 @@ def build_evidence_pack(symbol: str):
         "source": "Bybit public linear perpetual market data",
         "ticker": {k: _round(v, 6) if isinstance(v, (int, float)) else v for k, v in ticker.items()},
         "btc_cor_15m": _round(cor, 4),
-        "candles": {label: _candle_summary(rows) for label, rows in candles.items()},
+        "candle_window_policy": {
+            "context": {
+                "1D": "last 90 candles for higher-timeframe regime and major levels",
+                "4H": "last 90 candles for trade context, trend, range, failed breakdowns, and reclaims",
+                "1H": "last 72 candles for near-term structure and setup development",
+            },
+            "execution": {
+                "15M": "last 36 candles for execution context",
+                "15M_last_18_highlight": "most recent 18 candles used as the trigger/confirmation window, not the whole analysis",
+            },
+        },
+        "candles": {label: _candle_summary(rows, limit=CANDLE_WINDOWS[label]) for label, rows in candles.items()},
+        "execution_highlight": {
+            "15M_last_18": _candle_summary(candles["15M"], limit=EXECUTION_HIGHLIGHT_CANDLES),
+        },
         "context": {
-            "btc_15m_recent": _candle_summary(btc_15m, limit=10),
-            "eth_15m_recent": _candle_summary(eth_15m, limit=10),
+            "btc_15m_recent": _candle_summary(btc_15m, limit=CANDLE_WINDOWS["15M"]),
+            "eth_15m_recent": _candle_summary(eth_15m, limit=CANDLE_WINDOWS["15M"]),
         },
         "limitations": [
             "This prototype uses Bybit public market data, not a TradingView chart screenshot.",
@@ -335,7 +359,10 @@ def _stamp_dashboard_metadata(data: dict, symbol: str, evidence: dict) -> dict:
     data["price"] = _fmt_price(last)
     data["change_pct_24h"] = round(float(ticker.get("change_24h_pct") or 0), 2)
     data["meta"] = data.get("meta") or {}
-    data["meta"]["timeframe_analyzed"] = data["meta"].get("timeframe_analyzed") or "Daily + 4H + 1H + 15M"
+    data["meta"]["timeframe_analyzed"] = (
+        data["meta"].get("timeframe_analyzed")
+        or "Context: 1D 90, 4H 90, 1H 72; execution: 15M 36, last 18 highlighted"
+    )
     data["meta"]["analysis_time"] = datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%b %-d, %Y, %-I:%M %p %Z")
     data["snapshot"] = [
         {"label": "Current Price", "value": _fmt_price(last)},
@@ -402,6 +429,10 @@ def generate_dashboard_analysis(symbol: str, api_key: str, model: str = DEFAULT_
         "data. Do not claim CVD, AVWAP, RSI, EMA, or volume profile unless you can derive it from the "
         "supplied evidence. You may use support/resistance, candle swings, compression, measured moves, "
         "funding, OI, and BTC-COR 15M.\n\n"
+        "Candle weighting rule: use 1D 90, 4H 90, and 1H 72 candles as the context window. "
+        "Use 15M 36 candles as the execution window, with the supplied 15M last-18 highlight "
+        "as the trigger/confirmation window only. Do not let the last 18 candles override the "
+        "broader context if they are merely a late move into support/resistance or exhaustion.\n\n"
         "Dashboard schema hint:\n"
         f"{json.dumps(_schema_hint(symbol, evidence), indent=2)}\n\n"
         "USER FRAMEWORK PROMPT:\n"
