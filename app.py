@@ -60,8 +60,9 @@ st.markdown(
       .orion-logo .accent {color: #4c8dff;}
       .orion-logo .sub {display: block; font-size: .8rem; font-weight: 400; color: #848e9c; letter-spacing: .02em;}
       .orion-meta {color: #5b626c; font-size: .8rem; margin-top: .2rem;}
+      .ezw-heading {margin: 1.05rem 0 .45rem 0;}
       .st-key-entry_zone_watchlist {
-        margin: 1.05rem 0 1.15rem 0;
+        margin: 0 0 1.15rem 0;
         border: 1px solid rgba(139,92,246,.38);
         border-radius: 10px;
         background: rgba(19,16,30,.82);
@@ -69,8 +70,6 @@ st.markdown(
         padding: 13px 15px 15px;
       }
       .st-key-entry_zone_watchlist [data-testid="stHorizontalBlock"] {align-items: flex-start;}
-      .ezw-title {font-size: 1.06rem; font-weight: 800; color: #e6e8eb; letter-spacing: .02em;}
-      .ezw-sub {font-size: .78rem; color: #8b94a0; margin-top: 2px;}
       .ezw-time {font-size: .76rem; color: #6f7885; text-align: right; margin-top: 5px;}
       .ezw-empty {border-top: 1px solid #252b35; padding-top: 12px; color: #8b94a0; font-size: .84rem;}
       .ezw-table {width: 100%; border-collapse: collapse; font-size: .78rem;}
@@ -903,19 +902,21 @@ else:
         "Run Analyse on high-volume symbols to seed this watchlist, then Refresh.</div>"
     )
 
+_ezw_logo = chrome.logo_data_uri()
+_ezw_logo_img = f'<img src="{_ezw_logo}" alt="logo">' if _ezw_logo else ""
+st.markdown(
+    '<div class="ezw-heading">'
+    '<div class="orion-brand">'
+    f"{_ezw_logo_img}"
+    '<div class="orion-logo">ENTRY ZONE <span class="accent">WATCHLIST</span>'
+    '<span class="sub">Saved A/B setups · top 30 liquid pairs · price still outside entry</span></div>'
+    "</div>"
+    "</div>",
+    unsafe_allow_html=True,
+)
+
 with st.container(key="entry_zone_watchlist"):
     wz_l, wz_r = st.columns([3, 1], vertical_alignment="top")
-    with wz_l:
-        _ezw_logo = chrome.logo_data_uri()
-        _ezw_logo_img = f'<img src="{_ezw_logo}" alt="logo">' if _ezw_logo else ""
-        st.markdown(
-            '<div class="orion-brand">'
-            f"{_ezw_logo_img}"
-            '<div class="orion-logo">ENTRY ZONE <span class="accent">WATCHLIST</span>'
-            '<span class="sub">Saved A/B setups · top 30 liquid pairs · price still outside entry</span></div>'
-            "</div>",
-            unsafe_allow_html=True,
-        )
     with wz_r:
         if st.button("Refresh", key="entry_zone_refresh"):
             build_entry_zone_watchlist.clear()
