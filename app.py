@@ -906,9 +906,14 @@ else:
 with st.container(key="entry_zone_watchlist"):
     wz_l, wz_r = st.columns([3, 1], vertical_alignment="top")
     with wz_l:
+        _ezw_logo = chrome.logo_data_uri()
+        _ezw_logo_img = f'<img src="{_ezw_logo}" alt="logo">' if _ezw_logo else ""
         st.markdown(
-            "<div class='ezw-title'>Entry Zone Watchlist</div>"
-            "<div class='ezw-sub'>Saved A/B setups from the current top 30 liquid pairs where price is still outside entry.</div>",
+            '<div class="orion-brand">'
+            f"{_ezw_logo_img}"
+            '<div class="orion-logo">ENTRY ZONE <span class="accent">WATCHLIST</span>'
+            '<span class="sub">Saved A/B setups · top 30 liquid pairs · price still outside entry</span></div>'
+            "</div>",
             unsafe_allow_html=True,
         )
     with wz_r:
