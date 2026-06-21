@@ -91,16 +91,10 @@ st.markdown(
       .ezw-muted {color: #8b94a0;}
       .ezw-trigger {max-width: 360px; color: #aeb7c3; line-height: 1.35;}
       .ezw-info {display: flex; justify-content: flex-start; margin-top: 10px; padding-top: 8px; border-top: 1px solid #252b35;}
-      .ezw-eye {
+      .ezw-infoicon {
         position: relative; display: inline-flex; align-items: center; justify-content: center;
-        width: 24px; height: 18px; cursor: help; color: #8b94a0;
-      }
-      .ezw-eye-shape {
-        width: 20px; height: 12px; border: 1px solid #6f7a88; border-radius: 50% / 60%;
-        display: inline-flex; align-items: center; justify-content: center;
-      }
-      .ezw-eye-shape::after {
-        content: ""; width: 5px; height: 5px; border-radius: 50%; background: #9fc0ff;
+        width: 16px; height: 16px; border: 1px solid #4c8dff; border-radius: 50%;
+        color: #9fc0ff; font-size: 10px; font-weight: 800; cursor: help;
       }
       .ezw-eyebox {
         display: none; position: absolute; left: 0; bottom: 24px; z-index: 20; width: 360px;
@@ -108,7 +102,7 @@ st.markdown(
         background: #101722; color: #dce3ec; box-shadow: 0 14px 32px rgba(0,0,0,.35);
         font-size: .74rem; line-height: 1.45; font-weight: 400;
       }
-      .ezw-eye:hover .ezw-eyebox, .ezw-eye:focus .ezw-eyebox {display: block;}
+      .ezw-infoicon:hover .ezw-eyebox, .ezw-infoicon:focus .ezw-eyebox {display: block;}
       .st-key-entry_zone_refresh div[data-testid="stButton"] {justify-content: flex-end; margin-top: 0;}
       .st-key-entry_zone_refresh button {
         border-radius: 9999px !important;
@@ -923,8 +917,7 @@ else:
 
 watchlist_help = (
     "<div class='ezw-info'>"
-    "<span class='ezw-eye' tabindex='0' aria-label='Entry Zone Watchlist status definitions'>"
-    "<span class='ezw-eye-shape'></span>"
+    "<span class='ezw-infoicon' tabindex='0' aria-label='Entry Zone Watchlist status definitions'>i"
     "<span class='ezw-eyebox'>"
     "<b>Status key</b><br>"
     "<b>Approaching</b>: price is close to the entry zone but has not reached it yet.<br>"
