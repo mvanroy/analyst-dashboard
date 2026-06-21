@@ -1087,7 +1087,7 @@ _CSS = """
 .v3strip{flex:1 1 auto;width:100%;min-width:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 12px;padding:10px 2px;border-top:1px solid #1e242c;border-bottom:1px solid #1e242c;}
 .v3strip .livebadge{position:static;display:inline-flex;align-items:center;}
 .v3bias{display:flex;align-items:flex-end;gap:10px;}
-.v3bias.bull{color:#2ebd85;}.v3bias.bear{color:#f6465d;}.v3bias.neu{color:#aab2bd;}
+.v3bias.bull{color:#2ebd85;}.v3bias.bear{color:#f6465d;}.v3bias.neu{color:#e3a008;}
 .v3biasv{font-size:17px;font-weight:700;margin-top:3px;line-height:1.1;color:inherit;}
 .v3bias .bias-ico{width:44px;height:44px;flex:0 0 auto;display:block;position:relative;top:6px;}
 .v3si{min-width:0;flex:0 1 auto;}
@@ -1110,7 +1110,7 @@ _CSS = """
 .mc-im{padding-left:14px;}
 .v3banntop{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;}
 .v3biasinline{position:absolute;top:5px;right:2px;}
-.v3biasinline.bull{color:#2ebd85;}.v3biasinline.bear{color:#f6465d;}.v3biasinline.neu{color:#aab2bd;}
+.v3biasinline.bull{color:#2ebd85;}.v3biasinline.bear{color:#f6465d;}.v3biasinline.neu{color:#e3a008;}
 .v3biasv2{display:flex;flex-direction:column;align-items:center;color:inherit;}
 .v3biasword{font-size:18px;font-weight:700;line-height:1.1;}
 .v3biasicon{margin-top:22px;line-height:0;}
@@ -1121,7 +1121,7 @@ _CSS = """
 .v3right .dcard{margin-bottom:0;}
 .v3right .mc-cond{flex:1;}
 .mc-bias .biasrow{display:flex;align-items:center;gap:12px;}
-.mc-bias .biasrow.bull{color:#2ebd85;}.mc-bias .biasrow.bear{color:#f6465d;}.mc-bias .biasrow.neu{color:#aab2bd;}
+.mc-bias .biasrow.bull{color:#2ebd85;}.mc-bias .biasrow.bear{color:#f6465d;}.mc-bias .biasrow.neu{color:#e3a008;}
 .mc-bias .biasval{font-size:22px;font-weight:800;line-height:1;color:inherit;}
 .mc-bias .biasrow .bias-ico{width:38px;height:38px;flex:0 0 auto;}
 .mc-bias .biasnote{margin-top:7px;color:#c2c9d2;font-size:12.5px;line-height:1.4;}
