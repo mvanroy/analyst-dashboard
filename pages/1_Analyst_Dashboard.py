@@ -104,15 +104,34 @@ if st.session_state.get("openai_analysis_error"):
 if data:
     _m = data.get("meta", {})
     _last_analysed = _m.get("analysis_time") or data.get("generated_at") or "unknown"
+    _grade_key = (
+        "<span class='gradehelp' tabindex='0'>i"
+        "<span class='gradehelpbox'>"
+        "<b>Trade grade key</b><br>"
+        "<b>A</b>: validated setup, strong R:R, clean location, entry not stale, meaningful move remains.<br>"
+        "<b>B</b>: good setup with one or more major weaknesses: mixed context, imperfect entry, incomplete trigger, or caveat.<br>"
+        "<b>C</b>: watchlist / tactical only; plausible but early, late, aggressive, or needing too much to go right.<br>"
+        "<b>D</b>: no valid trade setup: poor location, stale pattern, bad R:R, invalid structure, or hypothetical only.<br>"
+        "<b>Cap:</b> stale, lagging, chasing, or mostly resolved setups cannot be A-grade."
+        "</span></span>"
+    )
     _cap = (
         f"Viewing saved result for <b>{data.get('symbol', symbol)}</b> · "
         f"<b>Last analysed:</b> {_last_analysed} · analysis performed on "
         f"{_m.get('timeframe_analyzed', '—')} · framework "
-        f"{data.get('framework_version', 'Trade Setup Framework')}"
+        f"{data.get('framework_version', 'Trade Setup Framework')} {_grade_key}"
     )
     st.markdown(
         "<style>.v3capline{color:#8b94a0;font-size:.8rem;line-height:1.3;margin:0 0 14px 0;"
-        "padding-bottom:6px;border-bottom:1px solid #2a2f3a;}</style>"
+        "padding-bottom:6px;border-bottom:1px solid #2a2f3a;}"
+        ".gradehelp{position:relative;display:inline-flex;align-items:center;justify-content:center;"
+        "width:16px;height:16px;margin-left:5px;border:1px solid #4c8dff;border-radius:50%;"
+        "color:#9fc0ff;font-size:10px;font-weight:800;cursor:help;vertical-align:1px;}"
+        ".gradehelpbox{display:none;position:absolute;right:0;top:22px;z-index:10;width:360px;"
+        "padding:11px 12px;border:1px solid rgba(76,141,255,.45);border-radius:8px;"
+        "background:#101722;color:#dce3ec;box-shadow:0 14px 32px rgba(0,0,0,.35);"
+        "font-size:.74rem;line-height:1.45;font-weight:400;text-align:left;}"
+        ".gradehelp:hover .gradehelpbox,.gradehelp:focus .gradehelpbox{display:block;}</style>"
         f"<div class='v3capline'>{_cap}</div>",
         unsafe_allow_html=True,
     )
