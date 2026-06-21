@@ -109,7 +109,7 @@ if data:
         "<span class='gradehelpbox'>"
         "<b>Trade grade key</b><br>"
         "<b>A</b>: validated setup, strong R:R, clean location, entry not stale, meaningful move remains.<br>"
-        "<b>B</b>: good setup with one or more major weaknesses: mixed context, imperfect entry, incomplete trigger, or caveat.<br>"
+        "<b>B</b>: good setup with weaker validation: mixed context, thinner confluence, incomplete trigger, confirmation dependency, or caveat.<br>"
         "<b>C</b>: watchlist / tactical only; plausible but early, late, aggressive, or needing too much to go right.<br>"
         "<b>D</b>: no valid trade setup: poor location, stale pattern, bad R:R, invalid structure, or hypothetical only.<br>"
         "<b>Cap:</b> stale, lagging, chasing, or mostly resolved setups cannot be A-grade."
