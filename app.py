@@ -18,6 +18,7 @@ import streamlit.components.v1 as components
 from st_aggrid import AgGrid, JsCode
 
 import icons
+import openai_analysis
 import rules
 import scanner
 import chrome  # shared nav/clocks/brand chrome (single source of truth)
@@ -88,6 +89,7 @@ st.markdown(
         padding: 13px 15px 15px;
       }
       .ezw-time {font-size: .76rem; color: #6f7885; text-align: right; margin-top: 5px;}
+      .ezw-scan-note {font-size: .76rem; color: #8b94a0; margin: -.25rem 0 .65rem 0;}
       .ezw-empty {border-top: 1px solid #252b35; padding-top: 12px; color: #8b94a0; font-size: .84rem;}
       .ezw-table {width: 100%; border-collapse: collapse; font-size: .78rem;}
       .ezw-table th {
@@ -318,9 +320,25 @@ WATCHLIST_SUBTITLES = {
 }
 
 
+WATCHLIST_REFRESH_LIMIT = 8
+
+
 @st.cache_data(show_spinner="Loading watchlist universe…")
 def watchlist_universe(mode):
     return tuple(scanner.bybit_watchlist_universe(mode, limit=30))
+
+
+def refresh_watchlist_analyses(symbols, api_key):
+    """Run fresh OpenAI analysis for the leading symbols in this universe."""
+    results = []
+    errors = []
+    for symbol in list(symbols)[:WATCHLIST_REFRESH_LIMIT]:
+        try:
+            result = openai_analysis.generate_dashboard_analysis(symbol, api_key=api_key)
+            results.append(result["symbol"])
+        except Exception as exc:
+            errors.append(f"{symbol}: {exc}")
+    return results, errors
 
 
 @st.cache_data(show_spinner="Refreshing Entry Zone Watchlist…")
@@ -923,6 +941,8 @@ with clockc:
 # ---------------- entry zone watchlist ----------------
 if "entry_zone_mode_label" not in st.session_state:
     st.session_state.entry_zone_mode_label = "Top Volume"
+if "entry_zone_scan_note" not in st.session_state:
+    st.session_state.entry_zone_scan_note = ""
 
 selected_watchlist_label = st.session_state.entry_zone_mode_label
 watchlist_symbols = watchlist_universe(WATCHLIST_MODES[selected_watchlist_label])
@@ -989,9 +1009,27 @@ with st.container(key="entry_zone_heading"):
         )
     with wz_r:
         if st.button("Refresh", key="entry_zone_refresh"):
-            watchlist_universe.clear()
-            build_entry_zone_watchlist.clear()
-            st.rerun()
+            try:
+                api_key = (st.secrets.get("openai_api_key") or "").strip()
+                if not api_key or api_key == "PASTE_OPENAI_API_KEY_HERE":
+                    raise RuntimeError("OpenAI API key is not configured in .streamlit/secrets.toml.")
+                with st.spinner(f"Scanning {selected_watchlist_label} with OpenAI..."):
+                    refreshed, scan_errors = refresh_watchlist_analyses(watchlist_symbols, api_key)
+                st.session_state.entry_zone_scan_note = (
+                    f"Fresh scan: analysed {len(refreshed)} {selected_watchlist_label} candidates. "
+                    f"{len(scan_errors)} failed." if scan_errors else
+                    f"Fresh scan: analysed {len(refreshed)} {selected_watchlist_label} candidates."
+                )
+                if scan_errors:
+                    st.session_state.entry_zone_scan_errors = scan_errors[:3]
+                else:
+                    st.session_state.entry_zone_scan_errors = []
+            except Exception as exc:
+                st.session_state.entry_zone_scan_note = f"Fresh scan failed: {exc}"
+            finally:
+                watchlist_universe.clear()
+                build_entry_zone_watchlist.clear()
+                st.rerun()
         st.markdown(f"<div class='ezw-time'>Last scanned: {last_scanned}</div>", unsafe_allow_html=True)
 
 with st.container(key="entry_zone_filters"):
@@ -1002,6 +1040,12 @@ with st.container(key="entry_zone_filters"):
         horizontal=True,
         label_visibility="collapsed",
     )
+    if st.session_state.get("entry_zone_scan_note"):
+        st.markdown(f"<div class='ezw-scan-note'>{_h(st.session_state.entry_zone_scan_note)}</div>", unsafe_allow_html=True)
+    if st.session_state.get("entry_zone_scan_errors"):
+        with st.expander("Recent scan warnings"):
+            for err in st.session_state.entry_zone_scan_errors:
+                st.write(err)
 
 with st.container(key="entry_zone_watchlist"):
     st.markdown(
