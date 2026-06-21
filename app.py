@@ -5,7 +5,11 @@ Run with:  streamlit run app.py
 from __future__ import annotations
 
 import base64
+import glob
+import html
+import json
 import os
+import re
 import time
 
 import pandas as pd
@@ -56,6 +60,54 @@ st.markdown(
       .orion-logo .accent {color: #4c8dff;}
       .orion-logo .sub {display: block; font-size: .8rem; font-weight: 400; color: #848e9c; letter-spacing: .02em;}
       .orion-meta {color: #5b626c; font-size: .8rem; margin-top: .2rem;}
+      .st-key-entry_zone_watchlist {
+        margin: 1.05rem 0 1.15rem 0;
+        border: 1px solid rgba(139,92,246,.38);
+        border-radius: 10px;
+        background: rgba(19,16,30,.82);
+        box-shadow: 0 0 0 1px rgba(124,58,237,.06), 0 0 22px rgba(124,58,237,.15);
+        padding: 13px 15px 15px;
+      }
+      .st-key-entry_zone_watchlist [data-testid="stHorizontalBlock"] {align-items: flex-start;}
+      .ezw-title {font-size: 1.06rem; font-weight: 800; color: #e6e8eb; letter-spacing: .02em;}
+      .ezw-sub {font-size: .78rem; color: #8b94a0; margin-top: 2px;}
+      .ezw-time {font-size: .76rem; color: #6f7885; text-align: right; margin-top: 5px;}
+      .ezw-empty {border-top: 1px solid #252b35; padding-top: 12px; color: #8b94a0; font-size: .84rem;}
+      .ezw-table {width: 100%; border-collapse: collapse; font-size: .78rem;}
+      .ezw-table th {
+        color: #8b94a0; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase;
+        text-align: left; padding: 8px 7px; border-bottom: 1px solid #252b35;
+      }
+      .ezw-table td {padding: 9px 7px; border-bottom: 1px solid #191f28; color: #d7dde5; vertical-align: top;}
+      .ezw-table tr:last-child td {border-bottom: none;}
+      .ezw-grade {
+        display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px;
+        border-radius: 7px; border: 1px solid rgba(238,242,248,.8); font-weight: 900; color: #f0f2f5;
+      }
+      .ezw-dir-long {color: #0ecb81; font-weight: 800;}
+      .ezw-dir-short {color: #f6465d; font-weight: 800;}
+      .ezw-status {display: inline-block; border-radius: 999px; padding: 2px 8px; font-size: .68rem; font-weight: 800;}
+      .ezw-status.approaching {color: #e3a008; border: 1px solid rgba(227,160,8,.45); background: rgba(227,160,8,.12);}
+      .ezw-status.waiting {color: #9fc0ff; border: 1px solid rgba(76,141,255,.45); background: rgba(76,141,255,.10);}
+      .ezw-muted {color: #8b94a0;}
+      .ezw-trigger {max-width: 360px; color: #aeb7c3; line-height: 1.35;}
+      .st-key-entry_zone_refresh div[data-testid="stButton"] {justify-content: flex-end; margin-top: 0;}
+      .st-key-entry_zone_refresh button {
+        border-radius: 9999px !important;
+        border: 1px solid rgba(76,141,255,.75) !important;
+        background: rgba(76,141,255,.12) !important;
+        color: #e6e8eb !important;
+        font-weight: 600 !important;
+        min-height: 0 !important;
+        padding: 0.25rem 0.9rem !important;
+        width: auto !important;
+        white-space: nowrap !important;
+      }
+      .st-key-entry_zone_refresh button:hover {
+        border-color: #4c8dff !important;
+        color: #4c8dff !important;
+        background: transparent !important;
+      }
       .rationale {margin-top: 1rem; border-left: 2px solid #2a2f37; padding-left: .8rem;}
       .rationale h4 {color: #e6e8eb; font-size: .95rem; font-weight: 700; margin: 0 0 .4rem 0; letter-spacing: .02em;}
       .rationale ol {margin: 0; padding-left: 1.1rem; color: #9aa3ad; font-size: .8rem; line-height: 1.5;}
@@ -139,6 +191,106 @@ def funding_map(symbols):
 @st.cache_data(show_spinner=False)
 def taker_map(symbols):
     return scanner.taker_ratio(list(symbols))
+
+
+def _clean_symbol(value):
+    return re.sub(r"[^A-Z0-9]", "", (value or "").upper())
+
+
+def _h(value):
+    return html.escape(str(value if value is not None else ""))
+
+
+def _analysis_symbol(data, fallback):
+    symbol = _clean_symbol(data.get("symbol") or fallback)
+    if symbol and not symbol.endswith("USDT"):
+        symbol += "USDT"
+    return symbol
+
+
+def _fmt_entry_price(value):
+    if value is None:
+        return "—"
+    value = float(value)
+    if value >= 1:
+        return f"${value:,.2f}"
+    if value >= 0.01:
+        return f"${value:.4f}"
+    return f"${value:.6f}"
+
+
+def _candidate_watch_row(symbol, data, candidate):
+    grade = (candidate.get("grade") or "").strip().upper()[:1]
+    if grade not in {"A", "B"}:
+        return None
+
+    entry = candidate.get("entry") or {}
+    direction = (entry.get("direction") or "").strip().lower()
+    zone = entry.get("zone") or {}
+    try:
+        low = float(zone.get("low"))
+        high = float(zone.get("high"))
+    except (TypeError, ValueError):
+        return None
+    if low <= 0 or high <= 0:
+        return None
+    if low > high:
+        low, high = high, low
+    if direction not in {"long", "short"}:
+        return None
+
+    quote = scanner.live_ticker(symbol)
+    if not quote:
+        return None
+    current = float(quote["last"])
+
+    if direction == "long":
+        if current <= high:
+            return None
+        distance = (current - high) / current * 100
+    else:
+        if current >= low:
+            return None
+        distance = (low - current) / current * 100
+
+    status = "Approaching" if distance <= 1.0 else "Waiting"
+    subtitle = zone.get("subtitle") or ""
+    trigger = subtitle if subtitle else candidate.get("qualifier") or candidate.get("summary") or "Entry condition pending."
+    return {
+        "symbol": symbol,
+        "grade": grade,
+        "direction": direction,
+        "setup": candidate.get("name") or candidate.get("classification") or "Setup",
+        "status": status,
+        "entry": zone.get("label") or f"{_fmt_entry_price(low)} – {_fmt_entry_price(high)}",
+        "current": _fmt_entry_price(current),
+        "distance": distance,
+        "trigger": trigger,
+    }
+
+
+@st.cache_data(show_spinner="Refreshing Entry Zone Watchlist…")
+def build_entry_zone_watchlist(top_symbols):
+    top = set(top_symbols)
+    rows = []
+    analyses_dir = os.path.join(os.path.dirname(__file__), "analyses")
+    for path in glob.glob(os.path.join(analyses_dir, "*.json")):
+        fallback = os.path.splitext(os.path.basename(path))[0]
+        try:
+            with open(path, "r") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+        symbol = _analysis_symbol(data, fallback)
+        if symbol not in top:
+            continue
+        for candidate in data.get("pattern_candidates") or []:
+            row = _candidate_watch_row(symbol, data, candidate)
+            if row:
+                rows.append(row)
+
+    rows.sort(key=lambda row: ({"A": 0, "B": 1}.get(row["grade"], 2), row["distance"]))
+    return rows[:12], time.time()
 
 
 # S&P 500 futures sentiment — refreshes at most every 5 min, and on Run Market
@@ -713,6 +865,63 @@ with navc:
 with clockc:
     chrome.render_clocks()
 
+
+# ---------------- entry zone watchlist ----------------
+top30_symbols = tuple(df.sort_values("vol5m", ascending=False)["symbol"].head(30))
+watch_rows, watch_ts = build_entry_zone_watchlist(top30_symbols)
+last_scanned = time.strftime("%H:%M:%S", time.localtime(watch_ts))
+
+if watch_rows:
+    body = ""
+    for row in watch_rows:
+        dir_cls = "ezw-dir-long" if row["direction"] == "long" else "ezw-dir-short"
+        status_cls = row["status"].lower()
+        body += (
+            "<tr>"
+            f"<td><b>{_h(row['symbol'])}</b></td>"
+            f"<td><span class='ezw-grade'>{_h(row['grade'])}</span></td>"
+            f"<td><span class='{dir_cls}'>{_h(row['direction'].upper())}</span></td>"
+            f"<td>{_h(row['setup'])}</td>"
+            f"<td><span class='ezw-status {status_cls}'>{_h(row['status'])}</span></td>"
+            f"<td>{_h(row['entry'])}</td>"
+            f"<td>{_h(row['current'])}</td>"
+            f"<td>{row['distance']:.2f}%</td>"
+            f"<td class='ezw-trigger'>{_h(row['trigger'])}</td>"
+            "</tr>"
+        )
+    table = (
+        "<table class='ezw-table'><thead><tr>"
+        "<th>Symbol</th><th>Grade</th><th>Dir</th><th>Setup</th><th>Status</th>"
+        "<th>Entry Zone</th><th>Current</th><th>Distance</th><th>Trigger / Condition</th>"
+        "</tr></thead><tbody>"
+        f"{body}"
+        "</tbody></table>"
+    )
+else:
+    table = (
+        "<div class='ezw-empty'>No A/B saved setups from the current top 30 are waiting outside their entry zone. "
+        "Run Analyse on high-volume symbols to seed this watchlist, then Refresh.</div>"
+    )
+
+with st.container(key="entry_zone_watchlist"):
+    wz_l, wz_r = st.columns([3, 1], vertical_alignment="top")
+    with wz_l:
+        st.markdown(
+            "<div class='ezw-title'>Entry Zone Watchlist</div>"
+            "<div class='ezw-sub'>Saved A/B setups from the current top 30 liquid pairs where price is still outside entry.</div>",
+            unsafe_allow_html=True,
+        )
+    with wz_r:
+        if st.button("Refresh", key="entry_zone_refresh"):
+            build_entry_zone_watchlist.clear()
+            st.rerun()
+        st.markdown(f"<div class='ezw-time'>Last scanned: {last_scanned}</div>", unsafe_allow_html=True)
+    st.markdown(
+        f"{table}",
+        unsafe_allow_html=True,
+    )
+
+
 # ---------------- header: logo + refresh (left) + shortlist (right) ----------------
 left, right = st.columns([1, 3])
 
@@ -892,4 +1101,3 @@ AgGrid(
     custom_css=AGGRID_CSS,
     key="full_grid",
 )
-
