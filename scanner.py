@@ -168,6 +168,125 @@ def scan():
     return asyncio.run(_scan())
 
 
+# ---------------- Bybit watchlist universes ----------------
+async def _fetch_bybit_tickers(client):
+    data = await _get_json(
+        client,
+        BYBIT_BASE + "/v5/market/tickers",
+        params={"category": "linear"},
+    )
+    if data.get("retCode") not in (0, "0"):
+        return []
+    return (data.get("result") or {}).get("list") or []
+
+
+async def _fetch_bybit_instruments(client, symbol_type=None):
+    cursor = None
+    rows = []
+    while True:
+        params = {"category": "linear", "limit": "1000"}
+        if symbol_type:
+            params["symbolType"] = symbol_type
+        if cursor:
+            params["cursor"] = cursor
+        data = await _get_json(client, BYBIT_BASE + "/v5/market/instruments-info", params=params)
+        if data.get("retCode") not in (0, "0"):
+            break
+        result = data.get("result") or {}
+        rows.extend(result.get("list") or [])
+        cursor = result.get("nextPageCursor")
+        if not cursor:
+            break
+    return rows
+
+
+def _to_float(value, default=float("nan")):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+async def _bybit_watchlist_universe(mode, limit=30):
+    async with httpx.AsyncClient(headers={"User-Agent": "orion-lite/1.0"}) as client:
+        tickers, instruments = await asyncio.gather(
+            _fetch_bybit_tickers(client),
+            _fetch_bybit_instruments(client),
+        )
+
+    instrument_map = {item.get("symbol"): item for item in instruments if item.get("symbol")}
+    records = []
+    for ticker in tickers:
+        symbol = ticker.get("symbol")
+        instrument = instrument_map.get(symbol, {})
+        if (
+            not symbol
+            or instrument.get("status") != "Trading"
+            or instrument.get("contractType") != "LinearPerpetual"
+        ):
+            continue
+        symbol_type = instrument.get("symbolType") or ""
+        records.append(
+            {
+                "symbol": symbol,
+                "symbol_type": symbol_type,
+                "contract_type": instrument.get("contractType") or "",
+                "turnover24h": _to_float(ticker.get("turnover24h")),
+                "price24h_pct": _to_float(ticker.get("price24hPcnt")) * 100,
+                "launch_time": _to_float(instrument.get("launchTime"), 0),
+            }
+        )
+
+    if not records:
+        return []
+
+    df = pd.DataFrame.from_records(records)
+    crypto = df[~df["symbol_type"].isin(["stock", "commodity"])].copy()
+    stocks = df[df["symbol_type"].eq("stock")].copy()
+
+    if mode == "tradfi_stocks":
+        out = stocks.sort_values("turnover24h", ascending=False)
+    elif mode == "new":
+        out = crypto.sort_values("launch_time", ascending=False)
+    elif mode == "gainers":
+        floor = max(5_000_000, crypto["turnover24h"].quantile(0.35))
+        out = (
+            crypto[(crypto["price24h_pct"] > 0) & (crypto["turnover24h"] >= floor)]
+            .sort_values(["price24h_pct", "turnover24h"], ascending=[False, False])
+        )
+    elif mode == "change_24h":
+        out = crypto.sort_values("price24h_pct", ascending=False)
+    elif mode == "low_cap_impulse":
+        floor = max(50_000, crypto["turnover24h"].quantile(0.05))
+        ceiling = crypto["turnover24h"].quantile(0.75)
+        pool = crypto[
+            (crypto["price24h_pct"] >= 3)
+            & (crypto["turnover24h"] >= floor)
+            & (crypto["turnover24h"] <= ceiling)
+        ].copy()
+        if pool.empty:
+            pool = crypto[(crypto["price24h_pct"] > 0) & (crypto["turnover24h"] >= floor)].copy()
+        pool["low_cap_score"] = (
+            pool["price24h_pct"].rank(pct=True) * 0.55
+            + (1 - pool["turnover24h"].rank(pct=True)) * 0.25
+            + pool["turnover24h"].rank(pct=True) * 0.20
+        )
+        out = pool.sort_values(["low_cap_score", "price24h_pct"], ascending=[False, False])
+    else:
+        out = crypto.sort_values("turnover24h", ascending=False)
+
+    return out["symbol"].head(limit).tolist()
+
+
+def bybit_watchlist_universe(mode="top_volume", limit=30):
+    """Symbols for the Entry Zone Watchlist category selector.
+
+    The modes are intentionally scanner universes only; saved A/B analyses still
+    decide whether a symbol has a valid waiting entry-zone setup.
+    """
+    return asyncio.run(_bybit_watchlist_universe(mode, limit))
+
+
 # ---------------- open-interest change (fetched on demand, e.g. shortlist) ----------------
 _OI_NAN = {"oi5m": float("nan"), "oi1h": float("nan")}
 
@@ -351,6 +470,34 @@ def live_ticker(symbol):
             "high": float(d["highPrice"]),
             "low": float(d["lowPrice"]),
             "vol": float(d["volume"]),  # 24h base-asset volume (in coins)
+        }
+    except Exception:
+        return None
+
+
+def live_bybit_ticker(symbol):
+    """Live 24h ticker for one Bybit linear perp."""
+    try:
+        r = httpx.get(
+            BYBIT_BASE + "/v5/market/tickers",
+            params={"category": "linear", "symbol": symbol.upper()},
+            headers={"User-Agent": "orion-lite/1.0"},
+            timeout=6,
+        )
+        r.raise_for_status()
+        data = r.json()
+        if data.get("retCode") not in (0, "0"):
+            return None
+        items = (data.get("result") or {}).get("list") or []
+        if not items:
+            return None
+        item = items[0]
+        return {
+            "last": float(item["lastPrice"]),
+            "pct": float(item.get("price24hPcnt") or 0) * 100,
+            "high": float(item.get("highPrice24h") or 0),
+            "low": float(item.get("lowPrice24h") or 0),
+            "vol": float(item.get("volume24h") or 0),
         }
     except Exception:
         return None

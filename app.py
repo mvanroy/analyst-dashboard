@@ -62,6 +62,23 @@ st.markdown(
       .orion-meta {color: #5b626c; font-size: .8rem; margin-top: .2rem;}
       .st-key-entry_zone_heading {margin: 1.05rem 0 .45rem 0;}
       .st-key-entry_zone_heading [data-testid="stHorizontalBlock"] {align-items: flex-start;}
+      .st-key-entry_zone_filters {margin: -.15rem 0 .65rem 0;}
+      .st-key-entry_zone_filters [role="radiogroup"] {
+        display: flex; flex-wrap: wrap; gap: .45rem;
+      }
+      .st-key-entry_zone_filters label {
+        border: 1px solid rgba(230,232,235,.18);
+        border-radius: 9999px;
+        padding: .18rem .72rem;
+        background: rgba(19,16,30,.42);
+      }
+      .st-key-entry_zone_filters label:has(input:checked) {
+        border-color: rgba(76,141,255,.8);
+        background: rgba(76,141,255,.14);
+      }
+      .st-key-entry_zone_filters [data-testid="stMarkdownContainer"] p {
+        color: #8b94a0; font-size: .72rem; margin: .2rem 0 0 0;
+      }
       .st-key-entry_zone_watchlist {
         margin: 0 0 1.15rem 0;
         border: 1px solid rgba(139,92,246,.38);
@@ -251,7 +268,7 @@ def _candidate_watch_row(symbol, data, candidate):
     if direction not in {"long", "short"}:
         return None
 
-    quote = scanner.live_ticker(symbol)
+    quote = scanner.live_bybit_ticker(symbol) or scanner.live_ticker(symbol)
     if not quote:
         return None
     current = float(quote["last"])
@@ -281,9 +298,34 @@ def _candidate_watch_row(symbol, data, candidate):
     }
 
 
+WATCHLIST_MODES = {
+    "Top Volume": "top_volume",
+    "Gainers": "gainers",
+    "24h %": "change_24h",
+    "New": "new",
+    "TradFi: Stocks": "tradfi_stocks",
+    "Low Cap Impulse": "low_cap_impulse",
+}
+
+
+WATCHLIST_SUBTITLES = {
+    "Top Volume": "Saved A/B setups · most traded Bybit crypto perps · price still outside entry",
+    "Gainers": "Saved A/B setups · positive movers with liquidity filter · price still outside entry",
+    "24h %": "Saved A/B setups · raw Bybit 24h percentage movers · price still outside entry",
+    "New": "Saved A/B setups · newest Bybit crypto perps · price still outside entry",
+    "TradFi: Stocks": "Saved A/B setups · Bybit stock perps only · crypto excluded",
+    "Low Cap Impulse": "Saved A/B setups · lower-volume movers with unusual upside impulse",
+}
+
+
+@st.cache_data(show_spinner="Loading watchlist universe…")
+def watchlist_universe(mode):
+    return tuple(scanner.bybit_watchlist_universe(mode, limit=30))
+
+
 @st.cache_data(show_spinner="Refreshing Entry Zone Watchlist…")
-def build_entry_zone_watchlist(top_symbols):
-    top = set(top_symbols)
+def build_entry_zone_watchlist(source_symbols):
+    top = set(source_symbols)
     rows = []
     analyses_dir = os.path.join(os.path.dirname(__file__), "analyses")
     for path in glob.glob(os.path.join(analyses_dir, "*.json")):
@@ -879,8 +921,12 @@ with clockc:
 
 
 # ---------------- entry zone watchlist ----------------
-top30_symbols = tuple(df.sort_values("vol5m", ascending=False)["symbol"].head(30))
-watch_rows, watch_ts = build_entry_zone_watchlist(top30_symbols)
+if "entry_zone_mode_label" not in st.session_state:
+    st.session_state.entry_zone_mode_label = "Top Volume"
+
+selected_watchlist_label = st.session_state.entry_zone_mode_label
+watchlist_symbols = watchlist_universe(WATCHLIST_MODES[selected_watchlist_label])
+watch_rows, watch_ts = build_entry_zone_watchlist(watchlist_symbols)
 last_scanned = time.strftime("%H:%M:%S", time.localtime(watch_ts))
 
 if watch_rows:
@@ -911,8 +957,8 @@ if watch_rows:
     )
 else:
     table = (
-        "<div class='ezw-empty'>No A/B saved setups from the current top 30 are waiting outside their entry zone. "
-        "Run Analyse on high-volume symbols to seed this watchlist, then Refresh.</div>"
+        "<div class='ezw-empty'>No A/B saved setups from this universe are waiting outside their entry zone. "
+        "Run Analyse on symbols you want tracked, then Refresh.</div>"
     )
 
 watchlist_help = (
@@ -937,15 +983,25 @@ with st.container(key="entry_zone_heading"):
             '<div class="orion-brand">'
             f"{_ezw_logo_img}"
             '<div class="orion-logo">ENTRY ZONE <span class="accent">WATCHLIST</span>'
-            '<span class="sub">Saved A/B setups · top 30 liquid pairs · price still outside entry</span></div>'
+            f'<span class="sub">{_h(WATCHLIST_SUBTITLES[selected_watchlist_label])}</span></div>'
             "</div>",
             unsafe_allow_html=True,
         )
     with wz_r:
         if st.button("Refresh", key="entry_zone_refresh"):
+            watchlist_universe.clear()
             build_entry_zone_watchlist.clear()
             st.rerun()
         st.markdown(f"<div class='ezw-time'>Last scanned: {last_scanned}</div>", unsafe_allow_html=True)
+
+with st.container(key="entry_zone_filters"):
+    st.radio(
+        "Entry Zone Watchlist universe",
+        list(WATCHLIST_MODES.keys()),
+        key="entry_zone_mode_label",
+        horizontal=True,
+        label_visibility="collapsed",
+    )
 
 with st.container(key="entry_zone_watchlist"):
     st.markdown(
