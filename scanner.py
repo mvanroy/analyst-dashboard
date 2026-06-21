@@ -15,6 +15,7 @@ import httpx
 import pandas as pd
 
 BASE = "https://fapi.binance.com"
+BYBIT_BASE = "https://api.bybit.com"
 
 
 async def _get_json(client, url, params=None, retries=3):
@@ -350,6 +351,34 @@ def live_ticker(symbol):
             "high": float(d["highPrice"]),
             "low": float(d["lowPrice"]),
             "vol": float(d["volume"]),  # 24h base-asset volume (in coins)
+        }
+    except Exception:
+        return None
+
+
+def live_bybit_derivatives(symbol):
+    """Current Bybit funding and open interest for one linear perp.
+
+    Returns {"funding": pct, "open_interest": float} or None on failure.
+    """
+    try:
+        r = httpx.get(
+            BYBIT_BASE + "/v5/market/tickers",
+            params={"category": "linear", "symbol": symbol.upper()},
+            headers={"User-Agent": "orion-lite/1.0"},
+            timeout=6,
+        )
+        r.raise_for_status()
+        data = r.json()
+        if data.get("retCode") not in (0, "0"):
+            return None
+        items = (data.get("result") or {}).get("list") or []
+        if not items:
+            return None
+        item = items[0]
+        return {
+            "funding": float(item.get("fundingRate") or 0) * 100,
+            "open_interest": float(item.get("openInterest") or 0),
         }
     except Exception:
         return None

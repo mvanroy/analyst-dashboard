@@ -553,6 +553,11 @@ def _dash(inner):
     return style + '<div class="dash">' + inner + "</div>"
 
 
+@st.cache_data(ttl=30, show_spinner=False)
+def _live_derivatives(symbol):
+    return scanner.live_bybit_derivatives(symbol)
+
+
 def render_price_bias_card(d, live_price=None, live_chg=None, right_html=None, left_html=None, badge_inline=False):
     """Render just the price+bias card (with the dashboard CSS) on its own — used
     to surface a coin's live price/bias on other pages (e.g. Position Calculator).
@@ -1078,22 +1083,22 @@ _CSS = """
 .hhead{color:#8b94a0;font-size:12px;margin-top:2px;}
 /* v3 header — layout only, reuses .hsym/.hperp/.hprice/.hhead/.amber type scale */
 .v3banner{position:relative;padding:2px 2px 4px;}
-.v3striprow{display:flex;align-items:center;margin:8px 0 0;}
-.v3strip{flex:0 0 auto;display:flex;flex-wrap:wrap;align-items:center;gap:26px;padding:11px 2px;border-top:1px solid #1e242c;border-bottom:1px solid #1e242c;}
+.v3striprow{display:flex;align-items:center;margin:8px 0 0;min-width:0;}
+.v3strip{flex:1 1 auto;width:100%;min-width:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 12px;padding:10px 2px;border-top:1px solid #1e242c;border-bottom:1px solid #1e242c;}
 .v3strip .livebadge{position:static;display:inline-flex;align-items:center;}
 .v3bias{display:flex;align-items:flex-end;gap:10px;}
 .v3bias.bull{color:#2ebd85;}.v3bias.bear{color:#f6465d;}.v3bias.neu{color:#aab2bd;}
 .v3biasv{font-size:17px;font-weight:700;margin-top:3px;line-height:1.1;color:inherit;}
 .v3bias .bias-ico{width:44px;height:44px;flex:0 0 auto;display:block;position:relative;top:6px;}
-.v3si{min-width:58px;}
-.v3sl{font-size:12px;color:#8b94a0;letter-spacing:.04em;}
-.v3sv{font-size:17px;font-weight:700;margin-top:3px;}
+.v3si{min-width:0;flex:0 1 auto;}
+.v3sl{font-size:10px;color:#8b94a0;letter-spacing:.04em;white-space:nowrap;}
+.v3sv{font-size:15px;font-weight:700;margin-top:3px;white-space:nowrap;}
 .v3sv.bull{color:#26a69a;}.v3sv.bear{color:#f6465d;}.v3sv.neu{color:#e6e8eb;}
 /* Top row: ticker block (Market Bias folded into its top-right) + Market Condition
    filling the rest of the row. */
 .v3toprow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start;}
 @media(max-width:980px){.v3toprow{grid-template-columns:1fr;}}
-.v3left{justify-self:start;min-width:0;display:flex;flex-direction:column;}
+.v3left{justify-self:stretch;min-width:0;width:100%;display:flex;flex-direction:column;}
 .v3condside{grid-column:2 / 4;display:flex;min-width:0;}
 @media(max-width:980px){.v3condside{grid-column:auto;}}
 .v3condside .mc-cond{width:100%;margin-bottom:0;}
@@ -1968,6 +1973,8 @@ def _dhead_top(d, q):
 
     hi = fmt_price(q["high"]) if q else snap.get("24h high")
     lo = fmt_price(q["low"]) if q else snap.get("24h low")
+    funding = f'{q["funding"]:.4f}%' if q and q.get("funding") is not None else snap.get("funding rate") or snap.get("funding")
+    open_interest = fmt_volume(q["open_interest"]) if q and q.get("open_interest") is not None else snap.get("open interest")
 
     strip = (
         '<div class="v3striprow">'
@@ -1975,8 +1982,8 @@ def _dhead_top(d, q):
         + _live_badge()
         + si("24H High", hi)
         + si("24H Low", lo)
-        + si("Funding", snap.get("funding rate") or snap.get("funding"))
-        + si("Open Interest", snap.get("open interest"))
+        + si("Funding", funding)
+        + si("Open Interest", open_interest)
         + "</div>"
         + "</div>"
     )
@@ -2009,6 +2016,9 @@ def render(d, symbol=None):
         def _live_top():
             try:
                 q = scanner.live_ticker(symbol)
+                deriv = _live_derivatives(symbol)
+                if q and deriv:
+                    q.update(deriv)
             except Exception:
                 q = None
             cur = q.get("last") if q else _num(d.get("price"))

@@ -472,6 +472,25 @@ def _fmt_money(value):
     return f"${value:.0f}"
 
 
+def _fmt_compact(value):
+    if value is None:
+        return "—"
+    value = float(value)
+    if value >= 1e9:
+        return f"{value / 1e9:.2f}B"
+    if value >= 1e6:
+        return f"{value / 1e6:.2f}M"
+    if value >= 1e3:
+        return f"{value / 1e3:.2f}K"
+    return f"{value:.0f}"
+
+
+def _fmt_pct(value, digits=4):
+    if value is None:
+        return "—"
+    return f"{float(value):.{digits}f}%"
+
+
 def _display_symbol(symbol: str) -> str:
     if symbol.endswith("USDT"):
         return f"{symbol[:-4]}/USDT"
@@ -545,6 +564,8 @@ def _schema_hint(symbol: str, evidence: dict) -> dict:
             {"label": "24H High", "value": "$..."},
             {"label": "24H Low", "value": "$..."},
             {"label": "24H Volume", "value": "$..."},
+            {"label": "Funding", "value": "0.0000%"},
+            {"label": "Open Interest", "value": "..."},
         ],
         "market_structure": {
             "state": "Trending Up | Trending Down | Range Bound | Transition",
@@ -604,6 +625,8 @@ def _stamp_dashboard_metadata(data: dict, symbol: str, evidence: dict) -> dict:
     high = ticker.get("high_24h")
     low = ticker.get("low_24h")
     turnover = ticker.get("turnover_24h")
+    funding = ticker.get("funding_rate_pct")
+    open_interest = ticker.get("open_interest")
     data["schema_version"] = 2
     data["framework_version"] = "Trade Setup Framework v1"
     data["symbol"] = _display_symbol(symbol)
@@ -622,6 +645,8 @@ def _stamp_dashboard_metadata(data: dict, symbol: str, evidence: dict) -> dict:
         {"label": "24H High", "value": _fmt_price(high)},
         {"label": "24H Low", "value": _fmt_price(low)},
         {"label": "24H Volume", "value": _fmt_money(turnover)},
+        {"label": "Funding", "value": _fmt_pct(funding)},
+        {"label": "Open Interest", "value": _fmt_compact(open_interest)},
     ]
     data["intermarket"] = data.get("intermarket") or {}
     data["intermarket"]["cor"] = evidence.get("btc_cor_15m")
