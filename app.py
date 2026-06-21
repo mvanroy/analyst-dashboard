@@ -90,6 +90,25 @@ st.markdown(
       .ezw-status.waiting {color: #9fc0ff; border: 1px solid rgba(76,141,255,.45); background: rgba(76,141,255,.10);}
       .ezw-muted {color: #8b94a0;}
       .ezw-trigger {max-width: 360px; color: #aeb7c3; line-height: 1.35;}
+      .ezw-info {display: flex; justify-content: flex-start; margin-top: 10px; padding-top: 8px; border-top: 1px solid #252b35;}
+      .ezw-eye {
+        position: relative; display: inline-flex; align-items: center; justify-content: center;
+        width: 24px; height: 18px; cursor: help; color: #8b94a0;
+      }
+      .ezw-eye-shape {
+        width: 20px; height: 12px; border: 1px solid #6f7a88; border-radius: 50% / 60%;
+        display: inline-flex; align-items: center; justify-content: center;
+      }
+      .ezw-eye-shape::after {
+        content: ""; width: 5px; height: 5px; border-radius: 50%; background: #9fc0ff;
+      }
+      .ezw-eyebox {
+        display: none; position: absolute; left: 0; bottom: 24px; z-index: 20; width: 360px;
+        padding: 11px 12px; border: 1px solid rgba(76,141,255,.45); border-radius: 8px;
+        background: #101722; color: #dce3ec; box-shadow: 0 14px 32px rgba(0,0,0,.35);
+        font-size: .74rem; line-height: 1.45; font-weight: 400;
+      }
+      .ezw-eye:hover .ezw-eyebox, .ezw-eye:focus .ezw-eyebox {display: block;}
       .st-key-entry_zone_refresh div[data-testid="stButton"] {justify-content: flex-end; margin-top: 0;}
       .st-key-entry_zone_refresh button {
         border-radius: 9999px !important;
@@ -902,6 +921,20 @@ else:
         "Run Analyse on high-volume symbols to seed this watchlist, then Refresh.</div>"
     )
 
+watchlist_help = (
+    "<div class='ezw-info'>"
+    "<span class='ezw-eye' tabindex='0' aria-label='Entry Zone Watchlist status definitions'>"
+    "<span class='ezw-eye-shape'></span>"
+    "<span class='ezw-eyebox'>"
+    "<b>Status key</b><br>"
+    "<b>Approaching</b>: price is close to the entry zone but has not reached it yet.<br>"
+    "<b>Waiting</b>: setup remains valid, but price is still some distance from entry.<br>"
+    "<b>At Zone</b>: price is testing the entry zone now; this should move to the Trade Dashboard for confirmation.<br>"
+    "<b>Missed</b>: price has already passed through the entry zone and run; avoid chasing.<br>"
+    "<b>Invalidated</b>: the setup condition has broken before entry."
+    "</span></span></div>"
+)
+
 _ezw_logo = chrome.logo_data_uri()
 _ezw_logo_img = f'<img src="{_ezw_logo}" alt="logo">' if _ezw_logo else ""
 with st.container(key="entry_zone_heading"):
@@ -923,7 +956,7 @@ with st.container(key="entry_zone_heading"):
 
 with st.container(key="entry_zone_watchlist"):
     st.markdown(
-        f"{table}",
+        f"{table}{watchlist_help}",
         unsafe_allow_html=True,
     )
 
