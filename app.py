@@ -82,23 +82,30 @@ st.markdown(
       }
       .st-key-entry_zone_watchlist {
         margin: 0 0 1.15rem 0;
-        border: 1px solid rgba(139,92,246,.38);
-        border-radius: 10px;
-        background: rgba(19,16,30,.82);
-        box-shadow: 0 0 0 1px rgba(124,58,237,.06), 0 0 22px rgba(124,58,237,.15);
-        padding: 13px 15px 15px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+        padding: 0;
       }
       .ezw-time {font-size: .76rem; color: #6f7885; text-align: right; margin-top: 5px;}
       .ezw-scan-note {font-size: .76rem; color: #8b94a0; margin: -.25rem 0 .65rem 0;}
       .ezw-empty {border-top: 1px solid #252b35; padding-top: 12px; color: #8b94a0; font-size: .84rem;}
-      .ezw-table {width: 100%; border-collapse: collapse; font-size: .78rem;}
+      .ezw-table {width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .78rem;}
       .ezw-table th {
         color: #8b94a0; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase;
         text-align: left; padding: 8px 7px; border-bottom: 1px solid #252b35;
       }
       .ezw-table td {padding: 9px 7px; border-bottom: 1px solid #191f28; color: #d7dde5; vertical-align: top;}
       .ezw-table tr:last-child td {border-bottom: none;}
-      .ezw-symbol {display: flex; align-items: center; gap: 8px; white-space: nowrap;}
+      .ezw-table th:nth-child(1), .ezw-table td:nth-child(1) {width: 128px; padding-right: 16px;}
+      .ezw-table th:nth-child(2), .ezw-table td:nth-child(2) {width: 58px; text-align: center;}
+      .ezw-table th:nth-child(3), .ezw-table td:nth-child(3) {width: 72px;}
+      .ezw-table th:nth-child(5), .ezw-table td:nth-child(5) {width: 112px;}
+      .ezw-table th:nth-child(7), .ezw-table td:nth-child(7) {width: 92px;}
+      .ezw-table th:nth-child(8), .ezw-table td:nth-child(8) {width: 104px;}
+      .ezw-symbol {display: flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap;}
+      .ezw-symbol b {overflow: hidden; text-overflow: ellipsis;}
       .ezw-symbol img {width: 19px; height: 19px; border-radius: 50%; background: #111827;}
       .ezw-grade {
         display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px;
