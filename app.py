@@ -67,37 +67,35 @@ st.markdown(
       .st-key-entry_zone_filters [data-testid="stWidgetLabel"] {
         display: none !important;
       }
-      .st-key-entry_zone_filters [data-testid="stHorizontalBlock"] {
-        gap: .45rem;
-        flex-wrap: wrap;
+      .st-key-entry_zone_filters [data-testid="stPills"] {
+        display: flex; flex-wrap: wrap; gap: .5rem;
       }
-      .st-key-entry_zone_filters div[data-testid="stButton"] {
-        margin-top: 0 !important;
-        justify-content: flex-start;
-      }
-      .st-key-entry_zone_filters div[data-testid="stButton"] > button {
+      .st-key-entry_zone_filters [data-testid="stPills"] button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         min-height: 30px;
-        width: 100%;
-        border-radius: 9999px;
         border: 1px solid #1f2a38;
-        background: #0e1117;
+        border-radius: 9999px;
+        padding: .24rem .86rem;
+        background: #0e1117 !important;
         box-shadow: inset 0 0 0 1px rgba(255,255,255,.015);
-        color: #9aa3ae;
+        color: #9aa3ae !important;
         font-size: .72rem;
         font-weight: 700;
         line-height: 1;
-        padding: .24rem .82rem;
+        transition: border-color .15s ease, background .15s ease, color .15s ease;
       }
-      .st-key-entry_zone_filters div[data-testid="stButton"] > button:hover {
-        border-color: rgba(76,141,255,.55);
-        color: #dce3ec;
-        background: #0e1117;
+      .st-key-entry_zone_filters [data-testid="stPills"] button:hover {
+        border-color: rgba(76,141,255,.55) !important;
+        color: #dce3ec !important;
       }
-      .st-key-ez_filter_active div[data-testid="stButton"] > button {
+      .st-key-entry_zone_filters [data-testid="stPills"] button[aria-pressed="true"],
+      .st-key-entry_zone_filters [data-testid="stPills"] button[aria-selected="true"] {
         border-color: rgba(76,141,255,.85) !important;
         background: rgba(76,141,255,.16) !important;
         color: #e6e8eb !important;
-        box-shadow: 0 0 0 1px rgba(76,141,255,.14), inset 0 0 0 1px rgba(255,255,255,.025) !important;
+        box-shadow: 0 0 0 1px rgba(76,141,255,.14), inset 0 0 0 1px rgba(255,255,255,.025);
       }
       .st-key-entry_zone_watchlist {
         margin: 0 0 1.15rem 0;
@@ -1125,13 +1123,13 @@ with st.container(key="entry_zone_heading"):
         st.markdown(f"<div class='ezw-time'>Last scanned: {last_scanned}</div>", unsafe_allow_html=True)
 
 with st.container(key="entry_zone_filters"):
-    filter_cols = st.columns([1, 1, 0.8, 0.75, 1.15, 1.25], gap="small")
-    for col, label in zip(filter_cols, WATCHLIST_MODES):
-        with col.container(key="ez_filter_active" if label == selected_watchlist_label else f"ez_filter_{WATCHLIST_MODES[label]}"):
-            if st.button(label, key=f"entry_zone_filter_{WATCHLIST_MODES[label]}"):
-                st.session_state.entry_zone_mode_label = label
-                build_entry_zone_watchlist.clear()
-                st.rerun()
+    st.pills(
+        "",
+        list(WATCHLIST_MODES.keys()),
+        selection_mode="single",
+        key="entry_zone_mode_label",
+        label_visibility="collapsed",
+    )
     if st.session_state.get("entry_zone_scan_note"):
         st.markdown(f"<div class='ezw-scan-note'>{_h(st.session_state.entry_zone_scan_note)}</div>", unsafe_allow_html=True)
     if st.session_state.get("entry_zone_scan_errors"):
