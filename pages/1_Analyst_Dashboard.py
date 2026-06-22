@@ -14,11 +14,11 @@ import chrome
 import dashboard
 import openai_analysis
 
-st.set_page_config(page_title="Trade Dashboard", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Trade Setup", page_icon="📊", layout="wide")
 
 # Shared chrome: nav + live clocks row (brand rendered below alongside the Run
 # button so they share one horizontal row).
-chrome.render_header("TRADE", "DASHBOARD", brand=False)
+chrome.render_header("TRADE", "SETUP", brand=False)
 
 # Brand + "Run" pill on one row (Run to the right of the brand). The Run pill
 # matches the Push To Calculator button; clicking it re-scans analyses/ for the
@@ -63,7 +63,7 @@ def _normalise_symbol(value: str) -> str:
 
 
 _brow = st.container(key="brandrow")
-_brow.markdown(chrome.brand_html("TRADE", "DASHBOARD"), unsafe_allow_html=True)
+_brow.markdown(chrome.brand_html("TRADE", "SETUP"), unsafe_allow_html=True)
 _brow.button("Run", key="runbtn")
 _brow.text_input(
     "Symbol",

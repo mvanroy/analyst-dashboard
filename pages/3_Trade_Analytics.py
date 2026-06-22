@@ -15,8 +15,8 @@ import streamlit as st
 import bybit
 import chrome
 
-st.set_page_config(page_title="Trade Analytics", page_icon="📈", layout="wide")
-chrome.render_header("TRADE", "ANALYTICS", "Bybit · USDT Perp")
+st.set_page_config(page_title="Analytics", page_icon="📈", layout="wide")
+chrome.render_header("ANALYTICS", "", "Bybit · USDT Perp")
 
 # --------------------------------------------------------------------------- #
 # Styling — reuse the app's purple-edged card system + a KPI grid + dark charts

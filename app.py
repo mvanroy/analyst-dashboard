@@ -29,7 +29,7 @@ NEUTRAL = "#848e9c"
 
 LOGO_PATH = chrome.LOGO_PATH
 
-st.set_page_config(page_title="Market Scanner", layout="wide", page_icon=LOGO_PATH)
+st.set_page_config(page_title="Scanner", layout="wide", page_icon=LOGO_PATH)
 
 chrome.inject_background()
 
@@ -1066,7 +1066,7 @@ watchlist_help = (
     "<b>Status key</b><br>"
     "<b>Approaching</b>: price is close to the entry zone but has not reached it yet.<br>"
     "<b>Waiting</b>: setup remains valid, but price is still some distance from entry.<br>"
-    "<b>At Zone</b>: price is testing the entry zone now; this should move to the Trade Dashboard for confirmation.<br>"
+    "<b>At Zone</b>: price is testing the entry zone now; this should move to Trade Setup for confirmation.<br>"
     "<b>Below/Above Zone</b>: price is outside the proposed participation area; the trigger is still ahead.<br>"
     "<b>Low Cap Impulse</b>: may include C-grade tactical participation points, not only clean A/B setups.<br>"
     "<b>Missed</b>: price has already passed through the entry zone and run; avoid chasing.<br>"
@@ -1149,7 +1149,7 @@ with left:
     st.markdown(
         '<div class="orion-brand">'
         f"{_logo_img}"
-        '<div class="orion-logo">MARKET <span class="accent">SCANNER</span>'
+        '<div class="orion-logo">SCANNER'
         '<span class="sub">Binance Futures</span></div>'
         "</div>",
         unsafe_allow_html=True,

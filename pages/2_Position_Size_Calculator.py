@@ -27,10 +27,10 @@ import chrome
 import dashboard
 import scanner
 
-st.set_page_config(page_title="Position Calculator", page_icon="📐", layout="wide")
+st.set_page_config(page_title="Calculator", page_icon="📐", layout="wide")
 
 # Shared chrome: nav + world-clocks (brand rendered below alongside the trade chip).
-chrome.render_header("POSITION", "CALCULATOR", "Bybit · USDT Perp", brand=False)
+chrome.render_header("CALCULATOR", "", "Bybit · USDT Perp", brand=False)
 
 # --------------------------------------------------------------------------- #
 # Styling — page gradient (folded in so there is ONE style element before the
@@ -788,7 +788,7 @@ RISK_GUARD_PCT = 2.0  # exposure mode warns when the derived loss-at-stop exceed
 _mode_default = _load_prefs().get("mode", "risk")
 _brow = st.container(key="brandrow")
 with _brow:
-    st.markdown(chrome.brand_html("POSITION", "CALCULATOR", "Bybit · USDT Perp"), unsafe_allow_html=True)
+    st.markdown(chrome.brand_html("CALCULATOR", "", "Bybit · USDT Perp"), unsafe_allow_html=True)
     st.session_state.setdefault("calc_mode", _mode_default == "exposure")
     _exp_on = bool(st.session_state.get("calc_mode", False))
     _blank = st.session_state.get("calc_blank", False)

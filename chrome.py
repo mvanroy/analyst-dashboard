@@ -194,10 +194,10 @@ def inject_background():
 
 # Page nav links, in order. Labels are the single source of truth across pages.
 _NAV = [
-    ("app.py", "Market Scanner"),
-    ("pages/1_Analyst_Dashboard.py", "Trade Dashboard"),
-    ("pages/2_Position_Size_Calculator.py", "Position Calculator"),
-    ("pages/3_Trade_Analytics.py", "Trade Analytics"),
+    ("app.py", "Scanner"),
+    ("pages/1_Analyst_Dashboard.py", "Trade Setup"),
+    ("pages/2_Position_Size_Calculator.py", "Calculator"),
+    ("pages/3_Trade_Analytics.py", "Analytics"),
 ]
 
 
@@ -216,7 +216,8 @@ def brand_html(word1, word2, sub=""):
     return (
         '<div class="orion-brand">'
         + (f'<img src="{logo}" alt="logo">' if logo else "")
-        + f'<div class="orion-logo">{word1} <span class="accent">{word2}</span>'
+        + f'<div class="orion-logo">{word1}'
+        + (f' <span class="accent">{word2}</span>' if word2 else "")
         + (f'<span class="sub">{sub}</span>' if sub else "")
         + "</div></div>"
     )

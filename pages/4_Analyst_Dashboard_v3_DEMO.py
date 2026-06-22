@@ -14,9 +14,9 @@ import streamlit as st
 import chrome
 import dashboard_v3_demo as dashboard  # isolated copy → reads analyses_demo/
 
-st.set_page_config(page_title="Trade Dashboard v3 (DEMO)", page_icon="🧪", layout="wide")
+st.set_page_config(page_title="Trade Setup v3 (DEMO)", page_icon="🧪", layout="wide")
 
-chrome.render_header("TRADE", "DASHBOARD", brand=False)
+chrome.render_header("TRADE", "SETUP", brand=False)
 
 st.markdown(
     "<style>"
@@ -35,7 +35,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 _brow = st.container(key="brandrow")
-_brow.markdown(chrome.brand_html("TRADE", "DASHBOARD"), unsafe_allow_html=True)
+_brow.markdown(chrome.brand_html("TRADE", "SETUP"), unsafe_allow_html=True)
 _brow.button("Run", key="runbtn")
 
 # DEMO banner so it's unmistakable which dashboard you're on.
