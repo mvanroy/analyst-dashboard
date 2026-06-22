@@ -234,7 +234,7 @@ def _h(value):
 
 def _analysis_symbol(data, fallback):
     symbol = _clean_symbol(data.get("symbol") or fallback)
-    if symbol and not symbol.endswith("USDT"):
+    if symbol and not symbol.endswith(("USDT", "PERP")):
         symbol += "USDT"
     return symbol
 
@@ -328,17 +328,19 @@ def watchlist_universe(mode):
     return tuple(scanner.bybit_watchlist_universe(mode, limit=30))
 
 
-def refresh_watchlist_analyses(symbols, api_key):
-    """Run fresh OpenAI analysis for the leading symbols in this universe."""
+def refresh_watchlist_analyses(mode, api_key):
+    """Cheaply triage the selected universe, then run full OpenAI analysis."""
+    triage = scanner.bybit_watchlist_triage(mode, limit=WATCHLIST_REFRESH_LIMIT)
+    symbols = triage.get("symbols") or []
     results = []
     errors = []
-    for symbol in list(symbols)[:WATCHLIST_REFRESH_LIMIT]:
+    for symbol in symbols:
         try:
             result = openai_analysis.generate_dashboard_analysis(symbol, api_key=api_key)
             results.append(result["symbol"])
         except Exception as exc:
             errors.append(f"{symbol}: {exc}")
-    return results, errors
+    return results, errors, triage
 
 
 @st.cache_data(show_spinner="Refreshing Entry Zone Watchlist…")
@@ -1013,12 +1015,19 @@ with st.container(key="entry_zone_heading"):
                 api_key = (st.secrets.get("openai_api_key") or "").strip()
                 if not api_key or api_key == "PASTE_OPENAI_API_KEY_HERE":
                     raise RuntimeError("OpenAI API key is not configured in .streamlit/secrets.toml.")
-                with st.spinner(f"Scanning {selected_watchlist_label} with OpenAI..."):
-                    refreshed, scan_errors = refresh_watchlist_analyses(watchlist_symbols, api_key)
+                with st.spinner(f"Scanning {selected_watchlist_label}: triage first, then OpenAI..."):
+                    refreshed, scan_errors, triage = refresh_watchlist_analyses(
+                        WATCHLIST_MODES[selected_watchlist_label],
+                        api_key,
+                    )
                 st.session_state.entry_zone_scan_note = (
-                    f"Fresh scan: analysed {len(refreshed)} {selected_watchlist_label} candidates. "
+                    f"Fresh scan: triaged {triage.get('universe_count', 0)} symbols, "
+                    f"sent {triage.get('qualified_count', 0)} candidates through the cheap filter, "
+                    f"analysed {len(refreshed)} with OpenAI. "
                     f"{len(scan_errors)} failed." if scan_errors else
-                    f"Fresh scan: analysed {len(refreshed)} {selected_watchlist_label} candidates."
+                    f"Fresh scan: triaged {triage.get('universe_count', 0)} symbols, "
+                    f"sent {triage.get('qualified_count', 0)} candidates through the cheap filter, "
+                    f"analysed {len(refreshed)} with OpenAI."
                 )
                 if scan_errors:
                     st.session_state.entry_zone_scan_errors = scan_errors[:3]

@@ -37,7 +37,7 @@ _ANALYSES_DIR = os.path.join(_ROOT, "analyses")
 
 def normalise_symbol(value: str) -> str:
     symbol = re.sub(r"[^A-Z0-9]", "", (value or "").upper())
-    if symbol and not symbol.endswith("USDT"):
+    if symbol and not symbol.endswith(("USDT", "PERP")):
         symbol += "USDT"
     return symbol
 
@@ -494,6 +494,8 @@ def _fmt_pct(value, digits=4):
 def _display_symbol(symbol: str) -> str:
     if symbol.endswith("USDT"):
         return f"{symbol[:-4]}/USDT"
+    if symbol.endswith("PERP"):
+        return symbol
     return symbol
 
 

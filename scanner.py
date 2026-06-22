@@ -207,13 +207,7 @@ def _to_float(value, default=float("nan")):
         return default
 
 
-async def _bybit_watchlist_universe(mode, limit=30):
-    async with httpx.AsyncClient(headers={"User-Agent": "orion-lite/1.0"}) as client:
-        tickers, instruments = await asyncio.gather(
-            _fetch_bybit_tickers(client),
-            _fetch_bybit_instruments(client),
-        )
-
+def _bybit_watchlist_frame(tickers, instruments, mode):
     instrument_map = {item.get("symbol"): item for item in instruments if item.get("symbol")}
     records = []
     for ticker in tickers:
@@ -238,42 +232,73 @@ async def _bybit_watchlist_universe(mode, limit=30):
         )
 
     if not records:
-        return []
+        return pd.DataFrame()
 
     df = pd.DataFrame.from_records(records)
     crypto = df[~df["symbol_type"].isin(["stock", "commodity"])].copy()
     stocks = df[df["symbol_type"].eq("stock")].copy()
 
     if mode == "tradfi_stocks":
-        out = stocks.sort_values("turnover24h", ascending=False)
+        out = stocks.copy()
     elif mode == "new":
-        out = crypto.sort_values("launch_time", ascending=False)
-    elif mode == "gainers":
-        floor = max(5_000_000, crypto["turnover24h"].quantile(0.35))
-        out = (
-            crypto[(crypto["price24h_pct"] > 0) & (crypto["turnover24h"] >= floor)]
-            .sort_values(["price24h_pct", "turnover24h"], ascending=[False, False])
-        )
-    elif mode == "change_24h":
-        out = crypto.sort_values("price24h_pct", ascending=False)
-    elif mode == "low_cap_impulse":
-        floor = max(50_000, crypto["turnover24h"].quantile(0.05))
-        ceiling = crypto["turnover24h"].quantile(0.75)
-        pool = crypto[
-            (crypto["price24h_pct"] >= 3)
-            & (crypto["turnover24h"] >= floor)
-            & (crypto["turnover24h"] <= ceiling)
+        out = crypto.copy()
+    else:
+        out = crypto.copy()
+
+    return out
+
+
+def _rank_watchlist_frame(df, mode):
+    if df.empty:
+        return df
+    out = df.copy()
+    out["volume_rank"] = out["turnover24h"].rank(pct=True)
+    out["gain_rank"] = out["price24h_pct"].rank(pct=True)
+    out["positive"] = out["price24h_pct"] > 0
+
+    if mode == "tradfi_stocks":
+        out["triage_score"] = out["volume_rank"] * 0.55 + out["gain_rank"] * 0.35 + out["positive"].astype(float) * 0.10
+        return out.sort_values(["triage_score", "turnover24h"], ascending=[False, False])
+    if mode == "new":
+        out["new_rank"] = out["launch_time"].rank(pct=True)
+        out["triage_score"] = out["new_rank"] * 0.55 + out["volume_rank"] * 0.25 + out["gain_rank"] * 0.20
+        return out.sort_values(["triage_score", "launch_time"], ascending=[False, False])
+    if mode == "gainers":
+        floor = max(5_000_000, out["turnover24h"].quantile(0.35))
+        pool = out[(out["price24h_pct"] > 0) & (out["turnover24h"] >= floor)].copy()
+        pool["triage_score"] = pool["gain_rank"] * 0.65 + pool["volume_rank"] * 0.35
+        return pool.sort_values(["triage_score", "price24h_pct"], ascending=[False, False])
+    if mode == "change_24h":
+        out["triage_score"] = out["gain_rank"] * 0.85 + out["volume_rank"] * 0.15
+        return out.sort_values(["price24h_pct", "turnover24h"], ascending=[False, False])
+    if mode == "low_cap_impulse":
+        floor = max(50_000, out["turnover24h"].quantile(0.05))
+        ceiling = out["turnover24h"].quantile(0.75)
+        pool = out[
+            (out["price24h_pct"] >= 3)
+            & (out["turnover24h"] >= floor)
+            & (out["turnover24h"] <= ceiling)
         ].copy()
         if pool.empty:
-            pool = crypto[(crypto["price24h_pct"] > 0) & (crypto["turnover24h"] >= floor)].copy()
-        pool["low_cap_score"] = (
+            pool = out[(out["price24h_pct"] > 0) & (out["turnover24h"] >= floor)].copy()
+        pool["triage_score"] = (
             pool["price24h_pct"].rank(pct=True) * 0.55
             + (1 - pool["turnover24h"].rank(pct=True)) * 0.25
             + pool["turnover24h"].rank(pct=True) * 0.20
         )
-        out = pool.sort_values(["low_cap_score", "price24h_pct"], ascending=[False, False])
-    else:
-        out = crypto.sort_values("turnover24h", ascending=False)
+        return pool.sort_values(["triage_score", "price24h_pct"], ascending=[False, False])
+
+    out["triage_score"] = out["volume_rank"] * 0.70 + out["gain_rank"] * 0.30
+    return out.sort_values(["turnover24h", "price24h_pct"], ascending=[False, False])
+
+
+async def _bybit_watchlist_universe(mode, limit=30):
+    async with httpx.AsyncClient(headers={"User-Agent": "orion-lite/1.0"}) as client:
+        tickers, instruments = await asyncio.gather(
+            _fetch_bybit_tickers(client),
+            _fetch_bybit_instruments(client),
+        )
+    out = _rank_watchlist_frame(_bybit_watchlist_frame(tickers, instruments, mode), mode)
 
     return out["symbol"].head(limit).tolist()
 
@@ -285,6 +310,30 @@ def bybit_watchlist_universe(mode="top_volume", limit=30):
     decide whether a symbol has a valid waiting entry-zone setup.
     """
     return asyncio.run(_bybit_watchlist_universe(mode, limit))
+
+
+async def _bybit_watchlist_triage(mode, limit=8):
+    async with httpx.AsyncClient(headers={"User-Agent": "orion-lite/1.0"}) as client:
+        tickers, instruments = await asyncio.gather(
+            _fetch_bybit_tickers(client),
+            _fetch_bybit_instruments(client),
+        )
+    frame = _bybit_watchlist_frame(tickers, instruments, mode)
+    ranked = _rank_watchlist_frame(frame, mode)
+    symbols = ranked["symbol"].head(limit).tolist() if not ranked.empty else []
+    return {
+        "symbols": symbols,
+        "universe_count": int(len(frame)),
+        "qualified_count": int(len(ranked)),
+    }
+
+
+def bybit_watchlist_triage(mode="top_volume", limit=8):
+    """Cheap first pass over the whole selected Bybit universe.
+
+    Returns the best symbols for full OpenAI analysis plus counts for UI status.
+    """
+    return asyncio.run(_bybit_watchlist_triage(mode, limit))
 
 
 # ---------------- open-interest change (fetched on demand, e.g. shortlist) ----------------
