@@ -64,6 +64,9 @@ st.markdown(
       .st-key-entry_zone_heading {margin: 1.05rem 0 .45rem 0;}
       .st-key-entry_zone_heading [data-testid="stHorizontalBlock"] {align-items: flex-start;}
       .st-key-entry_zone_filters {margin: -.15rem 0 .65rem 0;}
+      .st-key-entry_zone_filters [data-testid="stWidgetLabel"] {
+        display: none !important;
+      }
       .st-key-entry_zone_filters [role="radiogroup"] {
         display: flex; flex-wrap: wrap; gap: .5rem;
       }
@@ -89,7 +92,8 @@ st.markdown(
       }
       .st-key-entry_zone_filters label [data-testid="stMarkdownContainer"] p {
         margin: 0;
-        line-height: 1;
+        line-height: 1.15;
+        transform: translateY(-.5px);
       }
       .st-key-entry_zone_filters label:has(input:checked) {
         border-color: rgba(76,141,255,.85);
@@ -1131,7 +1135,7 @@ with st.container(key="entry_zone_heading"):
 
 with st.container(key="entry_zone_filters"):
     st.radio(
-        "Entry Zone Watchlist universe",
+        "",
         list(WATCHLIST_MODES.keys()),
         key="entry_zone_mode_label",
         horizontal=True,
