@@ -1,6 +1,6 @@
 """Shared page chrome — the nav + world-clocks bar + brand block.
 
-Used by every page (Market Scanner in app.py and the secondary pages) so the
+Used by every page (Scanner in pages/0_Scanner.py and the secondary pages) so the
 header is identical and aligned across the app. Importing this module has NO
 Streamlit side effects, so it is safe to import from any page; it is also the
 single source of truth for the live clocks (app.py imports them from here).
@@ -146,8 +146,8 @@ def render_clocks():
     components.html(CLOCKS_HTML.replace("__SP_PCT__", val), height=66)
 
 
-# CSS subset of app.py's chrome shared by the secondary pages so their header
-# matches the Market Scanner exactly (hide default chrome, nav row, brand).
+# CSS subset of the Scanner chrome shared by the secondary pages so their header
+# matches exactly (hide default chrome, nav row, brand).
 _HEADER_CSS = """<style>
   [data-testid="stToolbar"]{display:none;}
   [data-testid="stHeader"]{display:none;}
@@ -194,7 +194,7 @@ def inject_background():
 
 # Page nav links, in order. Labels are the single source of truth across pages.
 _NAV = [
-    ("app.py", "Scanner"),
+    ("pages/0_Scanner.py", "Scanner"),
     ("pages/1_Analyst_Dashboard.py", "Trade Setup"),
     ("pages/2_Position_Size_Calculator.py", "Calculator"),
     ("pages/3_Trade_Analytics.py", "Analytics"),
