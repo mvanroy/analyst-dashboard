@@ -8,6 +8,7 @@ from urllib.parse import quote
 import streamlit as st
 
 import alert_store
+import alert_watcher
 import chrome
 import scanner
 
@@ -52,6 +53,8 @@ st.markdown(
     ".apill.long{color:#2ebd85}.apill.short{color:#f6465d}.apill.watch{color:#e0a33e}.apill.blue{color:#4c8dff}"
     ".acond b{display:block;color:#e8edf6;font-size:.82rem;margin-bottom:4px;line-height:1.28;}"
     ".acond span{display:block;color:#aab2bd;font-size:.74rem;line-height:1.35;}"
+    ".asetup{margin-top:8px;padding-top:7px;border-top:1px dashed #2c3440;color:#8b94a0;font-size:.68rem;line-height:1.35;}"
+    ".asetup b{display:inline;color:#cdd3da;font-size:.68rem;margin:0;}"
     ".adist strong{display:block;font-size:1rem;color:#e6e8eb;line-height:1.1;}.adist strong.amber{color:#e0a33e}.adist strong.green{color:#2ebd85}.adist strong.blue{color:#4c8dff}"
     ".abar{height:7px;background:#242b35;border-radius:99px;overflow:hidden;margin-top:8px;}.abar i{display:block;height:100%;border-radius:99px;background:#e0a33e;}"
     ".astatus small{display:block;color:#8b94a0;font-size:.68rem;margin-top:6px;line-height:1.25;}"
@@ -117,6 +120,16 @@ def _handle_action() -> None:
     st.rerun()
 
 
+def _run_watcher_once(show_toast: bool = False) -> dict:
+    try:
+        result = alert_watcher.check_alerts()
+    except Exception as exc:
+        return {"checked": 0, "triggered": [], "errors": [{"error": str(exc)}], "checked_at": datetime.now().isoformat(timespec="seconds")}
+    if show_toast and result.get("triggered"):
+        st.toast(f"{len(result['triggered'])} alert triggered.", icon="🔔")
+    return result
+
+
 def _ticker_price(symbol: str) -> float | None:
     try:
         q = scanner.live_ticker(symbol)
@@ -178,6 +191,31 @@ def _symbol_line(alert: dict) -> str:
     return f"{pattern[:28]}{'...' if len(pattern) > 28 else ''} · {tail}"
 
 
+def _setup_context(alert: dict) -> str:
+    setup = alert.get("setup_snapshot") if isinstance(alert.get("setup_snapshot"), dict) else {}
+    if not setup:
+        return ""
+    entry = setup.get("entry_zone") or {}
+    stop = setup.get("stop") or {}
+    t1 = setup.get("t1") or {}
+    t2 = setup.get("t2") or {}
+    summary = setup.get("summary") or ""
+    bits = []
+    if entry.get("label"):
+        bits.append(f"<b>Entry</b> {_esc(entry.get('label'))}")
+    if stop.get("label"):
+        bits.append(f"<b>Stop</b> {_esc(stop.get('label'))}")
+    if t1.get("label"):
+        bits.append(f"<b>TP1</b> {_esc(t1.get('label'))}{(' ' + _esc(t1.get('rr'))) if t1.get('rr') else ''}")
+    if t2.get("label"):
+        bits.append(f"<b>TP2</b> {_esc(t2.get('label'))}{(' ' + _esc(t2.get('rr'))) if t2.get('rr') else ''}")
+    if summary:
+        bits.append(f"<b>Thesis</b> {_esc(summary[:190])}{'...' if len(summary) > 190 else ''}")
+    if not bits:
+        return ""
+    return "<div class='asetup'>" + "<br>".join(bits) + "</div>"
+
+
 def _render_row(alert: dict, price: float | None) -> str:
     prox = _proximity(alert, price)
     direction = (alert.get("direction") or "watch").lower()
@@ -188,13 +226,16 @@ def _render_row(alert: dict, price: float | None) -> str:
     pause_label = "Resume" if status == "paused" else "Pause"
     condition = alert.get("condition") or alert.get("note") or "Watch condition"
     note = alert.get("note") or alert.get("type") or "AI-assisted alert rule"
+    trigger = alert.get("trigger") if isinstance(alert.get("trigger"), dict) else {}
+    if trigger.get("message"):
+        note = f"Triggered: {trigger.get('message')} · {note}"
     last = datetime.now().strftime("%H:%M:%S")
     bar_color = "#2ebd85" if prox["tone"] == "green" else "#4c8dff" if prox["tone"] == "blue" else "#e0a33e"
     return (
         "<div class='alert-row'>"
         f"<div class='asym'><strong>{_esc(alert.get('symbol') or '')}</strong><span>{_esc(_symbol_line(alert))}</span></div>"
         f"<div><span class='apill {dcls}'>{_esc(direction or 'watch')}</span></div>"
-        f"<div class='acond'><b>{_esc(condition)}</b><span>{_esc(note)}</span></div>"
+        f"<div class='acond'><b>{_esc(condition)}</b><span>{_esc(note)}</span>{_setup_context(alert)}</div>"
         f"<div class='adist'><strong class='{_esc(prox['tone'])}'>{_esc(prox['distance'])}</strong>"
         f"<div class='abar'><i style='width:{int(prox['bar'])}%;background:{bar_color}'></i></div></div>"
         f"<div class='astatus'><span class='apill {_esc(prox['class'])}'>{_esc(prox['label'])}</span><small>{_esc(last)}</small></div>"
@@ -207,6 +248,16 @@ def _render_row(alert: dict, price: float | None) -> str:
 
 
 _handle_action()
+
+watcher_result = _run_watcher_once(show_toast=True)
+
+
+@st.fragment(run_every=30)
+def _watcher_tick():
+    _run_watcher_once(show_toast=True)
+
+
+_watcher_tick()
 
 brand = st.container(key="alertbrand")
 brand.markdown(
@@ -236,8 +287,9 @@ candle_count = sum(1 for a in active_alerts if "candle" in (a.get("type") or "")
 
 st.markdown(
     "<div class='alert-meta'>"
-    f"AI-assisted alert watch list &middot; Bybit live-price check &middot; Last checked <b>{datetime.now().strftime('%H:%M:%S')}</b> "
-    "&middot; Background watcher <b>ready to wire</b>"
+    f"AI-assisted alert watch list &middot; Bybit live-price and closed-candle watcher &middot; "
+    f"Last checked <b>{datetime.now().strftime('%H:%M:%S')}</b> "
+    f"&middot; Checked <b>{watcher_result.get('checked', 0)}</b> active alert(s)"
     "</div>",
     unsafe_allow_html=True,
 )
@@ -250,8 +302,8 @@ st.markdown(
     "<div class='sub'>Within 0.8% of level or zone</div></div>"
     f"<div class='alert-stat'><div class='cap'>Triggered</div><div class='big green'>{len(triggered_alerts)}</div>"
     "<div class='sub'>Triggered or acknowledged alerts</div></div>"
-    "<div class='alert-stat'><div class='cap'>Watcher Status</div><div class='big blue'>Ready</div>"
-    "<div class='sub'>Manual refresh now; engine next</div></div>"
+    "<div class='alert-stat'><div class='cap'>Watcher Status</div><div class='big blue'>Live</div>"
+    "<div class='sub'>Runs while Alerts page is open</div></div>"
     "</section>",
     unsafe_allow_html=True,
 )
@@ -295,7 +347,7 @@ if not rows:
     rows = (
         "<div class='empty-alerts'><b>No alerts in this view yet.</b>"
         "Set an alert from any Trade Setup card and it will appear here. "
-        "The next build will connect these saved rules to the background watcher.</div>"
+        "While this page is open, the local watcher will check saved rules against live Bybit data and closed candles.</div>"
     )
 else:
     rows = (
@@ -309,10 +361,17 @@ else:
 events = triggered_alerts[:3] or approaching[:3] or active_alerts[:3]
 event_html = ""
 for alert in events:
+    setup = alert.get("setup_snapshot") if isinstance(alert.get("setup_snapshot"), dict) else {}
+    entry = (setup.get("entry_zone") or {}).get("label") if setup else ""
+    stop = (setup.get("stop") or {}).get("label") if setup else ""
+    trigger = alert.get("trigger") if isinstance(alert.get("trigger"), dict) else {}
+    detail = trigger.get("message") or alert.get("condition") or alert.get("note") or ""
+    if entry or stop:
+        detail += f" Original trade: entry {entry or '-'}, stop {stop or '-'}."
     event_html += (
         "<div class='aevent'>"
         f"<strong>{_esc(alert.get('symbol'))} {_esc(alert.get('label') or 'Watch condition')}</strong>"
-        f"<span>{_esc(alert.get('condition') or alert.get('note') or '')}</span>"
+        f"<span>{_esc(detail)}</span>"
         f"<small>{_esc(alert.get('status') or 'active')} &middot; {_esc(alert.get('created_at') or 'saved alert')}</small>"
         "</div>"
     )
@@ -328,8 +387,8 @@ st.markdown(
     + "</div>"
     + "<div class='alert-panel'><h3>Watcher Route</h3>"
     + "<div class='routeitem'><b>Data</b><span>Bybit price + candles</span></div>"
-    + "<div class='routeitem'><b>Logic</b><span>Local watcher first</span></div>"
-    + "<div class='routeitem'><b>Notify</b><span>Dashboard now; Telegram/iMessage later</span></div>"
+    + "<div class='routeitem'><b>Logic</b><span>Price zones + closed candles</span></div>"
+    + "<div class='routeitem'><b>Notify</b><span>Dashboard trigger state now; Telegram/iMessage later</span></div>"
     + "<div class='routeitem'><b>Cloud</b><span>Optional always-on phase</span></div>"
     + "</div></aside></section>",
     unsafe_allow_html=True,

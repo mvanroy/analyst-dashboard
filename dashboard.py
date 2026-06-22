@@ -1841,6 +1841,40 @@ def _pattern_alerts(p, symbol=None):
         note = item.get("note") or ""
         if not condition:
             continue
+        entry = p.get("entry") or {}
+        zone = entry.get("zone") or {}
+        stop = entry.get("stop") or {}
+        t1 = entry.get("t1") or {}
+        t2 = entry.get("t2") or {}
+        setup_snapshot = {
+            "pattern": p.get("name") or "",
+            "grade": (p.get("grade") or "").strip().upper()[:1],
+            "direction": entry.get("direction") or "",
+            "summary": p.get("summary") or "",
+            "entry_zone": {
+                "label": zone.get("label") or "",
+                "subtitle": zone.get("subtitle") or "",
+                "low": zone.get("low"),
+                "high": zone.get("high"),
+            },
+            "stop": {
+                "label": stop.get("label") or "",
+                "value": stop.get("value"),
+                "note": stop.get("note") or "",
+            },
+            "t1": {
+                "label": t1.get("label") or "",
+                "value": t1.get("value"),
+                "rr": t1.get("rr") or "",
+                "note": t1.get("note") or "",
+            },
+            "t2": {
+                "label": t2.get("label") or "",
+                "value": t2.get("value"),
+                "rr": t2.get("rr") or "",
+                "note": t2.get("note") or "",
+            },
+        }
         rule = {
             "symbol": symbol or "",
             "pattern": p.get("name") or "",
@@ -1853,6 +1887,7 @@ def _pattern_alerts(p, symbol=None):
             "level": item.get("level"),
             "zone": item.get("zone"),
             "note": note,
+            "setup_snapshot": setup_snapshot,
         }
         meta = " · ".join(x for x in [typ, tf] if x)
         rows.append(

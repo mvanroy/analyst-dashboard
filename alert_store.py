@@ -72,6 +72,25 @@ def set_status(alert_id: str, status: str) -> bool:
     return changed
 
 
+def mark_triggered(alert_id: str, trigger: dict) -> bool:
+    alerts = load_alerts()
+    changed = False
+    now = datetime.now().isoformat(timespec="seconds")
+    for alert in alerts:
+        if alert.get("id") == alert_id:
+            if alert.get("status") == "triggered":
+                return False
+            alert["status"] = "triggered"
+            alert["triggered_at"] = now
+            alert["updated_at"] = now
+            alert["trigger"] = trigger
+            changed = True
+            break
+    if changed:
+        save_alerts(alerts)
+    return changed
+
+
 def delete_alert(alert_id: str) -> bool:
     alerts = load_alerts()
     kept = [a for a in alerts if a.get("id") != alert_id]

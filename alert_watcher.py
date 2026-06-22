@@ -1,0 +1,232 @@
+"""Local alert watcher for saved AI-assisted trade alerts."""
+from __future__ import annotations
+
+from datetime import datetime
+import re
+
+import httpx
+
+import alert_store
+import scanner
+
+
+BYBIT_BASE = "https://api.bybit.com"
+TF_TO_BYBIT = {"15M": "15", "1H": "60", "4H": "240", "1D": "D", "D": "D"}
+TF_MS = {"15M": 15 * 60_000, "1H": 60 * 60_000, "4H": 4 * 60 * 60_000, "1D": 24 * 60 * 60_000, "D": 24 * 60 * 60_000}
+
+
+def check_alerts(limit: int = 80) -> dict:
+    """Evaluate active alerts once. Returns counts and newly-triggered alerts.
+
+    This is intentionally mechanical: no AI call, no inference beyond the saved
+    rule. Candle-close alerts only inspect fully closed candles.
+    """
+    alerts = alert_store.load_alerts()
+    active = [a for a in alerts if (a.get("status") or "active") == "active"][:limit]
+    prices: dict[str, float | None] = {}
+    candles: dict[tuple[str, str], dict | None] = {}
+    triggered = []
+    checked = 0
+    errors = []
+    for alert in active:
+        checked += 1
+        symbol = (alert.get("symbol") or "").upper()
+        if not symbol:
+            continue
+        try:
+            result = _evaluate_alert(alert, prices, candles)
+        except Exception as exc:
+            errors.append({"symbol": symbol, "error": str(exc)})
+            continue
+        if result and alert_store.mark_triggered(alert.get("id"), result):
+            triggered.append({**alert, "trigger": result})
+    return {
+        "checked": checked,
+        "triggered": triggered,
+        "errors": errors[:5],
+        "checked_at": datetime.now().isoformat(timespec="seconds"),
+    }
+
+
+def _evaluate_alert(alert: dict, prices: dict, candles: dict) -> dict | None:
+    typ = (alert.get("type") or "").lower()
+    condition = (alert.get("condition") or "").lower()
+    if "candle" in typ or "close" in typ or "close" in condition:
+        return _evaluate_candle_close(alert, candles)
+    return _evaluate_price(alert, prices)
+
+
+def _evaluate_price(alert: dict, prices: dict) -> dict | None:
+    symbol = (alert.get("symbol") or "").upper()
+    if symbol not in prices:
+        prices[symbol] = _live_price(symbol)
+    price = prices.get(symbol)
+    if price is None:
+        return None
+
+    zone = alert.get("zone") if isinstance(alert.get("zone"), dict) else {}
+    low = _to_float(zone.get("low"))
+    high = _to_float(zone.get("high"))
+    if low is not None and high is not None:
+        lo, hi = sorted([low, high])
+        if lo <= price <= hi:
+            return {
+                "kind": "price_zone",
+                "message": f"Price entered zone {lo:g}-{hi:g}.",
+                "price": price,
+                "zone": {"low": lo, "high": hi},
+                "checked_at": datetime.now().isoformat(timespec="seconds"),
+            }
+        return None
+
+    level = _to_float(alert.get("level")) or _level_from_text(alert.get("condition") or "")
+    if level is None:
+        return None
+    direction = _direction_from_text(alert)
+    if direction == "below" and price <= level:
+        return _price_level_trigger("price_below", price, level)
+    if direction == "above" and price >= level:
+        return _price_level_trigger("price_above", price, level)
+    return None
+
+
+def _evaluate_candle_close(alert: dict, candles: dict) -> dict | None:
+    symbol = (alert.get("symbol") or "").upper()
+    tf = _normalise_tf(alert.get("timeframe") or _tf_from_text(alert.get("condition") or ""))
+    if not tf:
+        return None
+    key = (symbol, tf)
+    if key not in candles:
+        candles[key] = _latest_closed_candle(symbol, tf)
+    candle = candles.get(key)
+    if not candle:
+        return None
+    level = _to_float(alert.get("level")) or _level_from_text(alert.get("condition") or "")
+    if level is None:
+        return None
+    direction = _direction_from_text(alert)
+    close = candle["close"]
+    if direction == "below" and close <= level:
+        return _candle_trigger("candle_close_below", tf, candle, level)
+    if direction == "above" and close >= level:
+        return _candle_trigger("candle_close_above", tf, candle, level)
+    return None
+
+
+def _live_price(symbol: str) -> float | None:
+    q = scanner.live_ticker(symbol)
+    return float(q["last"]) if q and q.get("last") is not None else None
+
+
+def _latest_closed_candle(symbol: str, tf: str) -> dict | None:
+    interval = TF_TO_BYBIT.get(tf)
+    if not interval:
+        return None
+    response = httpx.get(
+        BYBIT_BASE + "/v5/market/kline",
+        params={"category": "linear", "symbol": symbol, "interval": interval, "limit": 4},
+        timeout=15,
+    )
+    response.raise_for_status()
+    data = response.json()
+    if data.get("retCode") not in (0, "0"):
+        raise RuntimeError(f"Bybit error {data.get('retCode')}: {data.get('retMsg')}")
+    now_ms = int(data.get("time") or datetime.utcnow().timestamp() * 1000)
+    tf_ms = TF_MS[tf]
+    for raw in data.get("result", {}).get("list", []) or []:
+        start = int(raw[0])
+        if start + tf_ms <= now_ms:
+            return {
+                "start": start,
+                "time": datetime.utcfromtimestamp(start / 1000).strftime("%Y-%m-%d %H:%M UTC"),
+                "open": float(raw[1]),
+                "high": float(raw[2]),
+                "low": float(raw[3]),
+                "close": float(raw[4]),
+            }
+    return None
+
+
+def _direction_from_text(alert: dict) -> str:
+    text = " ".join(str(alert.get(k) or "") for k in ("type", "condition", "label")).lower()
+    if re.search(r"\b(below|under|loses|loss of|beneath)\b", text):
+        return "below"
+    if re.search(r"\b(above|over|reclaim|breakout)\b|break above|close through", text):
+        return "above"
+    direction = (alert.get("direction") or "").lower()
+    if direction == "short":
+        return "below"
+    return "above"
+
+
+def _tf_from_text(text: str) -> str:
+    t = text.upper()
+    if "15M" in t or "15 M" in t or "15-M" in t:
+        return "15M"
+    if "1H" in t or "1 H" in t or "HOURLY" in t:
+        return "1H"
+    if "4H" in t or "4 H" in t:
+        return "4H"
+    if "1D" in t or "DAILY" in t:
+        return "1D"
+    return ""
+
+
+def _normalise_tf(value: str) -> str:
+    v = (value or "").upper().replace(" ", "")
+    if v in {"15", "15M", "15MIN"}:
+        return "15M"
+    if v in {"60", "1H"}:
+        return "1H"
+    if v in {"240", "4H"}:
+        return "4H"
+    if v in {"D", "1D", "DAILY"}:
+        return "1D"
+    return ""
+
+
+def _level_from_text(text: str) -> float | None:
+    marked = re.findall(r"\$\s*\d+(?:,\d{3})*(?:\.\d+)?", text or "")
+    comma_or_decimal = re.findall(r"\b\d{1,3}(?:,\d{3})+(?:\.\d+)?\b|\b\d+\.\d+\b", text or "")
+    plain = re.findall(r"(?<![A-Z])\b\d+\b(?!\s*[HMDA-Z])", text or "", flags=re.IGNORECASE)
+    for group in (marked, comma_or_decimal, plain):
+        nums = [_parse_float(raw) for raw in group]
+        nums = [n for n in nums if n is not None]
+        if nums:
+            return nums[-1]
+    return None
+
+
+def _parse_float(raw: str) -> float | None:
+    try:
+        return float(raw.replace("$", "").replace(",", "").replace(" ", ""))
+    except ValueError:
+        return None
+
+
+def _to_float(value):
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _price_level_trigger(kind: str, price: float, level: float) -> dict:
+    return {
+        "kind": kind,
+        "message": f"Price {price:g} reached level {level:g}.",
+        "price": price,
+        "level": level,
+        "checked_at": datetime.now().isoformat(timespec="seconds"),
+    }
+
+
+def _candle_trigger(kind: str, tf: str, candle: dict, level: float) -> dict:
+    return {
+        "kind": kind,
+        "message": f"{tf} closed at {candle['close']:g} versus level {level:g}.",
+        "timeframe": tf,
+        "level": level,
+        "candle": candle,
+        "checked_at": datetime.now().isoformat(timespec="seconds"),
+    }
