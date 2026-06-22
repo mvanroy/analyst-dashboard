@@ -382,7 +382,7 @@ WATCHLIST_SUBTITLES = {
 }
 
 
-WATCHLIST_REFRESH_LIMIT = 8
+WATCHLIST_REFRESH_LIMIT = 1
 
 
 @st.cache_data(show_spinner="Loading watchlist universe…")
@@ -391,7 +391,7 @@ def watchlist_universe(mode):
 
 
 def refresh_watchlist_analyses(mode, api_key):
-    """Cheaply triage the selected universe, then run full OpenAI analysis."""
+    """Cheaply triage the selected universe, then analyse the top candidate only."""
     triage = scanner.bybit_watchlist_triage(mode, limit=WATCHLIST_REFRESH_LIMIT)
     symbols = triage.get("symbols") or []
     tactical_mode = mode == "low_cap_impulse"
@@ -1097,23 +1097,23 @@ with st.container(key="entry_zone_filters"):
             label_visibility="collapsed",
         )
     with filter_r:
-        if st.button("Refresh", key="entry_zone_refresh"):
+        if st.button("Analyse", key="entry_zone_refresh"):
             try:
                 api_key = (st.secrets.get("openai_api_key") or "").strip()
                 if not api_key or api_key == "PASTE_OPENAI_API_KEY_HERE":
                     raise RuntimeError("OpenAI API key is not configured in .streamlit/secrets.toml.")
-                with st.spinner(f"Scanning {selected_watchlist_label}: triage first, then OpenAI..."):
+                with st.spinner(f"Scanning {selected_watchlist_label}: analysing the top candidate only..."):
                     refreshed, scan_errors, triage = refresh_watchlist_analyses(
                         WATCHLIST_MODES[selected_watchlist_label],
                         api_key,
                     )
                 st.session_state.entry_zone_scan_note = (
                     f"Fresh scan: triaged {triage.get('universe_count', 0)} symbols, "
-                    f"sent {triage.get('qualified_count', 0)} candidates through the cheap filter, "
+                    f"selected the top candidate from {triage.get('qualified_count', 0)} cheap-filter matches, "
                     f"analysed {len(refreshed)} with OpenAI. "
                     f"{len(scan_errors)} failed." if scan_errors else
                     f"Fresh scan: triaged {triage.get('universe_count', 0)} symbols, "
-                    f"sent {triage.get('qualified_count', 0)} candidates through the cheap filter, "
+                    f"selected the top candidate from {triage.get('qualified_count', 0)} cheap-filter matches, "
                     f"analysed {len(refreshed)} with OpenAI."
                 )
                 if scan_errors:
