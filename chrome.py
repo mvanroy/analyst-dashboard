@@ -32,21 +32,27 @@ def sp_futures():
     return scanner.sp500_futures()
 
 
-# Live session-clock strip (Tokyo / London / NYSE) + S&P 500 futures tile.
+# Live session-clock strip (Tokyo / London / NYSE) + S&P 500 futures tile
+# + a 4H candle close countdown under the S&P tile.
 # Everything ticks in the BROWSER via setInterval — no Streamlit reruns, no
 # flicker. Only SP_PCT is injected from Python. {pct} -> "null" or a number.
 CLOCKS_HTML = """
 <!DOCTYPE html><html><head><meta charset="utf-8"><style>
   html,body { margin:0; padding:0; background:transparent;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+  * { box-sizing:border-box; }
+  .clockwrap { display:flex; flex-direction:column; align-items:flex-end; gap:7px; }
   .strip { display:flex; justify-content:flex-end; align-items:stretch;
-    gap:7px; flex-wrap:wrap; }
+    gap:7px; flex-wrap:nowrap; }
   .tile { background:#15181f; border:1px solid rgba(139,92,246,0.40); border-radius:9px;
-    padding:6px 10px; min-width:84px; display:flex; flex-direction:column;
+    padding:6px 10px; min-width:84px; min-height:66px; display:flex; flex-direction:column;
     justify-content:center; }
   .top { display:flex; justify-content:space-between; align-items:baseline;
     gap:14px; }
   .tile.live { background:rgba(14,203,129,0.13); border-color:rgba(14,203,129,0.55); }
+  .tile.sp { width:122px; min-width:122px; }
+  .tile.fourh { width:122px; min-width:122px; min-height:58px;
+    border-color:rgba(224,163,62,.56); background:rgba(224,163,62,.10); }
   .name { color:#c5ccd4; font-size:11px; font-weight:800; letter-spacing:.04em;
     text-transform:uppercase; }
   .when { color:#848e9c; font-size:10px; font-weight:600; white-space:nowrap;
@@ -55,11 +61,19 @@ CLOCKS_HTML = """
     text-transform:uppercase; margin-top:4px; line-height:1; text-align:center; }
   .value { font-size:16px; font-weight:800; margin-top:1px; line-height:1.15;
     font-variant-numeric:tabular-nums; white-space:nowrap; text-align:center; }
+  .fourh .name { text-align:center; display:block; }
+  .fourh .top { justify-content:center; }
+  .fourh .value { color:#e0a33e; font-size:17px; }
+  .fourh .when { text-align:center; margin-top:5px; color:#6b747e; font-size:10px; font-weight:700; }
   .green { color:#0ecb81; }
   .red { color:#f6465d; }
   .muted { color:#848e9c; }
+  .amber { color:#e0a33e; }
 </style></head><body>
-  <div class="strip" id="strip"></div>
+  <div class="clockwrap">
+    <div class="strip" id="strip"></div>
+    <div id="fourh"></div>
+  </div>
   <script>
     var SP_PCT = __SP_PCT__;
     // sessions are [openMin, closeMin] in local minutes-since-midnight.
@@ -103,6 +117,19 @@ CLOCKS_HTML = """
       var tm=new Intl.DateTimeFormat('en-US',{timeZone:tz,hour:'numeric',minute:'2-digit',hour12:true}).format(d);
       return wd+' '+tm;
     }
+    function melTimeFromUtc(date){
+      return new Intl.DateTimeFormat('en-AU',{
+        timeZone:'Australia/Melbourne', hour:'numeric', minute:'2-digit', hour12:false
+      }).format(date) + ' MEL';
+    }
+    function nextFourHourClose(){
+      var now = new Date();
+      var close = new Date(now);
+      close.setUTCMinutes(0,0,0);
+      close.setUTCHours(Math.floor(now.getUTCHours()/4)*4 + 4);
+      if(close <= now) close.setUTCHours(close.getUTCHours() + 4);
+      return close;
+    }
     function tile(name, when, label, value, extra){
       var top = '<div class="top"><span class="name">'+name+'</span>'
         + (when ? '<span class="when">'+when+'</span>' : '') + '</div>';
@@ -130,8 +157,13 @@ CLOCKS_HTML = """
         var up = SP_PCT>=0, cls = up?'green':'red', dot = up?'🟢':'🔴';
         sp='<div class="value '+cls+'">'+dot+' '+(up?'+':'')+SP_PCT.toFixed(2)+'%</div>';
       }
-      html += tile('S&amp;P 500 Fut', '', 'Day Chg', sp, '');
+      html += tile('S&amp;P 500 Fut', '', 'Day Chg', sp, 'sp');
       document.getElementById('strip').innerHTML = html;
+      var close = nextFourHourClose(), secs = Math.max(0, Math.floor((close - new Date())/1000));
+      document.getElementById('fourh').innerHTML =
+        '<div class="tile fourh"><div class="top"><span class="name">Next 4H Close</span></div>'
+        + '<div class="value amber">'+fmt(secs)+'</div>'
+        + '<div class="when">'+melTimeFromUtc(close)+'</div></div>';
     }
     render(); setInterval(render, 1000);
   </script>
@@ -143,7 +175,7 @@ def render_clocks():
     sp = sp_futures()
     pct = sp.get("pct") if sp else None
     val = "null" if pct is None else f"{pct:.4f}"
-    components.html(CLOCKS_HTML.replace("__SP_PCT__", val), height=66)
+    components.html(CLOCKS_HTML.replace("__SP_PCT__", val), height=132)
 
 
 # CSS subset of the Scanner chrome shared by the secondary pages so their header
