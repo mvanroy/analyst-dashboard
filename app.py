@@ -63,7 +63,7 @@ st.markdown(
       .orion-meta {color: #5b626c; font-size: .8rem; margin-top: .2rem;}
       .st-key-entry_zone_heading {margin: 1.05rem 0 .45rem 0;}
       .st-key-entry_zone_heading [data-testid="stHorizontalBlock"] {align-items: flex-start;}
-      .st-key-entry_zone_filters {margin: 0 0 .65rem 0; padding-top: 14px;}
+      .st-key-entry_zone_filters {margin: 0 0 4px 0; padding-top: 14px;}
       .st-key-entry_zone_filters [data-testid="stWidgetLabel"] {
         display: none !important;
       }
