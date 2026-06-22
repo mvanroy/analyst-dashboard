@@ -154,10 +154,12 @@ _HEADER_CSS = """<style>
   [data-testid="stSidebarNav"]{display:none;}
   footer{display:none;}
   .block-container{padding-top:1.6rem;padding-bottom:1rem;max-width:100%;}
-  .st-key-topnav{flex-direction:row!important;gap:1.1rem;align-items:center;}
+  .st-key-topnav{flex-direction:row!important;gap:1.1rem;align-items:center;
+    transform:translateY(16px);}
   .st-key-topnav [data-testid="stElementContainer"]{width:auto!important;}
   .st-key-topnav [data-testid="stMarkdownContainer"] p{width:auto!important;
     overflow:visible!important;text-overflow:clip!important;white-space:nowrap;}
+  [data-testid="stHorizontalBlock"]:has(.st-key-topnav) iframe{transform:translateY(16px);}
   .orion-brand{display:flex;align-items:center;gap:.7rem;}
   .orion-brand img{width:54px;height:54px;}
   .orion-logo{font-size:1.7rem;font-weight:800;letter-spacing:.04em;color:#e6e8eb;line-height:1.1;white-space:nowrap;}
