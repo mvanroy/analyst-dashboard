@@ -33,7 +33,7 @@ def sp_futures():
 
 
 # Live session-clock strip (Tokyo / London / NYSE) + S&P 500 futures tile
-# + a 4H candle close countdown under the S&P tile.
+# + a 4H candle close countdown.
 # Everything ticks in the BROWSER via setInterval — no Streamlit reruns, no
 # flicker. Only SP_PCT is injected from Python. {pct} -> "null" or a number.
 CLOCKS_HTML = """
@@ -41,39 +41,33 @@ CLOCKS_HTML = """
   html,body { margin:0; padding:0; background:transparent;
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
   * { box-sizing:border-box; }
-  .clockwrap { display:flex; flex-direction:column; align-items:flex-end; gap:7px; }
   .strip { display:flex; justify-content:flex-end; align-items:stretch;
     gap:7px; flex-wrap:nowrap; }
   .tile { background:#15181f; border:1px solid rgba(139,92,246,0.40); border-radius:9px;
-    padding:6px 10px; min-width:84px; min-height:66px; display:flex; flex-direction:column;
+    padding:6px 9px; width:92px; min-width:92px; min-height:72px; display:flex; flex-direction:column;
     justify-content:center; }
-  .top { display:flex; justify-content:space-between; align-items:baseline;
-    gap:14px; }
+  .top { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; }
   .tile.live { background:rgba(14,203,129,0.13); border-color:rgba(14,203,129,0.55); }
-  .tile.sp { width:122px; min-width:122px; }
-  .tile.fourh { width:122px; min-width:122px; min-height:58px;
+  .tile.sp { width:108px; min-width:108px; }
+  .tile.fourh { width:112px; min-width:112px;
     border-color:rgba(224,163,62,.56); background:rgba(224,163,62,.10); }
-  .name { color:#c5ccd4; font-size:11px; font-weight:800; letter-spacing:.04em;
-    text-transform:uppercase; }
-  .when { color:#848e9c; font-size:10px; font-weight:600; white-space:nowrap;
-    font-variant-numeric:tabular-nums; }
+  .name { color:#c5ccd4; font-size:10.5px; font-weight:800; letter-spacing:.04em;
+    text-transform:uppercase; white-space:nowrap; }
+  .when { color:#848e9c; font-size:9px; font-weight:700; white-space:nowrap;
+    font-variant-numeric:tabular-nums; text-transform:uppercase; }
   .label { color:#6b747e; font-size:8px; font-weight:700; letter-spacing:.13em;
-    text-transform:uppercase; margin-top:4px; line-height:1; text-align:center; }
-  .value { font-size:16px; font-weight:800; margin-top:1px; line-height:1.15;
+    text-transform:uppercase; margin-top:5px; line-height:1; text-align:center; }
+  .value { font-size:15.5px; font-weight:800; margin-top:2px; line-height:1.15;
     font-variant-numeric:tabular-nums; white-space:nowrap; text-align:center; }
-  .fourh .name { text-align:center; display:block; }
-  .fourh .top { justify-content:center; }
+  .fourh .name { font-size:9.5px; text-align:center; display:block; }
   .fourh .value { color:#e0a33e; font-size:17px; }
-  .fourh .when { text-align:center; margin-top:5px; color:#6b747e; font-size:10px; font-weight:700; }
+  .fourh .when { color:#6b747e; font-size:9.5px; font-weight:700; }
   .green { color:#0ecb81; }
   .red { color:#f6465d; }
   .muted { color:#848e9c; }
   .amber { color:#e0a33e; }
 </style></head><body>
-  <div class="clockwrap">
-    <div class="strip" id="strip"></div>
-    <div id="fourh"></div>
-  </div>
+  <div class="strip" id="strip"></div>
   <script>
     var SP_PCT = __SP_PCT__;
     // sessions are [openMin, closeMin] in local minutes-since-midnight.
@@ -132,7 +126,7 @@ CLOCKS_HTML = """
     }
     function tile(name, when, label, value, extra){
       var top = '<div class="top"><span class="name">'+name+'</span>'
-        + (when ? '<span class="when">'+when+'</span>' : '') + '</div>';
+        + (when ? '<span class="when">'+when+'</span>' : '<span class="when">&nbsp;</span>') + '</div>';
       return '<div class="tile'+(extra?' '+extra:'')+'">'+top
         + '<div class="label">'+label+'</div>'+value+'</div>';
     }
@@ -157,13 +151,12 @@ CLOCKS_HTML = """
         var up = SP_PCT>=0, cls = up?'green':'red', dot = up?'🟢':'🔴';
         sp='<div class="value '+cls+'">'+dot+' '+(up?'+':'')+SP_PCT.toFixed(2)+'%</div>';
       }
-      html += tile('S&amp;P 500 Fut', '', 'Day Chg', sp, 'sp');
-      document.getElementById('strip').innerHTML = html;
       var close = nextFourHourClose(), secs = Math.max(0, Math.floor((close - new Date())/1000));
-      document.getElementById('fourh').innerHTML =
-        '<div class="tile fourh"><div class="top"><span class="name">Next 4H Close</span></div>'
-        + '<div class="value amber">'+fmt(secs)+'</div>'
-        + '<div class="when">'+melTimeFromUtc(close)+'</div></div>';
+      html += tile('S&amp;P 500 Fut', '', 'Day Chg', sp, 'sp');
+      html += '<div class="tile fourh"><div class="top"><span class="name">Next 4H Close</span>'
+        + '<span class="when">'+melTimeFromUtc(close)+'</span></div>'
+        + '<div class="label">Closes in</div><div class="value amber">'+fmt(secs)+'</div></div>';
+      document.getElementById('strip').innerHTML = html;
     }
     render(); setInterval(render, 1000);
   </script>
@@ -175,7 +168,7 @@ def render_clocks():
     sp = sp_futures()
     pct = sp.get("pct") if sp else None
     val = "null" if pct is None else f"{pct:.4f}"
-    components.html(CLOCKS_HTML.replace("__SP_PCT__", val), height=144)
+    components.html(CLOCKS_HTML.replace("__SP_PCT__", val), height=78)
 
 
 # CSS subset of the Scanner chrome shared by the secondary pages so their header
