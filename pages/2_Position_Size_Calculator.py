@@ -122,12 +122,14 @@ st.markdown(
 
 /* ---- brand row (brand left + symbol chip / direction right), matches dashboard ---- */
 .st-key-brandrow{justify-content:flex-start!important;margin-top:-20px!important;}
+.st-key-brandrow [data-testid="stLayoutWrapper"]:has(.st-key-modestack){width:auto!important;
+  flex:0 0 auto!important;}
 /* ---- Mode toggles: two segmented controls stacked top-to-bottom, right-aligned in the brand
    row. Each shows BOTH options at once using the "direct" colour scheme — the ACTIVE segment
    gets light shading + a bold label + a coloured border; the inactive segment stays a plain
    light-bordered, muted-label chip. (No dark "inverted" fill, no sliding knob, no heading.) */
 .st-key-modestack{flex-direction:column!important;align-items:center!important;gap:6px!important;
-  width:220px!important;margin:0 auto 8px!important;align-self:center!important;}
+  width:220px!important;margin:0!important;align-self:center!important;}
 /* each control is a row of two equal segments, butted together (no gap) */
 .st-key-sizeseg,.st-key-ctxseg{flex-direction:row!important;gap:0!important;width:220px!important;
   align-items:stretch!important;}
@@ -792,6 +794,19 @@ _blank = st.session_state.get("calc_blank", False)
 _brow = st.container(key="brandrow")
 with _brow:
     st.markdown(chrome.brand_html("POSITION", "CALCULATOR", "Bybit · USDT Perp"), unsafe_allow_html=True)
+    # Page-level sizing/context controls sit beside the heading. The far-right
+    # header space stays available for the shared trading-clock widget.
+    with st.container(key="modestack"):
+        with st.container(key="sizeseg"):
+            st.button("Risk", key="segrisk_on" if not _exp_on else "segrisk_off",
+                      on_click=_set_mode, args=(False,))
+            st.button("Exposure", key="segexp_on" if _exp_on else "segexp_off",
+                      on_click=_set_mode, args=(True,))
+        with st.container(key="ctxseg"):
+            st.button("Push Trade", key="segpush_on" if not _blank else "segpush_off",
+                      on_click=_set_blank, args=(False,))
+            st.button("Blank Calc", key="segblank_on" if _blank else "segblank_off",
+                      on_click=_set_blank, args=(True,))
 mode = "exposure" if _exp_on else "risk"
 is_exposure = mode == "exposure"
 
@@ -959,19 +974,6 @@ with top_dir:
     else:
         st.markdown(_dir_box, unsafe_allow_html=True)
 with top_pnl:
-    # Sizing/context controls sit above P&L so the page header has room for the
-    # shared trading-clock widget.
-    with st.container(key="modestack"):
-        with st.container(key="sizeseg"):
-            st.button("Risk", key="segrisk_on" if not _exp_on else "segrisk_off",
-                      on_click=_set_mode, args=(False,))
-            st.button("Exposure", key="segexp_on" if _exp_on else "segexp_off",
-                      on_click=_set_mode, args=(True,))
-        with st.container(key="ctxseg"):
-            st.button("Push Trade", key="segpush_on" if not _blank else "segpush_off",
-                      on_click=_set_blank, args=(False,))
-            st.button("Blank Calc", key="segblank_on" if _blank else "segblank_off",
-                      on_click=_set_blank, args=(True,))
     st.markdown(_pnl_box, unsafe_allow_html=True)
 with top_right:
     _eq = float(st.session_state.get("calc_equity", _eq_default))
