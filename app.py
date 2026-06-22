@@ -68,10 +68,13 @@ st.markdown(
         display: flex; flex-wrap: wrap; gap: .5rem;
       }
       .st-key-entry_zone_filters label {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
         min-height: 30px;
         border: 1px solid #1f2a38;
         border-radius: 9999px;
-        padding: .27rem .82rem;
+        padding: .22rem .82rem;
         background: #0e1117;
         box-shadow: inset 0 0 0 1px rgba(255,255,255,.015);
         color: #9aa3ae;
@@ -86,6 +89,7 @@ st.markdown(
       }
       .st-key-entry_zone_filters label [data-testid="stMarkdownContainer"] p {
         margin: 0;
+        line-height: 1;
       }
       .st-key-entry_zone_filters label:has(input:checked) {
         border-color: rgba(76,141,255,.85);
