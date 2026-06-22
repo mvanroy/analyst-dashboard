@@ -16,13 +16,11 @@ import openai_analysis
 
 st.set_page_config(page_title="Trade Setup", page_icon="📊", layout="wide")
 
-# Shared chrome: nav + live clocks row (brand rendered below alongside the Run
-# button so they share one horizontal row).
+# Shared chrome: nav + live clocks row (brand rendered below alongside the
+# ticker analysis controls).
 chrome.render_header("TRADE", "SETUP", brand=False)
 
-# Brand + "Run" pill on one row (Run to the right of the brand). The Run pill
-# matches the Push To Calculator button; clicking it re-scans analyses/ for the
-# newest analysis Claude generated and re-renders.
+# Brand + ticker analysis controls on one row.
 st.markdown(
     "<style>"
     # Ambient purple gradient behind the cards — shared with the Market Scanner and
@@ -36,19 +34,16 @@ st.markdown(
     # removes the only control to reopen it once collapsed. Hide it outright here.
     + "[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important;}"
     ".st-key-brandrow .stTextInput{width:150px!important;transform:translateY(8px);}"
-    ".st-key-brandrow .stTextInput input{height:30px;border-radius:9999px!important;"
+    ".st-key-brandrow .stTextInput input{height:30px;border-radius:7px!important;"
     "border:1px solid rgba(230,232,235,.2)!important;background:rgba(10,14,20,.35)!important;"
     "color:#e6e8eb!important;font-size:.82rem!important;padding:0.25rem .85rem!important;"
     "text-transform:uppercase;}"
     ".st-key-brandrow .stTextInput input:focus{border-color:#4c8dff!important;"
     "box-shadow:none!important;}"
-    ".st-key-runbtn button{border-radius:9999px;border:1px solid rgba(230,232,235,.2)!important;"
-    "background:transparent!important;color:#e6e8eb!important;font-weight:500;min-height:0;"
-    "padding:0.25rem 0.85rem;width:auto;white-space:nowrap;transform:translateY(8px);}"
     ".st-key-analysebtn button{border-radius:9999px;border:1px solid rgba(76,141,255,.75)!important;"
     "background:rgba(76,141,255,.12)!important;color:#e6e8eb!important;font-weight:600;"
     "min-height:0;padding:0.25rem 0.9rem;width:auto;white-space:nowrap;transform:translateY(8px);}"
-    ".st-key-runbtn button:hover,.st-key-analysebtn button:hover{border-color:#4c8dff!important;color:#4c8dff!important;"
+    ".st-key-analysebtn button:hover{border-color:#4c8dff!important;color:#4c8dff!important;"
     "background:transparent!important;}"
     "</style>",
     unsafe_allow_html=True,
@@ -64,11 +59,10 @@ def _normalise_symbol(value: str) -> str:
 
 _brow = st.container(key="brandrow")
 _brow.markdown(chrome.brand_html("TRADE", "SETUP"), unsafe_allow_html=True)
-_brow.button("Run", key="runbtn")
 _brow.text_input(
-    "Symbol",
+    "Ticker",
     key="analysis_symbol_input",
-    placeholder="INJUSDT",
+    placeholder="Ticker",
     label_visibility="collapsed",
 )
 if _brow.button("Analyse", key="analysebtn"):
