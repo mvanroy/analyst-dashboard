@@ -548,7 +548,7 @@ def _parse_json_response(text: str) -> dict:
     return json.loads(clean[start : end + 1])
 
 
-def _schema_hint(symbol: str, evidence: dict) -> dict:
+def _schema_hint(symbol: str, evidence: dict, setup_timeframe: str = "4H") -> dict:
     return {
         "schema_version": 2,
         "framework_version": "Trade Setup Framework v1",
@@ -559,6 +559,7 @@ def _schema_hint(symbol: str, evidence: dict) -> dict:
         "change_pct_24h": 0.0,
         "meta": {
             "timeframe_analyzed": "Daily + 4H + 1H + 15M",
+            "setup_timeframe": setup_timeframe,
             "analysis_time": "Melbourne local time",
         },
         "snapshot": [
@@ -621,7 +622,7 @@ def _schema_hint(symbol: str, evidence: dict) -> dict:
     }
 
 
-def _stamp_dashboard_metadata(data: dict, symbol: str, evidence: dict) -> dict:
+def _stamp_dashboard_metadata(data: dict, symbol: str, evidence: dict, setup_timeframe: str = "4H") -> dict:
     ticker = evidence.get("ticker") or {}
     last = ticker.get("last")
     high = ticker.get("high_24h")
@@ -641,6 +642,7 @@ def _stamp_dashboard_metadata(data: dict, symbol: str, evidence: dict) -> dict:
         data["meta"].get("timeframe_analyzed")
         or "Context: 1D 90, 4H 90, 1H 72; execution: 15M 36, last 18 highlighted"
     )
+    data["meta"]["setup_timeframe"] = setup_timeframe
     data["meta"]["analysis_time"] = datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%b %-d, %Y, %-I:%M %p %Z")
     data["snapshot"] = [
         {"label": "Current Price", "value": _fmt_price(last)},
@@ -692,10 +694,20 @@ def _sanitize_candidate_numbers(data: dict, fallback_price):
         risk.setdefault("unit", "")
 
 
-def generate_dashboard_analysis(symbol: str, api_key: str, model: str = DEFAULT_MODEL, tactical_mode: bool = False) -> dict:
+def generate_dashboard_analysis(
+    symbol: str,
+    api_key: str,
+    model: str = DEFAULT_MODEL,
+    tactical_mode: bool = False,
+    setup_timeframe: str = "4H",
+) -> dict:
     """Call OpenAI and write analyses/<SYMBOL>.json for the Trade Dashboard."""
     symbol = normalise_symbol(symbol)
+    setup_timeframe = (setup_timeframe or "4H").upper()
+    if setup_timeframe not in {"4H", "1H", "15M"}:
+        setup_timeframe = "4H"
     evidence = build_evidence_pack(symbol)
+    evidence["selected_setup_chart"] = setup_timeframe
     framework = _read_framework_prompt()
     tactical_instruction = ""
     if tactical_mode:
@@ -743,9 +755,14 @@ def generate_dashboard_analysis(symbol: str, api_key: str, model: str = DEFAULT_
         "Use 15M 36 candles as the execution window, with the supplied 15M last-18 highlight "
         "as the trigger/confirmation window only. Do not let the last 18 candles override the "
         "broader context if they are merely a late move into support/resistance or exhaustion.\n\n"
+        f"Selected setup chart: {setup_timeframe}. Preserve multi-timeframe context and use broader/lower "
+        "timeframes for bias, confluence, risk, invalidation, and timing nuance. However, construct the "
+        "actual trade setup options primarily from the selected setup chart: pattern maturity, entry zone, "
+        "trigger, stop, targets, and invalidation should reference that chart unless there is a clear "
+        "reason to state that the selected chart has no valid setup.\n\n"
         f"{tactical_instruction}\n"
         "Dashboard schema hint:\n"
-        f"{json.dumps(_schema_hint(symbol, evidence), indent=2)}\n\n"
+        f"{json.dumps(_schema_hint(symbol, evidence, setup_timeframe), indent=2)}\n\n"
         "USER FRAMEWORK PROMPT:\n"
         f"{framework}\n\n"
         "BYBIT EVIDENCE PACK:\n"
@@ -763,7 +780,7 @@ def generate_dashboard_analysis(symbol: str, api_key: str, model: str = DEFAULT_
     raw = _extract_text(payload)
     if not raw:
         raise RuntimeError("OpenAI returned no text output.")
-    data = _stamp_dashboard_metadata(_parse_json_response(raw), symbol, evidence)
+    data = _stamp_dashboard_metadata(_parse_json_response(raw), symbol, evidence, setup_timeframe)
     os.makedirs(_ANALYSES_DIR, exist_ok=True)
     json_path = os.path.join(_ANALYSES_DIR, f"{symbol}.json")
     raw_path = os.path.join(_ANALYSES_DIR, f"{symbol}.openai.raw.txt")

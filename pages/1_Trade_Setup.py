@@ -45,6 +45,20 @@ st.markdown(
     "border-radius:0!important;background:transparent!important;color:#e6e8eb!important;"
     "font-size:.82rem!important;padding:0.25rem .85rem!important;text-transform:uppercase;}"
     ".st-key-brandrow .stTextInput input:focus{box-shadow:none!important;outline:none!important;}"
+    ".st-key-analysis_setup_chart{transform:translateY(2px);}"
+    ".st-key-analysis_setup_chart [data-testid='stWidgetLabel']{display:none!important;}"
+    ".st-key-analysis_setup_chart [data-testid='stPills']{display:flex;gap:.28rem;}"
+    ".st-key-analysis_setup_chart [data-testid='stPills'] button{min-height:32px!important;"
+    "border-radius:7px!important;border:1px solid rgba(230,232,235,.18)!important;"
+    "background:rgba(10,14,20,.30)!important;color:#8b94a0!important;font-size:.76rem!important;"
+    "font-weight:800!important;padding:.18rem .58rem!important;}"
+    ".st-key-analysis_setup_chart [data-testid='stPills'] button:hover{"
+    "border-color:rgba(76,141,255,.55)!important;color:#dce3ec!important;}"
+    ".st-key-analysis_setup_chart button[data-testid='stBaseButton-pillsActive'],"
+    ".st-key-analysis_setup_chart [data-testid='stPills'] button[aria-pressed='true'],"
+    ".st-key-analysis_setup_chart [data-testid='stPills'] button[aria-selected='true']{"
+    "border-color:rgba(76,141,255,.85)!important;background:rgba(76,141,255,.16)!important;"
+    "color:#e6e8eb!important;}"
     ".st-key-analysebtn button{border-radius:9999px;border:1px solid rgba(76,141,255,.75)!important;"
     "background:rgba(76,141,255,.12)!important;color:#e6e8eb!important;font-weight:600;"
     "min-height:0;padding:0.25rem 0.9rem;width:auto;white-space:nowrap;transform:translateY(2px);}"
@@ -62,6 +76,9 @@ def _normalise_symbol(value: str) -> str:
     return symbol
 
 
+if "analysis_setup_chart" not in st.session_state:
+    st.session_state.analysis_setup_chart = "4H"
+
 _brow = st.container(key="brandrow")
 _brow.markdown(chrome.brand_html("TRADE", "SETUP"), unsafe_allow_html=True)
 _brow.text_input(
@@ -70,8 +87,16 @@ _brow.text_input(
     placeholder="Ticker",
     label_visibility="collapsed",
 )
+_brow.pills(
+    "Setup chart",
+    ["4H", "1H", "15M"],
+    selection_mode="single",
+    key="analysis_setup_chart",
+    label_visibility="collapsed",
+)
 if _brow.button("Analyse", key="analysebtn"):
     requested = _normalise_symbol(st.session_state.get("analysis_symbol_input", ""))
+    setup_chart = st.session_state.get("analysis_setup_chart") or "4H"
     if requested:
         st.session_state.analysis_request_submitted = True
         st.session_state.openai_analysis_error = None
@@ -83,6 +108,7 @@ if _brow.button("Analyse", key="analysebtn"):
                 openai_analysis.generate_dashboard_analysis(
                     requested,
                     api_key=api_key,
+                    setup_timeframe=setup_chart,
                 )
             st.session_state.analysis_requested_symbol = requested
             st.rerun()
@@ -115,7 +141,8 @@ if data:
     _cap = (
         f"Viewing saved result for <b>{data.get('symbol', symbol)}</b> · "
         f"<b>Last analysed:</b> {_last_analysed} · analysis performed on "
-        f"{_m.get('timeframe_analyzed', '—')} · framework "
+        f"{_m.get('timeframe_analyzed', '—')} · setup chart "
+        f"<b>{_m.get('setup_timeframe', '—')}</b> · framework "
         f"{data.get('framework_version', 'Trade Setup Framework')} {_grade_key}"
     )
     st.markdown(
