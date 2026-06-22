@@ -126,8 +126,8 @@ st.markdown(
    row. Each shows BOTH options at once using the "direct" colour scheme — the ACTIVE segment
    gets light shading + a bold label + a coloured border; the inactive segment stays a plain
    light-bordered, muted-label chip. (No dark "inverted" fill, no sliding knob, no heading.) */
-.st-key-modestack{flex-direction:column!important;align-items:flex-end!important;gap:6px!important;
-  width:auto!important;margin-left:auto!important;align-self:center!important;}
+.st-key-modestack{flex-direction:column!important;align-items:center!important;gap:6px!important;
+  width:220px!important;margin:0 auto 8px!important;align-self:center!important;}
 /* each control is a row of two equal segments, butted together (no gap) */
 .st-key-sizeseg,.st-key-ctxseg{flex-direction:row!important;gap:0!important;width:220px!important;
   align-items:stretch!important;}
@@ -786,28 +786,12 @@ RISK_GUARD_PCT = 2.0  # exposure mode warns when the derived loss-at-stop exceed
 # pattern as the Trade Dashboard so the heading lands in the identical position.
 # --------------------------------------------------------------------------- #
 _mode_default = _load_prefs().get("mode", "risk")
+st.session_state.setdefault("calc_mode", _mode_default == "exposure")
+_exp_on = bool(st.session_state.get("calc_mode", False))
+_blank = st.session_state.get("calc_blank", False)
 _brow = st.container(key="brandrow")
 with _brow:
     st.markdown(chrome.brand_html("POSITION", "CALCULATOR", "Bybit · USDT Perp"), unsafe_allow_html=True)
-    st.session_state.setdefault("calc_mode", _mode_default == "exposure")
-    _exp_on = bool(st.session_state.get("calc_mode", False))
-    _blank = st.session_state.get("calc_blank", False)
-    # Two segmented toggles, stacked top-to-bottom and pushed to the far right of the brand row.
-    # Each shows BOTH options at once with the active one highlighted (the "direct" colour
-    # scheme: light shading + bold label + coloured border on the active segment; light border +
-    # muted label on the inactive one). Top = sizing (Risk | Exposure); bottom = context
-    # (Push Trade | Blank Calc). The active segment's key ends in "_on" so the CSS can colour it.
-    with st.container(key="modestack"):
-        with st.container(key="sizeseg"):
-            st.button("Risk", key="segrisk_on" if not _exp_on else "segrisk_off",
-                      on_click=_set_mode, args=(False,))
-            st.button("Exposure", key="segexp_on" if _exp_on else "segexp_off",
-                      on_click=_set_mode, args=(True,))
-        with st.container(key="ctxseg"):
-            st.button("Push Trade", key="segpush_on" if not _blank else "segpush_off",
-                      on_click=_set_blank, args=(False,))
-            st.button("Blank Calc", key="segblank_on" if _blank else "segblank_off",
-                      on_click=_set_blank, args=(True,))
 mode = "exposure" if _exp_on else "risk"
 is_exposure = mode == "exposure"
 
@@ -975,6 +959,19 @@ with top_dir:
     else:
         st.markdown(_dir_box, unsafe_allow_html=True)
 with top_pnl:
+    # Sizing/context controls sit above P&L so the page header has room for the
+    # shared trading-clock widget.
+    with st.container(key="modestack"):
+        with st.container(key="sizeseg"):
+            st.button("Risk", key="segrisk_on" if not _exp_on else "segrisk_off",
+                      on_click=_set_mode, args=(False,))
+            st.button("Exposure", key="segexp_on" if _exp_on else "segexp_off",
+                      on_click=_set_mode, args=(True,))
+        with st.container(key="ctxseg"):
+            st.button("Push Trade", key="segpush_on" if not _blank else "segpush_off",
+                      on_click=_set_blank, args=(False,))
+            st.button("Blank Calc", key="segblank_on" if _blank else "segblank_off",
+                      on_click=_set_blank, args=(True,))
     st.markdown(_pnl_box, unsafe_allow_html=True)
 with top_right:
     _eq = float(st.session_state.get("calc_equity", _eq_default))
