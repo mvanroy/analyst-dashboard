@@ -41,6 +41,7 @@ st.markdown(
       /* the default Streamlit header is a 60px opaque bar pinned on top of the
          page (z-index ~999990); it was covering the top of our headings, so hide it */
       [data-testid="stHeader"] {display: none;}
+      [data-testid="stSidebar"], [data-testid="stSidebarCollapsedControl"] {display: none !important;}
       /* we surface page navigation as an in-page list (top-left), so hide the
          default sidebar page-nav */
       [data-testid="stSidebarNav"] {display: none;}
@@ -982,12 +983,8 @@ def short_grid_options(with_tooltips=True):
     }
 
 
-# ---------------- sidebar ----------------
-st.sidebar.title("Settings")
-shortlist_floor = st.sidebar.number_input(
-    "Shortlist volume floor ($)", value=500_000, step=100_000, min_value=0,
-    help="Minimum 5M volume for a coin to qualify for the shortlist.",
-)
+# ---------------- shortlist settings ----------------
+shortlist_floor = 500_000
 
 # ---------------- data ----------------
 try:

@@ -151,6 +151,7 @@ def render_clocks():
 _HEADER_CSS = """<style>
   [data-testid="stToolbar"]{display:none;}
   [data-testid="stHeader"]{display:none;}
+  [data-testid="stSidebar"],[data-testid="stSidebarCollapsedControl"]{display:none!important;}
   [data-testid="stSidebarNav"]{display:none;}
   footer{display:none;}
   .block-container{padding-top:1.6rem;padding-bottom:1rem;max-width:100%;}
