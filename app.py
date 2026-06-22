@@ -105,7 +105,7 @@ st.markdown(
         box-shadow: none;
         padding: 0;
       }
-      .ezw-time {font-size: .76rem; color: #6f7885; text-align: right; margin-top: 5px;}
+      .ezw-time {font-size: .76rem; color: #6f7885; text-align: right; margin-top: 0;}
       .ezw-scan-note {font-size: .76rem; color: #8b94a0; margin: -.25rem 0 .65rem 0;}
       .ezw-empty {border-top: 1px solid #252b35; padding-top: 12px; color: #8b94a0; font-size: .84rem;}
       .ezw-table {
@@ -1080,17 +1080,26 @@ watchlist_help = (
 _ezw_logo = chrome.logo_data_uri()
 _ezw_logo_img = f'<img src="{_ezw_logo}" alt="logo">' if _ezw_logo else ""
 with st.container(key="entry_zone_heading"):
-    wz_l, wz_r = st.columns([3, 1], vertical_alignment="top")
-    with wz_l:
-        st.markdown(
-            '<div class="orion-brand">'
-            f"{_ezw_logo_img}"
-            '<div class="orion-logo">ENTRY ZONE <span class="accent">WATCHLIST</span>'
-            f'<span class="sub">{_h(WATCHLIST_SUBTITLES[selected_watchlist_label])}</span></div>'
-            "</div>",
-            unsafe_allow_html=True,
+    st.markdown(
+        '<div class="orion-brand">'
+        f"{_ezw_logo_img}"
+        '<div class="orion-logo">ENTRY ZONE <span class="accent">WATCHLIST</span>'
+        f'<span class="sub">{_h(WATCHLIST_SUBTITLES[selected_watchlist_label])} · Last scanned: {last_scanned}</span></div>'
+        "</div>",
+        unsafe_allow_html=True,
+    )
+
+with st.container(key="entry_zone_filters"):
+    filter_l, filter_r = st.columns([5, 1], vertical_alignment="top")
+    with filter_l:
+        st.pills(
+            "",
+            list(WATCHLIST_MODES.keys()),
+            selection_mode="single",
+            key="entry_zone_mode_label",
+            label_visibility="collapsed",
         )
-    with wz_r:
+    with filter_r:
         if st.button("Refresh", key="entry_zone_refresh"):
             try:
                 api_key = (st.secrets.get("openai_api_key") or "").strip()
@@ -1120,16 +1129,6 @@ with st.container(key="entry_zone_heading"):
                 watchlist_universe.clear()
                 build_entry_zone_watchlist.clear()
                 st.rerun()
-        st.markdown(f"<div class='ezw-time'>Last scanned: {last_scanned}</div>", unsafe_allow_html=True)
-
-with st.container(key="entry_zone_filters"):
-    st.pills(
-        "",
-        list(WATCHLIST_MODES.keys()),
-        selection_mode="single",
-        key="entry_zone_mode_label",
-        label_visibility="collapsed",
-    )
     if st.session_state.get("entry_zone_scan_note"):
         st.markdown(f"<div class='ezw-scan-note'>{_h(st.session_state.entry_zone_scan_note)}</div>", unsafe_allow_html=True)
     if st.session_state.get("entry_zone_scan_errors"):
