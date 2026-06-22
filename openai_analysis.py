@@ -692,11 +692,22 @@ def _sanitize_candidate_numbers(data: dict, fallback_price):
         risk.setdefault("unit", "")
 
 
-def generate_dashboard_analysis(symbol: str, api_key: str, model: str = DEFAULT_MODEL) -> dict:
+def generate_dashboard_analysis(symbol: str, api_key: str, model: str = DEFAULT_MODEL, tactical_mode: bool = False) -> dict:
     """Call OpenAI and write analyses/<SYMBOL>.json for the Trade Dashboard."""
     symbol = normalise_symbol(symbol)
     evidence = build_evidence_pack(symbol)
     framework = _read_framework_prompt()
+    tactical_instruction = ""
+    if tactical_mode:
+        tactical_instruction = (
+            "\nLOW CAP IMPULSE MODE:\n"
+            "This symbol was selected by a low-cap impulse scanner. In addition to clean A/B setups, identify the next "
+            "tactical participation point even if the setup is messy. A tactical idea may be C-grade if it is not a clean "
+            "framework trade, but it still needs a real participation level, invalidation, and reason not to chase. "
+            "Prefer practical labels such as Tactical Long, Momentum Breakout, Pullback Watch, Failed Breakdown Reclaim, "
+            "or Do Not Chase. Do not pretend the setup is high quality if it is not; the goal is to show where the next "
+            "tradeable participation point would be for a fast low-cap impulse name.\n"
+        )
     prompt = (
         f"You are generating the dashboard-renderable analysis for {symbol}.\n\n"
         "Use the user's framework prompt and the Bybit evidence pack below. Return ONLY valid JSON "
@@ -732,6 +743,7 @@ def generate_dashboard_analysis(symbol: str, api_key: str, model: str = DEFAULT_
         "Use 15M 36 candles as the execution window, with the supplied 15M last-18 highlight "
         "as the trigger/confirmation window only. Do not let the last 18 candles override the "
         "broader context if they are merely a late move into support/resistance or exhaustion.\n\n"
+        f"{tactical_instruction}\n"
         "Dashboard schema hint:\n"
         f"{json.dumps(_schema_hint(symbol, evidence), indent=2)}\n\n"
         "USER FRAMEWORK PROMPT:\n"

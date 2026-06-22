@@ -107,6 +107,8 @@ st.markdown(
       .ezw-status {display: inline-block; border-radius: 999px; padding: 2px 8px; font-size: .68rem; font-weight: 800;}
       .ezw-status.approaching {color: #e3a008; border: 1px solid rgba(227,160,8,.45); background: rgba(227,160,8,.12);}
       .ezw-status.waiting {color: #9fc0ff; border: 1px solid rgba(76,141,255,.45); background: rgba(76,141,255,.10);}
+      .ezw-status.at-zone {color: #0ecb81; border: 1px solid rgba(14,203,129,.45); background: rgba(14,203,129,.10);}
+      .ezw-status.below-zone, .ezw-status.above-zone {color: #b7c2d0; border: 1px solid rgba(183,194,208,.35); background: rgba(183,194,208,.08);}
       .ezw-muted {color: #8b94a0;}
       .ezw-trigger {max-width: 360px; color: #aeb7c3; line-height: 1.35;}
       .ezw-info {display: flex; justify-content: flex-start; margin-top: 10px; padding-top: 8px; border-top: 1px solid #252b35;}
@@ -250,9 +252,10 @@ def _fmt_entry_price(value):
     return f"${value:.6f}"
 
 
-def _candidate_watch_row(symbol, data, candidate):
+def _candidate_watch_row(symbol, data, candidate, tactical=False):
     grade = (candidate.get("grade") or "").strip().upper()[:1]
-    if grade not in {"A", "B"}:
+    allowed_grades = {"A", "B", "C"} if tactical else {"A", "B"}
+    if grade not in allowed_grades:
         return None
 
     entry = candidate.get("entry") or {}
@@ -275,23 +278,28 @@ def _candidate_watch_row(symbol, data, candidate):
         return None
     current = float(quote["last"])
 
-    if direction == "long":
-        if current <= high:
+    if low <= current <= high:
+        if not tactical:
             return None
-        distance = (current - high) / current * 100
-    else:
-        if current >= low:
-            return None
+        distance = 0.0
+        status = "At Zone"
+    elif current < low:
         distance = (low - current) / current * 100
+        status = "Approaching" if distance <= 1.0 else "Below Zone"
+    else:
+        distance = (current - high) / current * 100
+        status = "Approaching" if distance <= 1.0 else "Above Zone"
 
-    status = "Approaching" if distance <= 1.0 else "Waiting"
+    if not tactical and status not in {"Approaching", "Below Zone", "Above Zone"}:
+        return None
+
     subtitle = zone.get("subtitle") or ""
     trigger = subtitle if subtitle else candidate.get("qualifier") or candidate.get("summary") or "Entry condition pending."
     return {
         "symbol": symbol,
         "grade": grade,
         "direction": direction,
-        "setup": candidate.get("name") or candidate.get("classification") or "Setup",
+        "setup": candidate.get("name") or candidate.get("classification") or ("Tactical Setup" if tactical else "Setup"),
         "status": status,
         "entry": zone.get("label") or f"{_fmt_entry_price(low)} – {_fmt_entry_price(high)}",
         "current": _fmt_entry_price(current),
@@ -316,7 +324,7 @@ WATCHLIST_SUBTITLES = {
     "24h %": "Saved A/B setups · raw Bybit 24h percentage movers · price still outside entry",
     "New": "Saved A/B setups · newest Bybit crypto perps · price still outside entry",
     "TradFi: Stocks": "Saved A/B setups · Bybit stock perps only · crypto excluded",
-    "Low Cap Impulse": "Saved A/B setups · lower-volume movers with unusual upside impulse",
+    "Low Cap Impulse": "Tactical participation points · lower-volume movers with unusual upside impulse",
 }
 
 
@@ -332,11 +340,16 @@ def refresh_watchlist_analyses(mode, api_key):
     """Cheaply triage the selected universe, then run full OpenAI analysis."""
     triage = scanner.bybit_watchlist_triage(mode, limit=WATCHLIST_REFRESH_LIMIT)
     symbols = triage.get("symbols") or []
+    tactical_mode = mode == "low_cap_impulse"
     results = []
     errors = []
     for symbol in symbols:
         try:
-            result = openai_analysis.generate_dashboard_analysis(symbol, api_key=api_key)
+            result = openai_analysis.generate_dashboard_analysis(
+                symbol,
+                api_key=api_key,
+                tactical_mode=tactical_mode,
+            )
             results.append(result["symbol"])
         except Exception as exc:
             errors.append(f"{symbol}: {exc}")
@@ -344,7 +357,7 @@ def refresh_watchlist_analyses(mode, api_key):
 
 
 @st.cache_data(show_spinner="Refreshing Entry Zone Watchlist…")
-def build_entry_zone_watchlist(source_symbols):
+def build_entry_zone_watchlist(source_symbols, tactical=False):
     top = set(source_symbols)
     rows = []
     analyses_dir = os.path.join(os.path.dirname(__file__), "analyses")
@@ -359,11 +372,11 @@ def build_entry_zone_watchlist(source_symbols):
         if symbol not in top:
             continue
         for candidate in data.get("pattern_candidates") or []:
-            row = _candidate_watch_row(symbol, data, candidate)
+            row = _candidate_watch_row(symbol, data, candidate, tactical=tactical)
             if row:
                 rows.append(row)
 
-    rows.sort(key=lambda row: ({"A": 0, "B": 1}.get(row["grade"], 2), row["distance"]))
+    rows.sort(key=lambda row: ({"A": 0, "B": 1, "C": 2}.get(row["grade"], 3), row["distance"]))
     return rows[:12], time.time()
 
 
@@ -948,14 +961,15 @@ if "entry_zone_scan_note" not in st.session_state:
 
 selected_watchlist_label = st.session_state.entry_zone_mode_label
 watchlist_symbols = watchlist_universe(WATCHLIST_MODES[selected_watchlist_label])
-watch_rows, watch_ts = build_entry_zone_watchlist(watchlist_symbols)
+low_cap_tactical = WATCHLIST_MODES[selected_watchlist_label] == "low_cap_impulse"
+watch_rows, watch_ts = build_entry_zone_watchlist(watchlist_symbols, tactical=low_cap_tactical)
 last_scanned = time.strftime("%H:%M:%S", time.localtime(watch_ts))
 
 if watch_rows:
     body = ""
     for row in watch_rows:
         dir_cls = "ezw-dir-long" if row["direction"] == "long" else "ezw-dir-short"
-        status_cls = row["status"].lower()
+        status_cls = row["status"].lower().replace(" ", "-")
         body += (
             "<tr>"
             f"<td><b>{_h(row['symbol'])}</b></td>"
@@ -978,10 +992,16 @@ if watch_rows:
         "</tbody></table>"
     )
 else:
-    table = (
-        "<div class='ezw-empty'>No A/B saved setups from this universe are waiting outside their entry zone. "
-        "Run Analyse on symbols you want tracked, then Refresh.</div>"
-    )
+    if low_cap_tactical:
+        table = (
+            "<div class='ezw-empty'>No tactical participation points are available from the current Low Cap Impulse scan yet. "
+            "Refresh to analyse the current impulse candidates.</div>"
+        )
+    else:
+        table = (
+            "<div class='ezw-empty'>No A/B saved setups from this universe are waiting outside their entry zone. "
+            "Run Analyse on symbols you want tracked, then Refresh.</div>"
+        )
 
 watchlist_help = (
     "<div class='ezw-info'>"
@@ -991,6 +1011,8 @@ watchlist_help = (
     "<b>Approaching</b>: price is close to the entry zone but has not reached it yet.<br>"
     "<b>Waiting</b>: setup remains valid, but price is still some distance from entry.<br>"
     "<b>At Zone</b>: price is testing the entry zone now; this should move to the Trade Dashboard for confirmation.<br>"
+    "<b>Below/Above Zone</b>: price is outside the proposed participation area; the trigger is still ahead.<br>"
+    "<b>Low Cap Impulse</b>: may include C-grade tactical participation points, not only clean A/B setups.<br>"
     "<b>Missed</b>: price has already passed through the entry zone and run; avoid chasing.<br>"
     "<b>Invalidated</b>: the setup condition has broken before entry."
     "</span></span></div>"
