@@ -163,6 +163,11 @@ _HEADER_CSS = """<style>
   .orion-logo{font-size:1.7rem;font-weight:800;letter-spacing:.04em;color:#e6e8eb;line-height:1.1;white-space:nowrap;}
   .orion-logo .accent{color:#4c8dff;}
   .orion-logo .sub{display:block;font-size:.8rem;font-weight:400;color:#848e9c;letter-spacing:.02em;}
+  .st-key-brandrow{flex-direction:row!important;align-items:flex-start!important;gap:1.3rem;
+    margin-top:12px!important;min-height:54px;}
+  .st-key-brandrow [data-testid="stElementContainer"]{width:auto!important;
+    align-self:center!important;flex-shrink:0!important;}
+  .st-key-brandrow [data-testid="stElementContainer"]:has(.orion-brand){align-self:flex-start!important;}
 </style>"""
 
 # Ambient purple gradient behind page content — shared across all pages so the
@@ -229,4 +234,5 @@ def render_header(word1, word2, sub="", brand=True):
         render_clocks()
 
     if brand:
-        st.markdown(brand_html(word1, word2, sub), unsafe_allow_html=True)
+        brand_row = st.container(key="brandrow")
+        brand_row.markdown(brand_html(word1, word2, sub), unsafe_allow_html=True)

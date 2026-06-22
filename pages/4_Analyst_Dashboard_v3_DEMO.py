@@ -26,8 +26,6 @@ st.markdown(
     # empty panel is just confusing dead space — and chrome.py hides stHeader, which
     # removes the only control to reopen it once collapsed. Hide it outright here.
     + "[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important;}"
-    ".st-key-brandrow{flex-direction:row!important;align-items:center!important;gap:1.3rem;}"
-    ".st-key-brandrow [data-testid='stElementContainer']{width:auto!important;align-self:center!important;}"
     ".st-key-runbtn button{border-radius:9999px;border:1px solid rgba(230,232,235,.2)!important;"
     "background:transparent!important;color:#e6e8eb!important;font-weight:500;min-height:0;"
     "padding:0.25rem 0.85rem;width:auto;white-space:nowrap;transform:translateY(8px);}"

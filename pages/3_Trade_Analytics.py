@@ -16,7 +16,7 @@ import bybit
 import chrome
 
 st.set_page_config(page_title="Trade Analytics", page_icon="📈", layout="wide")
-chrome.inject_background()
+chrome.render_header("TRADE", "ANALYTICS", "Bybit · USDT Perp")
 
 # --------------------------------------------------------------------------- #
 # Styling — reuse the app's purple-edged card system + a KPI grid + dark charts
@@ -25,6 +25,7 @@ st.markdown(
     "<style>"
     + chrome._PAGE_BG_CSS.replace("<style>", "").replace("</style>", "")
     + """
+.st-key-brandrow{margin-top:28px!important;}
 .ac-card{background:#13101e;border:1px solid rgba(139,92,246,.38);border-radius:10px;
   box-shadow:0 0 0 1px rgba(124,58,237,.06),0 0 22px rgba(124,58,237,.15);padding:14px 16px;}
 .ac-h{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#8b94a0;margin:0 0 10px;}
@@ -99,8 +100,6 @@ st.markdown(
 </style>""",
     unsafe_allow_html=True,
 )
-
-chrome.render_header("TRADE", "ANALYTICS", "Bybit · USDT Perp")
 
 # --------------------------------------------------------------------------- #
 # Controls + data

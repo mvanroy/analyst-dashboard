@@ -121,10 +121,7 @@ st.markdown(
 .hmain{height:100%!important;}
 
 /* ---- brand row (brand left + symbol chip / direction right), matches dashboard ---- */
-.st-key-brandrow{flex-direction:row!important;justify-content:flex-start!important;
-  align-items:center!important;gap:1.3rem;margin-top:7px;}
-.st-key-brandrow [data-testid="stElementContainer"]{width:auto!important;align-self:center!important;
-  flex-shrink:0!important;}
+.st-key-brandrow{justify-content:flex-start!important;margin-top:-20px!important;}
 /* ---- Mode toggles: two segmented controls stacked top-to-bottom, right-aligned in the brand
    row. Each shows BOTH options at once using the "direct" colour scheme — the ACTIVE segment
    gets light shading + a bold label + a coloured border; the inactive segment stays a plain

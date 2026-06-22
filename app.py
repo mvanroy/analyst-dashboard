@@ -61,7 +61,7 @@ st.markdown(
       .orion-logo .accent {color: #4c8dff;}
       .orion-logo .sub {display: block; font-size: .8rem; font-weight: 400; color: #848e9c; letter-spacing: .02em;}
       .orion-meta {color: #5b626c; font-size: .8rem; margin-top: .2rem;}
-      .st-key-entry_zone_heading {margin: 1.05rem 0 .45rem 0;}
+      .st-key-entry_zone_heading {margin: 12px 0 .45rem 0; min-height: 54px;}
       .st-key-entry_zone_heading [data-testid="stHorizontalBlock"] {align-items: flex-start;}
       .st-key-entry_zone_filters {margin: 0 0 4px 0; padding-top: 14px;}
       .st-key-entry_zone_filters [data-testid="stWidgetLabel"] {
