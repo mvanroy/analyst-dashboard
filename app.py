@@ -98,17 +98,28 @@ st.markdown(
       }
       .ezw-table td {padding: 9px 7px; border-bottom: 1px solid #191f28; color: #d7dde5; vertical-align: top;}
       .ezw-table tr:last-child td {border-bottom: none;}
+      .ezw-symbol {display: flex; align-items: center; gap: 8px; white-space: nowrap;}
+      .ezw-symbol img {width: 19px; height: 19px; border-radius: 50%; background: #111827;}
       .ezw-grade {
         display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px;
-        border-radius: 7px; border: 1px solid rgba(238,242,248,.8); font-weight: 900; color: #f0f2f5;
+        border-radius: 7px; font-weight: 900; color: #f0f2f5;
       }
-      .ezw-dir-long {color: #0ecb81; font-weight: 800;}
-      .ezw-dir-short {color: #f6465d; font-weight: 800;}
+      .ezw-grade-a {border: 1px solid rgba(14,203,129,.75); background: rgba(14,203,129,.15); color: #0ecb81;}
+      .ezw-grade-b {border: 1px solid rgba(76,141,255,.75); background: rgba(76,141,255,.15); color: #9fc0ff;}
+      .ezw-grade-c {border: 1px solid rgba(227,160,8,.7); background: rgba(227,160,8,.14); color: #e3a008;}
+      .ezw-dir-long, .ezw-dir-short {
+        display: inline-flex; align-items: center; justify-content: center; min-width: 50px;
+        border-radius: 999px; padding: 2px 8px; font-size: .68rem; font-weight: 900;
+      }
+      .ezw-dir-long {color: #0ecb81; border: 1px solid rgba(14,203,129,.45); background: rgba(14,203,129,.10);}
+      .ezw-dir-short {color: #f6465d; border: 1px solid rgba(246,70,93,.45); background: rgba(246,70,93,.10);}
       .ezw-status {display: inline-block; border-radius: 999px; padding: 2px 8px; font-size: .68rem; font-weight: 800;}
       .ezw-status.approaching {color: #e3a008; border: 1px solid rgba(227,160,8,.45); background: rgba(227,160,8,.12);}
       .ezw-status.waiting {color: #9fc0ff; border: 1px solid rgba(76,141,255,.45); background: rgba(76,141,255,.10);}
       .ezw-status.at-zone {color: #0ecb81; border: 1px solid rgba(14,203,129,.45); background: rgba(14,203,129,.10);}
       .ezw-status.below-zone, .ezw-status.above-zone {color: #b7c2d0; border: 1px solid rgba(183,194,208,.35); background: rgba(183,194,208,.08);}
+      .ezw-subline {margin-top: 4px; color: #8b94a0; font-size: .69rem; line-height: 1.25;}
+      .ezw-distance {font-weight: 800; color: #dce3ec; white-space: nowrap;}
       .ezw-muted {color: #8b94a0;}
       .ezw-trigger {max-width: 360px; color: #aeb7c3; line-height: 1.35;}
       .ezw-info {display: flex; justify-content: flex-start; margin-top: 10px; padding-top: 8px; border-top: 1px solid #252b35;}
@@ -252,6 +263,14 @@ def _fmt_entry_price(value):
     return f"${value:.6f}"
 
 
+def _position_label(current, low, high):
+    if low <= current <= high:
+        return "Price in zone"
+    if current < low:
+        return "Price below zone"
+    return "Price above zone"
+
+
 def _candidate_watch_row(symbol, data, candidate, tactical=False):
     grade = (candidate.get("grade") or "").strip().upper()[:1]
     allowed_grades = {"A", "B", "C"} if tactical else {"A", "B"}
@@ -278,19 +297,23 @@ def _candidate_watch_row(symbol, data, candidate, tactical=False):
         return None
     current = float(quote["last"])
 
+    position = _position_label(current, low, high)
     if low <= current <= high:
         if not tactical:
             return None
         distance = 0.0
+        gap = 0.0
         status = "At Zone"
     elif current < low:
+        gap = low - current
         distance = (low - current) / current * 100
-        status = "Approaching" if distance <= 1.0 else "Below Zone"
+        status = "Approaching" if distance <= 1.0 else "Waiting"
     else:
+        gap = current - high
         distance = (current - high) / current * 100
-        status = "Approaching" if distance <= 1.0 else "Above Zone"
+        status = "Approaching" if distance <= 1.0 else "Waiting"
 
-    if not tactical and status not in {"Approaching", "Below Zone", "Above Zone"}:
+    if not tactical and status not in {"Approaching", "Waiting"}:
         return None
 
     subtitle = zone.get("subtitle") or ""
@@ -301,9 +324,12 @@ def _candidate_watch_row(symbol, data, candidate, tactical=False):
         "direction": direction,
         "setup": candidate.get("name") or candidate.get("classification") or ("Tactical Setup" if tactical else "Setup"),
         "status": status,
+        "position": position,
         "entry": zone.get("label") or f"{_fmt_entry_price(low)} – {_fmt_entry_price(high)}",
         "current": _fmt_entry_price(current),
         "distance": distance,
+        "distance_label": "In zone" if distance == 0 else f"{distance:.2f}%",
+        "distance_detail": "Active now" if gap == 0 else f"{_fmt_entry_price(gap)} from zone",
         "trigger": trigger,
     }
 
@@ -961,6 +987,7 @@ if "entry_zone_scan_note" not in st.session_state:
 
 selected_watchlist_label = st.session_state.entry_zone_mode_label
 watchlist_symbols = watchlist_universe(WATCHLIST_MODES[selected_watchlist_label])
+watchlist_icons = icon_map(watchlist_symbols)
 low_cap_tactical = WATCHLIST_MODES[selected_watchlist_label] == "low_cap_impulse"
 watch_rows, watch_ts = build_entry_zone_watchlist(watchlist_symbols, tactical=low_cap_tactical)
 last_scanned = time.strftime("%H:%M:%S", time.localtime(watch_ts))
@@ -969,17 +996,22 @@ if watch_rows:
     body = ""
     for row in watch_rows:
         dir_cls = "ezw-dir-long" if row["direction"] == "long" else "ezw-dir-short"
+        grade_cls = f"ezw-grade-{row['grade'].lower()}"
         status_cls = row["status"].lower().replace(" ", "-")
+        icon_url = watchlist_icons.get(row["symbol"], "")
+        icon_html = f"<img src='{_h(icon_url)}' alt=''>" if icon_url else ""
         body += (
             "<tr>"
-            f"<td><b>{_h(row['symbol'])}</b></td>"
-            f"<td><span class='ezw-grade'>{_h(row['grade'])}</span></td>"
+            f"<td><div class='ezw-symbol'>{icon_html}<b>{_h(row['symbol'])}</b></div></td>"
+            f"<td><span class='ezw-grade {grade_cls}'>{_h(row['grade'])}</span></td>"
             f"<td><span class='{dir_cls}'>{_h(row['direction'].upper())}</span></td>"
             f"<td>{_h(row['setup'])}</td>"
-            f"<td><span class='ezw-status {status_cls}'>{_h(row['status'])}</span></td>"
+            f"<td><span class='ezw-status {status_cls}'>{_h(row['status'])}</span>"
+            f"<div class='ezw-subline'>{_h(row['position'])}</div></td>"
             f"<td>{_h(row['entry'])}</td>"
             f"<td>{_h(row['current'])}</td>"
-            f"<td>{row['distance']:.2f}%</td>"
+            f"<td><span class='ezw-distance'>{_h(row['distance_label'])}</span>"
+            f"<div class='ezw-subline'>{_h(row['distance_detail'])}</div></td>"
             f"<td class='ezw-trigger'>{_h(row['trigger'])}</td>"
             "</tr>"
         )
