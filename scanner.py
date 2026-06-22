@@ -10,6 +10,7 @@ Orion's screener columns:
 from __future__ import annotations
 
 import asyncio
+import math
 
 import httpx
 import pandas as pd
@@ -225,7 +226,11 @@ def _bybit_watchlist_frame(tickers, instruments, mode):
                 "symbol": symbol,
                 "symbol_type": symbol_type,
                 "contract_type": instrument.get("contractType") or "",
+                "last_price": _to_float(ticker.get("lastPrice")),
+                "high24h": _to_float(ticker.get("highPrice24h")),
+                "low24h": _to_float(ticker.get("lowPrice24h")),
                 "turnover24h": _to_float(ticker.get("turnover24h")),
+                "volume24h": _to_float(ticker.get("volume24h")),
                 "price24h_pct": _to_float(ticker.get("price24hPcnt")) * 100,
                 "launch_time": _to_float(instrument.get("launchTime"), 0),
             }
@@ -334,6 +339,240 @@ def bybit_watchlist_triage(mode="top_volume", limit=8):
     Returns the best symbols for full OpenAI analysis plus counts for UI status.
     """
     return asyncio.run(_bybit_watchlist_triage(mode, limit))
+
+
+async def _fetch_bybit_kline(client, sem, symbol, interval="240", limit=90):
+    async with sem:
+        try:
+            data = await _get_json(
+                client,
+                BYBIT_BASE + "/v5/market/kline",
+                params={"category": "linear", "symbol": symbol, "interval": interval, "limit": limit},
+            )
+        except httpx.HTTPError:
+            return symbol, []
+    if data.get("retCode") not in (0, "0"):
+        return symbol, []
+    rows = []
+    for raw in reversed((data.get("result") or {}).get("list") or []):
+        try:
+            rows.append(
+                {
+                    "open": float(raw[1]),
+                    "high": float(raw[2]),
+                    "low": float(raw[3]),
+                    "close": float(raw[4]),
+                    "volume": float(raw[5]),
+                    "turnover": float(raw[6]),
+                }
+            )
+        except (TypeError, ValueError, IndexError):
+            continue
+    return symbol, rows
+
+
+def _series_ema(values, period):
+    values = [float(v) for v in values if v == v]
+    if not values:
+        return float("nan")
+    k = 2 / (period + 1)
+    ema = values[0]
+    for value in values[1:]:
+        ema = value * k + ema * (1 - k)
+    return ema
+
+
+def _series_atr(candles, period=14):
+    if len(candles) <= 1:
+        return float("nan")
+    trs = []
+    for idx in range(1, len(candles)):
+        c = candles[idx]
+        prev = candles[idx - 1]["close"]
+        trs.append(max(c["high"] - c["low"], abs(c["high"] - prev), abs(c["low"] - prev)))
+    vals = trs[-period:]
+    return sum(vals) / len(vals) if vals else float("nan")
+
+
+def _fmt_watch_price(value):
+    if value is None or not math.isfinite(float(value)):
+        return "—"
+    value = float(value)
+    if value >= 1:
+        return f"${value:,.2f}"
+    if value >= 0.01:
+        return f"${value:.4f}"
+    return f"${value:.6f}"
+
+
+def _entry_position(current, low, high):
+    if low <= current <= high:
+        return "Price in zone", 0.0, "In zone", "Active now", "At Zone"
+    if current < low:
+        gap = low - current
+        distance = gap / current * 100 if current else 0.0
+        return (
+            "Price below zone",
+            distance,
+            f"{distance:.2f}%",
+            f"{_fmt_watch_price(gap)} from zone",
+            "Approaching" if distance <= 1.5 else "Waiting",
+        )
+    gap = current - high
+    distance = gap / current * 100 if current else 0.0
+    return (
+        "Price above zone",
+        distance,
+        f"{distance:.2f}%",
+        f"{_fmt_watch_price(gap)} from zone",
+        "Approaching" if distance <= 1.5 else "Waiting",
+    )
+
+
+def _free_watchlist_row(record, candles, mode):
+    if len(candles) < 30:
+        return None
+    symbol = record.get("symbol")
+    closes = [c["close"] for c in candles]
+    highs = [c["high"] for c in candles]
+    lows = [c["low"] for c in candles]
+    current = float(record.get("last_price") or closes[-1])
+    ema20 = _series_ema(closes[-30:], 20)
+    ema50 = _series_ema(closes[-70:], 50)
+    atr = _series_atr(candles[-30:], 14)
+    if not all(math.isfinite(v) and v > 0 for v in [current, ema20, atr]):
+        return None
+
+    change = float(record.get("price24h_pct") or 0)
+    volume_rank = float(record.get("volume_rank") or 0)
+    gain_rank = float(record.get("gain_rank") or 0)
+
+    long_bias = current >= ema20 or change > 4 or mode in {"gainers", "change_24h", "low_cap_impulse"}
+    short_bias = current < ema20 and (not math.isfinite(ema50) or ema20 <= ema50) and change < -1
+
+    if short_bias and mode in {"top_volume", "tradfi_stocks"}:
+        direction = "short"
+        zone_mid = max(ema20, current + 0.45 * atr)
+        low = zone_mid - 0.15 * atr
+        high = zone_mid + 0.35 * atr
+        setup = "4H Pullback Rejection"
+        trigger = (
+            f"Watch a push into {_fmt_watch_price(low)}–{_fmt_watch_price(high)} followed by rejection; "
+            f"invalidation is acceptance back above the zone."
+        )
+    elif long_bias:
+        direction = "long"
+        pullback_mid = min(ema20, current - 0.45 * atr)
+        low = pullback_mid - 0.35 * atr
+        high = pullback_mid + 0.15 * atr
+        setup = "4H Pullback Retest"
+        if mode == "low_cap_impulse":
+            setup = "Tactical Impulse Pullback"
+        trigger = (
+            f"Watch a pullback into {_fmt_watch_price(low)}–{_fmt_watch_price(high)}; "
+            f"confirmation improves if buyers defend the zone instead of chasing the impulse."
+        )
+    else:
+        return None
+
+    if low <= 0 or high <= 0:
+        return None
+    if low > high:
+        low, high = high, low
+
+    position, distance, distance_label, distance_detail, status = _entry_position(current, low, high)
+    if status == "At Zone":
+        return None
+    max_distance = 12.0 if mode == "low_cap_impulse" else 8.0
+    if distance > max_distance:
+        return None
+
+    trend_score = 0.0
+    if direction == "long":
+        trend_score += 0.25 if current > ema20 else 0.08
+        trend_score += 0.20 if math.isfinite(ema50) and ema20 > ema50 else 0.08
+        trend_score += min(max(change, 0), 20) / 100
+    else:
+        trend_score += 0.25 if current < ema20 else 0.08
+        trend_score += 0.20 if math.isfinite(ema50) and ema20 < ema50 else 0.08
+        trend_score += min(abs(min(change, 0)), 15) / 100
+    proximity_score = max(0.0, 1 - distance / max_distance) * 0.25
+    liquidity_score = volume_rank * 0.15
+    impulse_score = gain_rank * 0.15
+    score = trend_score + proximity_score + liquidity_score + impulse_score
+
+    if mode == "low_cap_impulse" and score < 0.72:
+        grade = "C"
+    elif score >= 0.78 and distance <= 4.0:
+        grade = "A"
+    else:
+        grade = "B"
+
+    if grade == "C" and mode != "low_cap_impulse":
+        return None
+
+    return {
+        "symbol": symbol,
+        "grade": grade,
+        "direction": direction,
+        "setup": setup,
+        "status": status,
+        "position": position,
+        "entry": f"{_fmt_watch_price(low)} – {_fmt_watch_price(high)}",
+        "current": _fmt_watch_price(current),
+        "distance": distance,
+        "distance_label": distance_label,
+        "distance_detail": distance_detail,
+        "trigger": trigger,
+        "score": score,
+        "change_24h": change,
+        "turnover24h": float(record.get("turnover24h") or 0),
+    }
+
+
+async def _bybit_free_entry_watchlist(mode="top_volume", universe_limit=30, row_limit=12):
+    async with httpx.AsyncClient(headers={"User-Agent": "orion-lite/1.0"}) as client:
+        tickers, instruments = await asyncio.gather(
+            _fetch_bybit_tickers(client),
+            _fetch_bybit_instruments(client),
+        )
+        frame = _bybit_watchlist_frame(tickers, instruments, mode)
+        ranked = _rank_watchlist_frame(frame, mode)
+        if ranked.empty:
+            return {"rows": [], "universe_count": int(len(frame)), "qualified_count": 0}
+        scan_frame = ranked.head(universe_limit).copy()
+        sem = asyncio.Semaphore(10)
+        kline_pairs = await asyncio.gather(
+            *(_fetch_bybit_kline(client, sem, symbol, interval="240", limit=90) for symbol in scan_frame["symbol"])
+        )
+    candles_by_symbol = dict(kline_pairs)
+    rows = []
+    for record in scan_frame.to_dict("records"):
+        row = _free_watchlist_row(record, candles_by_symbol.get(record["symbol"], []), mode)
+        if row:
+            rows.append(row)
+    rows.sort(
+        key=lambda row: (
+            {"A": 0, "B": 1, "C": 2}.get(row["grade"], 3),
+            row["distance"],
+            -row["score"],
+        )
+    )
+    return {
+        "rows": rows[:row_limit],
+        "universe_count": int(len(frame)),
+        "qualified_count": int(len(ranked)),
+    }
+
+
+def bybit_free_entry_watchlist(mode="top_volume", universe_limit=30, row_limit=12):
+    """Free Bybit-only Entry Zone Watchlist.
+
+    This deliberately does not call OpenAI. It uses the selected Bybit universe,
+    4H candles, EMA/ATR proximity, 24h movement, and liquidity ranking to surface
+    entry zones that have not yet been hit.
+    """
+    return asyncio.run(_bybit_free_entry_watchlist(mode, universe_limit, row_limit))
 
 
 # ---------------- open-interest change (fetched on demand, e.g. shortlist) ----------------

@@ -5,10 +5,7 @@ Run with:  streamlit run app.py, then open /Scanner
 from __future__ import annotations
 
 import base64
-import glob
 import html
-import json
-import os
 import re
 import time
 
@@ -18,7 +15,6 @@ import streamlit.components.v1 as components
 from st_aggrid import AgGrid, JsCode
 
 import icons
-import openai_analysis
 import rules
 import scanner
 import chrome  # shared nav/clocks/brand chrome (single source of truth)
@@ -265,101 +261,8 @@ def taker_map(symbols):
     return scanner.taker_ratio(list(symbols))
 
 
-def _clean_symbol(value):
-    return re.sub(r"[^A-Z0-9]", "", (value or "").upper())
-
-
 def _h(value):
     return html.escape(str(value if value is not None else ""))
-
-
-def _analysis_symbol(data, fallback):
-    symbol = _clean_symbol(data.get("symbol") or fallback)
-    if symbol and not symbol.endswith(("USDT", "PERP")):
-        symbol += "USDT"
-    return symbol
-
-
-def _fmt_entry_price(value):
-    if value is None:
-        return "—"
-    value = float(value)
-    if value >= 1:
-        return f"${value:,.2f}"
-    if value >= 0.01:
-        return f"${value:.4f}"
-    return f"${value:.6f}"
-
-
-def _position_label(current, low, high):
-    if low <= current <= high:
-        return "Price in zone"
-    if current < low:
-        return "Price below zone"
-    return "Price above zone"
-
-
-def _candidate_watch_row(symbol, data, candidate, tactical=False):
-    grade = (candidate.get("grade") or "").strip().upper()[:1]
-    allowed_grades = {"A", "B", "C"} if tactical else {"A", "B"}
-    if grade not in allowed_grades:
-        return None
-
-    entry = candidate.get("entry") or {}
-    direction = (entry.get("direction") or "").strip().lower()
-    zone = entry.get("zone") or {}
-    try:
-        low = float(zone.get("low"))
-        high = float(zone.get("high"))
-    except (TypeError, ValueError):
-        return None
-    if low <= 0 or high <= 0:
-        return None
-    if low > high:
-        low, high = high, low
-    if direction not in {"long", "short"}:
-        return None
-
-    quote = scanner.live_bybit_ticker(symbol) or scanner.live_ticker(symbol)
-    if not quote:
-        return None
-    current = float(quote["last"])
-
-    position = _position_label(current, low, high)
-    if low <= current <= high:
-        if not tactical:
-            return None
-        distance = 0.0
-        gap = 0.0
-        status = "At Zone"
-    elif current < low:
-        gap = low - current
-        distance = (low - current) / current * 100
-        status = "Approaching" if distance <= 1.0 else "Waiting"
-    else:
-        gap = current - high
-        distance = (current - high) / current * 100
-        status = "Approaching" if distance <= 1.0 else "Waiting"
-
-    if not tactical and status not in {"Approaching", "Waiting"}:
-        return None
-
-    subtitle = zone.get("subtitle") or ""
-    trigger = subtitle if subtitle else candidate.get("qualifier") or candidate.get("summary") or "Entry condition pending."
-    return {
-        "symbol": symbol,
-        "grade": grade,
-        "direction": direction,
-        "setup": candidate.get("name") or candidate.get("classification") or ("Tactical Setup" if tactical else "Setup"),
-        "status": status,
-        "position": position,
-        "entry": zone.get("label") or f"{_fmt_entry_price(low)} – {_fmt_entry_price(high)}",
-        "current": _fmt_entry_price(current),
-        "distance": distance,
-        "distance_label": "In zone" if distance == 0 else f"{distance:.2f}%",
-        "distance_detail": "Active now" if gap == 0 else f"{_fmt_entry_price(gap)} from zone",
-        "trigger": trigger,
-    }
 
 
 WATCHLIST_MODES = {
@@ -373,16 +276,13 @@ WATCHLIST_MODES = {
 
 
 WATCHLIST_SUBTITLES = {
-    "Top Volume": "Saved A/B setups · most traded Bybit crypto perps · price still outside entry",
-    "Gainers": "Saved A/B setups · positive movers with liquidity filter · price still outside entry",
-    "24h %": "Saved A/B setups · raw Bybit 24h percentage movers · price still outside entry",
-    "New": "Saved A/B setups · newest Bybit crypto perps · price still outside entry",
-    "TradFi: Stocks": "Saved A/B setups · Bybit stock perps only · crypto excluded",
-    "Low Cap Impulse": "Tactical participation points · lower-volume movers with unusual upside impulse",
+    "Top Volume": "Free Bybit scan · most traded crypto perps · entry zone not hit",
+    "Gainers": "Free Bybit scan · positive movers with liquidity filter · entry zone not hit",
+    "24h %": "Free Bybit scan · raw Bybit 24h percentage movers · entry zone not hit",
+    "New": "Free Bybit scan · newest crypto perps · entry zone not hit",
+    "TradFi: Stocks": "Free Bybit scan · Bybit stock perps only · crypto excluded",
+    "Low Cap Impulse": "Free Bybit scan · tactical participation points in lower-cap impulse names",
 }
-
-
-WATCHLIST_REFRESH_LIMIT = 1
 
 
 @st.cache_data(show_spinner="Loading watchlist universe…")
@@ -390,48 +290,10 @@ def watchlist_universe(mode):
     return tuple(scanner.bybit_watchlist_universe(mode, limit=30))
 
 
-def refresh_watchlist_analyses(mode, api_key):
-    """Cheaply triage the selected universe, then analyse the top candidate only."""
-    triage = scanner.bybit_watchlist_triage(mode, limit=WATCHLIST_REFRESH_LIMIT)
-    symbols = triage.get("symbols") or []
-    tactical_mode = mode == "low_cap_impulse"
-    results = []
-    errors = []
-    for symbol in symbols:
-        try:
-            result = openai_analysis.generate_dashboard_analysis(
-                symbol,
-                api_key=api_key,
-                tactical_mode=tactical_mode,
-            )
-            results.append(result["symbol"])
-        except Exception as exc:
-            errors.append(f"{symbol}: {exc}")
-    return results, errors, triage
-
-
 @st.cache_data(show_spinner="Refreshing Entry Zone Watchlist…")
-def build_entry_zone_watchlist(source_symbols, tactical=False):
-    top = set(source_symbols)
-    rows = []
-    analyses_dir = os.path.join(os.path.dirname(__file__), "analyses")
-    for path in glob.glob(os.path.join(analyses_dir, "*.json")):
-        fallback = os.path.splitext(os.path.basename(path))[0]
-        try:
-            with open(path, "r") as f:
-                data = json.load(f)
-        except (OSError, json.JSONDecodeError):
-            continue
-        symbol = _analysis_symbol(data, fallback)
-        if symbol not in top:
-            continue
-        for candidate in data.get("pattern_candidates") or []:
-            row = _candidate_watch_row(symbol, data, candidate, tactical=tactical)
-            if row:
-                rows.append(row)
-
-    rows.sort(key=lambda row: ({"A": 0, "B": 1, "C": 2}.get(row["grade"], 3), row["distance"]))
-    return rows[:12], time.time()
+def build_entry_zone_watchlist(mode):
+    result = scanner.bybit_free_entry_watchlist(mode, universe_limit=30, row_limit=12)
+    return result.get("rows") or [], time.time(), result
 
 
 # S&P 500 futures sentiment — refreshes at most every 5 min, and on Run Market
@@ -1012,8 +874,9 @@ if "entry_zone_scan_note" not in st.session_state:
 selected_watchlist_label = st.session_state.entry_zone_mode_label
 watchlist_symbols = watchlist_universe(WATCHLIST_MODES[selected_watchlist_label])
 watchlist_icons = icon_map(watchlist_symbols)
-low_cap_tactical = WATCHLIST_MODES[selected_watchlist_label] == "low_cap_impulse"
-watch_rows, watch_ts = build_entry_zone_watchlist(watchlist_symbols, tactical=low_cap_tactical)
+selected_watchlist_mode = WATCHLIST_MODES[selected_watchlist_label]
+low_cap_tactical = selected_watchlist_mode == "low_cap_impulse"
+watch_rows, watch_ts, watch_meta = build_entry_zone_watchlist(selected_watchlist_mode)
 last_scanned = time.strftime("%H:%M:%S", time.localtime(watch_ts))
 
 if watch_rows:
@@ -1051,12 +914,12 @@ else:
     if low_cap_tactical:
         table = (
             "<div class='ezw-empty'>No tactical participation points are available from the current Low Cap Impulse scan yet. "
-            "Refresh to analyse the current impulse candidates.</div>"
+            "Refresh to scan the current impulse candidates.</div>"
         )
     else:
         table = (
-            "<div class='ezw-empty'>No A/B saved setups from this universe are waiting outside their entry zone. "
-            "Run Analyse on symbols you want tracked, then Refresh.</div>"
+            "<div class='ezw-empty'>No free A/B setup candidates from this universe are waiting outside their entry zone. "
+            "Try another category or refresh when the market moves.</div>"
         )
 
 watchlist_help = (
@@ -1097,35 +960,15 @@ with st.container(key="entry_zone_filters"):
             label_visibility="collapsed",
         )
     with filter_r:
-        if st.button("Analyse", key="entry_zone_refresh"):
-            try:
-                api_key = (st.secrets.get("openai_api_key") or "").strip()
-                if not api_key or api_key == "PASTE_OPENAI_API_KEY_HERE":
-                    raise RuntimeError("OpenAI API key is not configured in .streamlit/secrets.toml.")
-                with st.spinner(f"Scanning {selected_watchlist_label}: analysing the top candidate only..."):
-                    refreshed, scan_errors, triage = refresh_watchlist_analyses(
-                        WATCHLIST_MODES[selected_watchlist_label],
-                        api_key,
-                    )
-                st.session_state.entry_zone_scan_note = (
-                    f"Fresh scan: triaged {triage.get('universe_count', 0)} symbols, "
-                    f"selected the top candidate from {triage.get('qualified_count', 0)} cheap-filter matches, "
-                    f"analysed {len(refreshed)} with OpenAI. "
-                    f"{len(scan_errors)} failed." if scan_errors else
-                    f"Fresh scan: triaged {triage.get('universe_count', 0)} symbols, "
-                    f"selected the top candidate from {triage.get('qualified_count', 0)} cheap-filter matches, "
-                    f"analysed {len(refreshed)} with OpenAI."
-                )
-                if scan_errors:
-                    st.session_state.entry_zone_scan_errors = scan_errors[:3]
-                else:
-                    st.session_state.entry_zone_scan_errors = []
-            except Exception as exc:
-                st.session_state.entry_zone_scan_note = f"Fresh scan failed: {exc}"
-            finally:
-                watchlist_universe.clear()
-                build_entry_zone_watchlist.clear()
-                st.rerun()
+        if st.button("Refresh", key="entry_zone_refresh"):
+            watchlist_universe.clear()
+            build_entry_zone_watchlist.clear()
+            st.session_state.entry_zone_scan_note = (
+                f"Free Bybit scan refreshed: checked the selected {selected_watchlist_label} universe. "
+                "No OpenAI credits used."
+            )
+            st.session_state.entry_zone_scan_errors = []
+            st.rerun()
     if st.session_state.get("entry_zone_scan_note"):
         st.markdown(f"<div class='ezw-scan-note'>{_h(st.session_state.entry_zone_scan_note)}</div>", unsafe_allow_html=True)
     if st.session_state.get("entry_zone_scan_errors"):
