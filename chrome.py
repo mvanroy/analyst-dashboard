@@ -48,7 +48,7 @@ CLOCKS_HTML = """
     justify-content:center; }
   .top { display:flex; flex-direction:column; justify-content:center; align-items:center; gap:2px; }
   .tile.live { background:rgba(14,203,129,0.13); border-color:rgba(14,203,129,0.55); }
-  .tile.sp { width:108px; min-width:108px; }
+  .tile.sp { width:96px; min-width:96px; }
   .tile.fourh { width:112px; min-width:112px;
     border-color:rgba(224,163,62,.56); background:rgba(224,163,62,.10); }
   .name { color:#c5ccd4; font-size:10.5px; font-weight:800; letter-spacing:.04em;
@@ -148,8 +148,8 @@ CLOCKS_HTML = """
       var sp;
       if(SP_PCT===null || isNaN(SP_PCT)){ sp='<div class="value muted">—</div>'; }
       else {
-        var up = SP_PCT>=0, cls = up?'green':'red', dot = up?'🟢':'🔴';
-        sp='<div class="value '+cls+'">'+dot+' '+(up?'+':'')+SP_PCT.toFixed(2)+'%</div>';
+        var up = SP_PCT>=0, cls = up?'green':'red';
+        sp='<div class="value '+cls+'">'+(up?'+':'')+SP_PCT.toFixed(2)+'%</div>';
       }
       var close = nextFourHourClose(), secs = Math.max(0, Math.floor((close - new Date())/1000));
       html += tile('S&amp;P 500 Fut', '', 'Day Chg', sp, 'sp');
