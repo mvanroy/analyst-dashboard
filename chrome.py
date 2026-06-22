@@ -195,7 +195,7 @@ def inject_background():
 # Page nav links, in order. Labels are the single source of truth across pages.
 _NAV = [
     ("pages/0_Scanner.py", "Scanner"),
-    ("pages/1_Analyst_Dashboard.py", "Trade Setup"),
+    ("pages/1_Trade_Setup.py", "Trade Setup"),
     ("pages/2_Position_Size_Calculator.py", "Calculator"),
     ("pages/3_Trade_Analytics.py", "Analytics"),
 ]

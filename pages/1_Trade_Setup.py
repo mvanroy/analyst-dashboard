@@ -1,4 +1,4 @@
-"""Analyst Dashboard — single-coin read rendered from a structured analysis
+"""Trade Setup — single-coin read rendered from a structured analysis
 file (analyses/<SYMBOL>.json) produced by the Trade Setup Framework
 (framework/trade_setup_framework.md) via /trade + /push-dashboard.
 

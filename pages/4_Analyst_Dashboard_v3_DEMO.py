@@ -1,6 +1,6 @@
 """Analyst Dashboard — v3 DEMO (sandbox).
 
-A SAFE, ISOLATED copy of pages/1_Analyst_Dashboard.py used to rework the layout
+A SAFE, ISOLATED copy of pages/1_Trade_Setup.py used to rework the layout
 toward framework v3. It imports `dashboard_v3_demo` (a copy of dashboard.py) which
 reads from `analyses_demo/` — so nothing here touches the live page 1, the live
 `dashboard.py`, or the live `analyses/` data.
