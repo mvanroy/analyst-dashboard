@@ -65,20 +65,40 @@ st.markdown(
       .st-key-entry_zone_heading [data-testid="stHorizontalBlock"] {align-items: flex-start;}
       .st-key-entry_zone_filters {margin: -.15rem 0 .65rem 0;}
       .st-key-entry_zone_filters [role="radiogroup"] {
-        display: flex; flex-wrap: wrap; gap: .45rem;
+        display: flex; flex-wrap: wrap; gap: .5rem;
       }
       .st-key-entry_zone_filters label {
-        border: 1px solid rgba(230,232,235,.18);
+        min-height: 30px;
+        border: 1px solid #1f2a38;
         border-radius: 9999px;
-        padding: .18rem .72rem;
-        background: rgba(19,16,30,.42);
+        padding: .27rem .82rem;
+        background: #0e1117;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,.015);
+        color: #9aa3ae;
+        transition: border-color .15s ease, background .15s ease, color .15s ease;
+      }
+      .st-key-entry_zone_filters label:hover {
+        border-color: rgba(76,141,255,.55);
+        color: #dce3ec;
+      }
+      .st-key-entry_zone_filters label > div:first-child:not([data-testid="stMarkdownContainer"]) {
+        display: none;
+      }
+      .st-key-entry_zone_filters label [data-testid="stMarkdownContainer"] p {
+        margin: 0;
       }
       .st-key-entry_zone_filters label:has(input:checked) {
-        border-color: rgba(76,141,255,.8);
-        background: rgba(76,141,255,.14);
+        border-color: rgba(76,141,255,.85);
+        background: rgba(76,141,255,.16);
+        color: #e6e8eb;
+        box-shadow: 0 0 0 1px rgba(76,141,255,.14), inset 0 0 0 1px rgba(255,255,255,.025);
+      }
+      .st-key-entry_zone_filters label:has(input:checked) [data-testid="stMarkdownContainer"] p {
+        color: #e6e8eb;
+        font-weight: 700;
       }
       .st-key-entry_zone_filters [data-testid="stMarkdownContainer"] p {
-        color: #8b94a0; font-size: .72rem; margin: .2rem 0 0 0;
+        color: inherit; font-size: .72rem; margin: 0;
       }
       .st-key-entry_zone_watchlist {
         margin: 0 0 1.15rem 0;
