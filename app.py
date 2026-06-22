@@ -67,46 +67,35 @@ st.markdown(
       .st-key-entry_zone_filters [data-testid="stWidgetLabel"] {
         display: none !important;
       }
-      .st-key-entry_zone_filters [role="radiogroup"] {
+      .st-key-entry_zone_filters [data-testid="stPills"] {
         display: flex; flex-wrap: wrap; gap: .5rem;
       }
-      .st-key-entry_zone_filters label {
+      .st-key-entry_zone_filters [data-testid="stPills"] button {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         min-height: 30px;
         border: 1px solid #1f2a38;
         border-radius: 9999px;
-        padding: .22rem .82rem;
-        background: #0e1117;
+        padding: .24rem .86rem;
+        background: #0e1117 !important;
         box-shadow: inset 0 0 0 1px rgba(255,255,255,.015);
-        color: #9aa3ae;
+        color: #9aa3ae !important;
+        font-size: .72rem;
+        font-weight: 700;
+        line-height: 1;
         transition: border-color .15s ease, background .15s ease, color .15s ease;
       }
-      .st-key-entry_zone_filters label:hover {
-        border-color: rgba(76,141,255,.55);
-        color: #dce3ec;
+      .st-key-entry_zone_filters [data-testid="stPills"] button:hover {
+        border-color: rgba(76,141,255,.55) !important;
+        color: #dce3ec !important;
       }
-      .st-key-entry_zone_filters label > div:first-child:not([data-testid="stMarkdownContainer"]) {
-        display: none;
-      }
-      .st-key-entry_zone_filters label [data-testid="stMarkdownContainer"] p {
-        margin: 0;
-        line-height: 1.15;
-        transform: translateY(-.5px);
-      }
-      .st-key-entry_zone_filters label:has(input:checked) {
-        border-color: rgba(76,141,255,.85);
-        background: rgba(76,141,255,.16);
-        color: #e6e8eb;
+      .st-key-entry_zone_filters [data-testid="stPills"] button[aria-pressed="true"],
+      .st-key-entry_zone_filters [data-testid="stPills"] button[aria-selected="true"] {
+        border-color: rgba(76,141,255,.85) !important;
+        background: rgba(76,141,255,.16) !important;
+        color: #e6e8eb !important;
         box-shadow: 0 0 0 1px rgba(76,141,255,.14), inset 0 0 0 1px rgba(255,255,255,.025);
-      }
-      .st-key-entry_zone_filters label:has(input:checked) [data-testid="stMarkdownContainer"] p {
-        color: #e6e8eb;
-        font-weight: 700;
-      }
-      .st-key-entry_zone_filters [data-testid="stMarkdownContainer"] p {
-        color: inherit; font-size: .72rem; margin: 0;
       }
       .st-key-entry_zone_watchlist {
         margin: 0 0 1.15rem 0;
@@ -1134,11 +1123,11 @@ with st.container(key="entry_zone_heading"):
         st.markdown(f"<div class='ezw-time'>Last scanned: {last_scanned}</div>", unsafe_allow_html=True)
 
 with st.container(key="entry_zone_filters"):
-    st.radio(
+    st.pills(
         "",
         list(WATCHLIST_MODES.keys()),
+        selection_mode="single",
         key="entry_zone_mode_label",
-        horizontal=True,
         label_visibility="collapsed",
     )
     if st.session_state.get("entry_zone_scan_note"):
