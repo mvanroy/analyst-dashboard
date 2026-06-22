@@ -6,19 +6,16 @@ The Market Scanner in app.py is untouched; this page is fully isolated.
 """
 from __future__ import annotations
 
-from datetime import datetime
 import html
 import json
-import os
 import re
 
 import streamlit as st
 
+import alert_store
 import chrome
 import dashboard
 import openai_analysis
-
-ALERTS_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "alerts.json")
 
 st.set_page_config(page_title="Trade Setup", page_icon="📊", layout="wide")
 
@@ -82,32 +79,6 @@ def _normalise_symbol(value: str) -> str:
     return symbol
 
 
-def _load_alerts() -> list[dict]:
-    if not os.path.exists(ALERTS_PATH):
-        return []
-    try:
-        with open(ALERTS_PATH, "r") as f:
-            data = json.load(f)
-        return data if isinstance(data, list) else []
-    except Exception:
-        return []
-
-
-def _save_alerts(alerts: list[dict]) -> None:
-    with open(ALERTS_PATH, "w") as f:
-        json.dump(alerts, f, indent=2)
-
-
-def _alert_key(alert: dict) -> tuple:
-    return (
-        alert.get("symbol"),
-        alert.get("pattern"),
-        alert.get("type"),
-        alert.get("timeframe"),
-        alert.get("condition"),
-    )
-
-
 def _handle_set_alert() -> None:
     raw = st.query_params.get("set_alert")
     if not raw:
@@ -116,13 +87,8 @@ def _handle_set_alert() -> None:
         alert = json.loads(raw)
         if not isinstance(alert, dict):
             raise ValueError("Invalid alert payload")
-        alerts = _load_alerts()
-        alert["status"] = "active"
-        alert["created_at"] = datetime.now().isoformat(timespec="seconds")
-        existing = {_alert_key(a) for a in alerts}
-        if _alert_key(alert) not in existing:
-            alerts.insert(0, alert)
-            _save_alerts(alerts)
+        added, _ = alert_store.add_alert(alert)
+        if added:
             st.toast("Alert saved to the watch list.", icon="🔔")
         else:
             st.toast("That alert is already saved.", icon="🔔")
@@ -136,7 +102,7 @@ _handle_set_alert()
 
 
 def _render_saved_alerts(symbol: str) -> None:
-    alerts = [a for a in _load_alerts() if a.get("status") == "active"]
+    alerts = [a for a in alert_store.load_alerts() if a.get("status") == "active"]
     if symbol:
         scoped = [a for a in alerts if (a.get("symbol") or "").upper() == symbol.upper()]
         alerts = scoped or alerts[:5]

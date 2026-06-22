@@ -221,6 +221,7 @@ def inject_background():
 _NAV = [
     ("pages/0_Scanner.py", "Scanner"),
     ("pages/1_Trade_Setup.py", "Trade Setup"),
+    ("pages/2_Alerts.py", "Alerts"),
     ("pages/2_Position_Size_Calculator.py", "Calculator"),
     ("pages/3_Trade_Analytics.py", "Analytics"),
 ]
