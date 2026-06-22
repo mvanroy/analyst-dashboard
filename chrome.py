@@ -56,7 +56,7 @@ CLOCKS_HTML = """
   .when { color:#848e9c; font-size:9px; font-weight:700; white-space:nowrap;
     font-variant-numeric:tabular-nums; text-transform:uppercase; }
   .label { color:#6b747e; font-size:8px; font-weight:700; letter-spacing:.13em;
-    text-transform:uppercase; margin-top:5px; line-height:1; text-align:center; }
+    text-transform:uppercase; margin-top:2px; line-height:1; text-align:center; }
   .value { font-size:15.5px; font-weight:800; margin-top:2px; line-height:1.15;
     font-variant-numeric:tabular-nums; white-space:nowrap; text-align:center; }
   .fourh .name { font-size:9.5px; text-align:center; display:block; }
