@@ -16,6 +16,7 @@ import json
 import math
 import os
 import re
+from urllib.parse import quote
 
 import streamlit as st
 
@@ -73,6 +74,10 @@ def latest_symbol(default="HYPEUSDT"):
 # ----------------------------------------------------------------- helpers
 def _e(v):
     return _html.escape(str(v if v is not None else ""))
+
+
+def _json_qs(data):
+    return quote(json.dumps(data, separators=(",", ":")), safe="")
 
 
 def _cls(v):
@@ -1018,6 +1023,16 @@ _CSS = """
 .oppstat.st-missed{background:rgba(139,148,158,.13);color:#8b94a0;border:1px solid rgba(139,148,158,.4);}
 .oppstat.st-unavail{background:rgba(139,148,158,.07);color:#5b636e;border:1px solid rgba(91,99,110,.3);}
 .oppstat.st-invalid{background:rgba(246,70,93,.15);color:#f6465d;border:1px solid rgba(246,70,93,.45);}
+.psecic.ic-alert{color:#e0a33e;border-color:rgba(228,160,8,.3);background:rgba(228,160,8,.06);}
+.alertwrap{display:flex;flex-direction:column;gap:8px;}
+.alertrow{display:flex;align-items:flex-start;gap:10px;padding:9px 10px;border:1px solid #232a33;border-radius:9px;background:#11161d;}
+.alertbody{flex:1;min-width:0;}
+.alerttop{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:11px;font-weight:800;color:#e6e8eb;line-height:1.25;}
+.alerttop em{font-style:normal;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#e0a33e;border:1px solid rgba(228,160,8,.38);border-radius:999px;padding:2px 7px;}
+.alertcond{font-size:11.5px;color:#cdd3da;line-height:1.4;margin-top:4px;}
+.alertnote{font-size:10px;color:#7d8794;line-height:1.35;margin-top:3px;}
+.dash a.alertbtn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border:1px solid rgba(76,141,255,.55);border-radius:999px;color:#9fc0ff;font-size:10px;font-weight:800;text-decoration:none;white-space:nowrap;background:rgba(76,141,255,.08);}
+.dash a.alertbtn:hover{border-color:#4c8dff;color:#e6e8eb;background:rgba(76,141,255,.16);text-decoration:none;}
 /* Decision-zone convergence callout — full width above the pattern cards */
 .convg{display:flex;gap:13px;align-items:flex-start;margin:2px 0 14px;padding:12px 16px;border-radius:11px;
   background:linear-gradient(90deg,rgba(228,160,8,.10),rgba(228,160,8,.02));border:1px solid rgba(228,160,8,.34);}
@@ -1767,6 +1782,99 @@ def _confluence(conf):
     return pill, body
 
 
+def _fallback_alert_suggestions(p):
+    entry = p.get("entry") or {}
+    zone = entry.get("zone") or {}
+    stop = entry.get("stop") or {}
+    suggestions = []
+    zlo = _num(zone.get("low"))
+    zhi = _num(zone.get("high"))
+    zlab = zone.get("label")
+    if zlo and zhi:
+        suggestions.append({
+            "label": "Entry zone touch",
+            "type": "Price enters zone",
+            "timeframe": "",
+            "condition": f"Alert when price trades into {zlab or (fmt_price(min(zlo, zhi)) + ' - ' + fmt_price(max(zlo, zhi)))}.",
+            "zone": {"low": min(zlo, zhi), "high": max(zlo, zhi)},
+            "note": "Entry-zone reminder from the AI trade location.",
+        })
+    subtitle = (zone.get("subtitle") or "").strip()
+    if subtitle:
+        suggestions.append({
+            "label": "Setup condition",
+            "type": "Condition reminder",
+            "timeframe": "",
+            "condition": subtitle,
+            "note": "The setup is conditional; use this as the alert you may want watched or edited.",
+        })
+    sval = _num(stop.get("value"))
+    if sval:
+        suggestions.append({
+            "label": "Invalidation",
+            "type": "Invalidation",
+            "timeframe": "",
+            "condition": f"Alert if price reaches invalidation near {fmt_price(sval)}.",
+            "level": sval,
+            "note": stop.get("note") or "Setup invalidation level.",
+        })
+    return suggestions[:3]
+
+
+def _pattern_alerts(p, symbol=None):
+    raw = p.get("alert_suggestions")
+    if raw is None:
+        raw = p.get("alerts")
+    suggestions = raw if isinstance(raw, list) else []
+    if not suggestions:
+        suggestions = _fallback_alert_suggestions(p)
+    rows = []
+    for item in suggestions[:3]:
+        if isinstance(item, str):
+            item = {"label": "Watch condition", "condition": item}
+        if not isinstance(item, dict):
+            continue
+        label = item.get("label") or item.get("type") or "Watch condition"
+        typ = item.get("type") or "AI suggestion"
+        tf = item.get("timeframe") or item.get("tf") or ""
+        condition = item.get("condition") or item.get("trigger") or item.get("note") or ""
+        note = item.get("note") or ""
+        if not condition:
+            continue
+        rule = {
+            "symbol": symbol or "",
+            "pattern": p.get("name") or "",
+            "grade": (p.get("grade") or "").strip().upper()[:1],
+            "direction": ((p.get("entry") or {}).get("direction") or ""),
+            "label": label,
+            "type": typ,
+            "timeframe": tf,
+            "condition": condition,
+            "level": item.get("level"),
+            "zone": item.get("zone"),
+            "note": note,
+        }
+        meta = " · ".join(x for x in [typ, tf] if x)
+        rows.append(
+            '<div class="alertrow">'
+            '<div class="alertbody">'
+            f'<div class="alerttop"><span>{_e(label)}</span>{("<em>" + _e(meta) + "</em>") if meta else ""}</div>'
+            f'<div class="alertcond">{_hl_numbers(condition)}</div>'
+            + (f'<div class="alertnote">{_hl_numbers(note)}</div>' if note else "")
+            + "</div>"
+            f'<a class="alertbtn" href="?set_alert={_json_qs(rule)}">Set Alert</a>'
+            "</div>"
+        )
+    if not rows:
+        return ""
+    return _section(
+        _IC_OPP,
+        "Suggested Alerts",
+        '<div class="alertwrap">' + "".join(rows) + "</div>",
+        "ic-alert",
+    )
+
+
 def _pattern_cards(cands, current=None, symbol=None):
     """Phase 3/4 pattern candidates as horizontal cards: name + maturity pill ·
     classification: qualifier · summary · Phase 5 entry hero + tiles · evidence ·
@@ -1837,6 +1945,7 @@ def _pattern_cards(cands, current=None, symbol=None):
             "head": head,
             "sum": summary,
             "entry": entryblock,
+            "alerts": _pattern_alerts(p, symbol),
             "opp": _section(_IC_OPP, "Opportunity Window", _opportunity(p.get("opportunity")), "ic-opp"),
             "ev": _section(_IC_EV, "Evidence", f'<ul class="plist">{ev}</ul>' if ev else "", "ic-ev"),
             "note": _section(_IC_NOTE, "Note", f'<ul class="plist miss">{miss}</ul>' if miss else "", "ic-note"),
@@ -1848,8 +1957,8 @@ def _pattern_cards(cands, current=None, symbol=None):
     # appears in at least one card (so empty rows don't leave gaps). Tools last so
     # it pins to the bottom of every card.
     fixed = [("head", "pc-head"), ("sum", "pc-sum"), ("entry", "pc-entry")]
-    optional = [("opp", "pc-opp"), ("ev", "pc-ev"), ("note", "pc-note"),
-                ("conf", "pc-conf"), ("tools", "pc-tools")]
+    optional = [("alerts", "pc-alerts"), ("opp", "pc-opp"), ("ev", "pc-ev"),
+                ("note", "pc-note"), ("conf", "pc-conf"), ("tools", "pc-tools")]
     slots = fixed + [s for s in optional if any(b[s[0]] for b in built)]
     nrows = len(slots)
 

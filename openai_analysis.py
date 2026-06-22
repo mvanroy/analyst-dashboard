@@ -610,6 +610,17 @@ def _schema_hint(symbol: str, evidence: dict, setup_timeframe: str = "4H") -> di
                     "t2": {"value": 0.0, "label": "$...", "rr": "~1 : X.X", "note": "implication"},
                     "tools": "tools actually used",
                 },
+                "alert_suggestions": [
+                    {
+                        "label": "short human label, e.g. 4H close above trigger",
+                        "type": "Price enters zone | Price crosses level | Candle closes above | Candle closes below | Approaching trigger | Invalidation",
+                        "timeframe": setup_timeframe,
+                        "condition": "plain-language condition to watch",
+                        "level": 0.0,
+                        "zone": {"low": 0.0, "high": 0.0},
+                        "note": "why this alert matters for this setup",
+                    }
+                ],
                 "evidence": ["what is observed + why it matters"],
                 "missing": ["what prevents progression"],
                 "confluence": {
@@ -762,6 +773,13 @@ def generate_dashboard_analysis(
         "reason to state that the selected chart has no valid setup.\n\n"
         "Maintain normal trading awareness of relevant support and resistance when assessing entries, "
         "exits, invalidation, and setup trajectory.\n\n"
+        "For each pattern candidate, include 1-3 alert_suggestions where useful. These are not extra "
+        "trade ideas; they are the specific moments the user may want the dashboard to watch so a "
+        "developing setup is not missed. Prefer observable Bybit conditions such as price entering "
+        "the entry zone, candle close above/below a trigger level, price approaching a trigger, or "
+        "invalidation. Keep them practical and editable: include the timeframe, condition, level or "
+        "zone when relevant, and a short note explaining why that alert matters. If no useful alert "
+        "exists for a weak/no-trade candidate, return an empty alert_suggestions list.\n\n"
         f"{tactical_instruction}\n"
         "Dashboard schema hint:\n"
         f"{json.dumps(_schema_hint(symbol, evidence, setup_timeframe), indent=2)}\n\n"

@@ -6,6 +6,10 @@ The Market Scanner in app.py is untouched; this page is fully isolated.
 """
 from __future__ import annotations
 
+from datetime import datetime
+import html
+import json
+import os
 import re
 
 import streamlit as st
@@ -13,6 +17,8 @@ import streamlit as st
 import chrome
 import dashboard
 import openai_analysis
+
+ALERTS_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "alerts.json")
 
 st.set_page_config(page_title="Trade Setup", page_icon="📊", layout="wide")
 
@@ -74,6 +80,93 @@ def _normalise_symbol(value: str) -> str:
     if symbol and not symbol.endswith("USDT"):
         symbol += "USDT"
     return symbol
+
+
+def _load_alerts() -> list[dict]:
+    if not os.path.exists(ALERTS_PATH):
+        return []
+    try:
+        with open(ALERTS_PATH, "r") as f:
+            data = json.load(f)
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+
+def _save_alerts(alerts: list[dict]) -> None:
+    with open(ALERTS_PATH, "w") as f:
+        json.dump(alerts, f, indent=2)
+
+
+def _alert_key(alert: dict) -> tuple:
+    return (
+        alert.get("symbol"),
+        alert.get("pattern"),
+        alert.get("type"),
+        alert.get("timeframe"),
+        alert.get("condition"),
+    )
+
+
+def _handle_set_alert() -> None:
+    raw = st.query_params.get("set_alert")
+    if not raw:
+        return
+    try:
+        alert = json.loads(raw)
+        if not isinstance(alert, dict):
+            raise ValueError("Invalid alert payload")
+        alerts = _load_alerts()
+        alert["status"] = "active"
+        alert["created_at"] = datetime.now().isoformat(timespec="seconds")
+        existing = {_alert_key(a) for a in alerts}
+        if _alert_key(alert) not in existing:
+            alerts.insert(0, alert)
+            _save_alerts(alerts)
+            st.toast("Alert saved to the watch list.", icon="🔔")
+        else:
+            st.toast("That alert is already saved.", icon="🔔")
+    except Exception as exc:
+        st.warning(f"Could not save that alert: {exc}", icon="⚠️")
+    st.query_params.clear()
+    st.rerun()
+
+
+_handle_set_alert()
+
+
+def _render_saved_alerts(symbol: str) -> None:
+    alerts = [a for a in _load_alerts() if a.get("status") == "active"]
+    if symbol:
+        scoped = [a for a in alerts if (a.get("symbol") or "").upper() == symbol.upper()]
+        alerts = scoped or alerts[:5]
+    if not alerts:
+        return
+    chips = ""
+    for a in alerts[:5]:
+        meta = " · ".join(x for x in [a.get("type"), a.get("timeframe")] if x)
+        chips += (
+            "<div class='savedalert'>"
+            f"<div class='savedalerttop'><b>{html.escape(a.get('symbol') or '')}</b>"
+            f"<span>{html.escape(a.get('label') or 'Watch condition')}</span></div>"
+            f"<div class='savedalertcond'>{html.escape(a.get('condition') or '')}</div>"
+            f"<div class='savedalertmeta'>{html.escape(meta or 'AI-assisted watch condition')}</div>"
+            "</div>"
+        )
+    st.markdown(
+        "<style>"
+        ".savedalerts{display:flex;gap:8px;flex-wrap:wrap;margin:-4px 0 14px;}"
+        ".savedalert{max-width:360px;border:1px solid rgba(228,160,8,.30);border-radius:9px;"
+        "background:rgba(228,160,8,.06);padding:8px 10px;}"
+        ".savedalerttop{display:flex;align-items:center;gap:7px;font-size:.72rem;color:#e6e8eb;}"
+        ".savedalerttop span{color:#cdd3da;font-weight:700;}"
+        ".savedalertcond{font-size:.72rem;color:#aab2bd;line-height:1.35;margin-top:4px;}"
+        ".savedalertmeta{font-size:.62rem;color:#e0a33e;font-weight:800;text-transform:uppercase;"
+        "letter-spacing:.05em;margin-top:5px;}"
+        "</style>"
+        f"<div class='savedalerts'>{chips}</div>",
+        unsafe_allow_html=True,
+    )
 
 
 if "analysis_setup_chart" not in st.session_state:
@@ -159,6 +252,7 @@ if data:
         f"<div class='v3capline'>{_cap}</div>",
         unsafe_allow_html=True,
     )
+    _render_saved_alerts(symbol)
     dashboard.render(data, symbol=symbol)
 else:
     st.divider()
