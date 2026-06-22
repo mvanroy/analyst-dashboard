@@ -91,7 +91,10 @@ st.markdown(
       .ezw-time {font-size: .76rem; color: #6f7885; text-align: right; margin-top: 5px;}
       .ezw-scan-note {font-size: .76rem; color: #8b94a0; margin: -.25rem 0 .65rem 0;}
       .ezw-empty {border-top: 1px solid #252b35; padding-top: 12px; color: #8b94a0; font-size: .84rem;}
-      .ezw-table {width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .78rem;}
+      .ezw-table {
+        width: 100%; border-collapse: collapse; table-layout: fixed; font-size: .78rem;
+        background: #15181f; border: 1px solid #1f2329; border-radius: 6px; overflow: hidden;
+      }
       .ezw-table th {
         color: #8b94a0; font-size: .68rem; letter-spacing: .06em; text-transform: uppercase;
         text-align: left; padding: 8px 7px; border-bottom: 1px solid #252b35;
