@@ -33,7 +33,7 @@ st.markdown(
     # empty panel is just confusing dead space — and chrome.py hides stHeader, which
     # removes the only control to reopen it once collapsed. Hide it outright here.
     + "[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important;}"
-    ".st-key-brandrow .stTextInput{width:150px!important;transform:translateY(8px);}"
+    ".st-key-brandrow .stTextInput{width:150px!important;transform:translateY(2px);}"
     ".st-key-brandrow .stTextInput [data-testid='stTextInputRootElement']{height:32px!important;"
     "border-radius:7px!important;border:1px solid rgba(230,232,235,.22)!important;"
     "background:rgba(10,14,20,.42)!important;box-shadow:none!important;}"
@@ -47,7 +47,7 @@ st.markdown(
     ".st-key-brandrow .stTextInput input:focus{box-shadow:none!important;outline:none!important;}"
     ".st-key-analysebtn button{border-radius:9999px;border:1px solid rgba(76,141,255,.75)!important;"
     "background:rgba(76,141,255,.12)!important;color:#e6e8eb!important;font-weight:600;"
-    "min-height:0;padding:0.25rem 0.9rem;width:auto;white-space:nowrap;transform:translateY(8px);}"
+    "min-height:0;padding:0.25rem 0.9rem;width:auto;white-space:nowrap;transform:translateY(2px);}"
     ".st-key-analysebtn button:hover{border-color:#4c8dff!important;color:#4c8dff!important;"
     "background:transparent!important;}"
     "</style>",
