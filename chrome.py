@@ -175,7 +175,7 @@ def render_clocks():
     sp = sp_futures()
     pct = sp.get("pct") if sp else None
     val = "null" if pct is None else f"{pct:.4f}"
-    components.html(CLOCKS_HTML.replace("__SP_PCT__", val), height=132)
+    components.html(CLOCKS_HTML.replace("__SP_PCT__", val), height=144)
 
 
 # CSS subset of the Scanner chrome shared by the secondary pages so their header
