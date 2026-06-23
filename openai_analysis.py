@@ -22,6 +22,14 @@ import scanner
 BYBIT_BASE = "https://api.bybit.com"
 OPENAI_URL = "https://api.openai.com/v1/responses"
 DEFAULT_MODEL = "gpt-5.2"
+OPENAI_PRICING_USD_PER_1M = {
+    # Estimate used for dashboard receipts. Update this map if the configured
+    # model changes or OpenAI publishes a different rate for this account.
+    "gpt-5.2": {"input": 2.50, "cached_input": 0.25, "output": 15.00},
+    "gpt-5.4": {"input": 2.50, "cached_input": 0.25, "output": 15.00},
+    "gpt-5.4-mini": {"input": 0.75, "cached_input": 0.075, "output": 4.50},
+    "gpt-5.5": {"input": 5.00, "cached_input": 0.50, "output": 30.00},
+}
 CANDLE_WINDOWS = {
     "1D": 90,
     "4H": 90,
@@ -548,6 +556,33 @@ def _parse_json_response(text: str) -> dict:
     return json.loads(clean[start : end + 1])
 
 
+def _openai_usage_receipt(payload: dict, model: str) -> dict:
+    usage = payload.get("usage") or {}
+    input_tokens = int(usage.get("input_tokens") or 0)
+    output_tokens = int(usage.get("output_tokens") or 0)
+    total_tokens = int(usage.get("total_tokens") or input_tokens + output_tokens)
+    details = usage.get("input_tokens_details") or {}
+    cached_tokens = int(details.get("cached_tokens") or 0)
+    billable_input = max(input_tokens - cached_tokens, 0)
+    rates = OPENAI_PRICING_USD_PER_1M.get(model) or OPENAI_PRICING_USD_PER_1M.get(DEFAULT_MODEL)
+    estimated_cost = None
+    if rates:
+        estimated_cost = (
+            billable_input * rates["input"]
+            + cached_tokens * rates["cached_input"]
+            + output_tokens * rates["output"]
+        ) / 1_000_000
+    return {
+        "model": model,
+        "input_tokens": input_tokens,
+        "cached_input_tokens": cached_tokens,
+        "output_tokens": output_tokens,
+        "total_tokens": total_tokens,
+        "estimated_cost_usd": round(estimated_cost, 6) if estimated_cost is not None else None,
+        "pricing_note": "Estimated from configured per-1M token rates; verify against OpenAI billing for final charged amount.",
+    }
+
+
 def _schema_hint(symbol: str, evidence: dict, setup_timeframe: str = "4H") -> dict:
     return {
         "schema_version": 2,
@@ -633,7 +668,13 @@ def _schema_hint(symbol: str, evidence: dict, setup_timeframe: str = "4H") -> di
     }
 
 
-def _stamp_dashboard_metadata(data: dict, symbol: str, evidence: dict, setup_timeframe: str = "4H") -> dict:
+def _stamp_dashboard_metadata(
+    data: dict,
+    symbol: str,
+    evidence: dict,
+    setup_timeframe: str = "4H",
+    openai_receipt=None,
+) -> dict:
     ticker = evidence.get("ticker") or {}
     last = ticker.get("last")
     high = ticker.get("high_24h")
@@ -655,6 +696,8 @@ def _stamp_dashboard_metadata(data: dict, symbol: str, evidence: dict, setup_tim
     )
     data["meta"]["setup_timeframe"] = setup_timeframe
     data["meta"]["analysis_time"] = datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%b %-d, %Y, %-I:%M %p %Z")
+    if openai_receipt:
+        data["meta"]["openai"] = openai_receipt
     data["snapshot"] = [
         {"label": "Current Price", "value": _fmt_price(last)},
         {"label": "24H High", "value": _fmt_price(high)},
@@ -800,7 +843,8 @@ def generate_dashboard_analysis(
     raw = _extract_text(payload)
     if not raw:
         raise RuntimeError("OpenAI returned no text output.")
-    data = _stamp_dashboard_metadata(_parse_json_response(raw), symbol, evidence, setup_timeframe)
+    receipt = _openai_usage_receipt(payload, model)
+    data = _stamp_dashboard_metadata(_parse_json_response(raw), symbol, evidence, setup_timeframe, receipt)
     os.makedirs(_ANALYSES_DIR, exist_ok=True)
     json_path = os.path.join(_ANALYSES_DIR, f"{symbol}.json")
     raw_path = os.path.join(_ANALYSES_DIR, f"{symbol}.openai.raw.txt")

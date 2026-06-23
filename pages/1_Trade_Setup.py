@@ -186,6 +186,24 @@ if st.session_state.get("openai_analysis_error"):
 if data:
     _m = data.get("meta", {})
     _last_analysed = _m.get("analysis_time") or data.get("generated_at") or "unknown"
+    _openai = _m.get("openai") or {}
+    _cost = _openai.get("estimated_cost_usd")
+    _cost_label = f"~${_cost:.4f}" if isinstance(_cost, (int, float)) else "—"
+    _token_label = ""
+    if _openai:
+        _token_label = (
+            f"<span class='costhelp' tabindex='0'>i"
+            f"<span class='costhelpbox'>"
+            f"<b>OpenAI scan receipt</b><br>"
+            f"<b>Model:</b> {html.escape(str(_openai.get('model') or '—'))}<br>"
+            f"<b>Input tokens:</b> {_openai.get('input_tokens', '—')}<br>"
+            f"<b>Cached input:</b> {_openai.get('cached_input_tokens', '—')}<br>"
+            f"<b>Output tokens:</b> {_openai.get('output_tokens', '—')}<br>"
+            f"<b>Total tokens:</b> {_openai.get('total_tokens', '—')}<br>"
+            f"<b>Estimated cost:</b> {_cost_label}<br>"
+            f"<span>{html.escape(str(_openai.get('pricing_note') or 'Estimate only.'))}</span>"
+            f"</span></span>"
+        )
     _grade_key = (
         "<span class='gradehelp' tabindex='0'>i"
         "<span class='gradehelpbox'>"
@@ -198,23 +216,23 @@ if data:
         "</span></span>"
     )
     _cap = (
-        f"Viewing saved result for <b>{data.get('symbol', symbol)}</b> · "
-        f"<b>Last analysed:</b> {_last_analysed} · analysis performed on "
-        f"{_m.get('timeframe_analyzed', '—')} · setup chart "
-        f"<b>{_m.get('setup_timeframe', '—')}</b> · framework "
-        f"{data.get('framework_version', 'Trade Setup Framework')} {_grade_key}"
+        f"<b>{data.get('symbol', symbol)}</b> · "
+        f"<b>Last analysed:</b> {_last_analysed} · "
+        f"<b>Chart setup:</b> {_m.get('setup_timeframe', '—')} · "
+        f"<b>OpenAI:</b> {_cost_label}{_token_label} {_grade_key}"
     )
     st.markdown(
         "<style>.v3capline{color:#8b94a0;font-size:.8rem;line-height:1.3;margin:0 0 14px 0;"
         "padding-bottom:6px;border-bottom:1px solid #2a2f3a;}"
-        ".gradehelp{position:relative;display:inline-flex;align-items:center;justify-content:center;"
+        ".gradehelp,.costhelp{position:relative;display:inline-flex;align-items:center;justify-content:center;"
         "width:16px;height:16px;margin-left:5px;border:1px solid #4c8dff;border-radius:50%;"
         "color:#9fc0ff;font-size:10px;font-weight:800;cursor:help;vertical-align:1px;}"
-        ".gradehelpbox{display:none;position:absolute;right:0;top:22px;z-index:10;width:360px;"
+        ".gradehelpbox,.costhelpbox{display:none;position:absolute;right:0;top:22px;z-index:10;width:360px;"
         "padding:11px 12px;border:1px solid rgba(76,141,255,.45);border-radius:8px;"
         "background:#101722;color:#dce3ec;box-shadow:0 14px 32px rgba(0,0,0,.35);"
         "font-size:.74rem;line-height:1.45;font-weight:400;text-align:left;}"
-        ".gradehelp:hover .gradehelpbox,.gradehelp:focus .gradehelpbox{display:block;}</style>"
+        ".gradehelp:hover .gradehelpbox,.gradehelp:focus .gradehelpbox,"
+        ".costhelp:hover .costhelpbox,.costhelp:focus .costhelpbox{display:block;}</style>"
         f"<div class='v3capline'>{_cap}</div>",
         unsafe_allow_html=True,
     )
