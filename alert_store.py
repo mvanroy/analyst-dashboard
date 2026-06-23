@@ -6,7 +6,6 @@ import hashlib
 import json
 import os
 
-
 ALERTS_PATH = os.path.join(os.path.dirname(__file__), "alerts.json")
 
 
@@ -50,6 +49,10 @@ def add_alert(alert: dict) -> tuple[bool, dict]:
     alert["status"] = alert.get("status") or "active"
     alert["created_at"] = alert.get("created_at") or datetime.now().isoformat(timespec="seconds")
     alert["id"] = alert.get("id") or _alert_id(alert)
+    if not alert.get("baseline"):
+        from alert_watcher import capture_baseline
+
+        alert["baseline"] = capture_baseline(alert)
     existing = {alert_key(a) for a in alerts}
     if alert_key(alert) in existing:
         return False, alert

@@ -1,7 +1,7 @@
 """Local alert watcher for saved AI-assisted trade alerts."""
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 import re
 
 import httpx
@@ -13,6 +13,43 @@ import scanner
 BYBIT_BASE = "https://api.bybit.com"
 TF_TO_BYBIT = {"15M": "15", "1H": "60", "4H": "240", "1D": "D", "D": "D"}
 TF_MS = {"15M": 15 * 60_000, "1H": 60 * 60_000, "4H": 4 * 60 * 60_000, "1D": 24 * 60 * 60_000, "D": 24 * 60 * 60_000}
+
+
+def capture_baseline(alert: dict) -> dict:
+    """Capture the market state at save time so stale conditions don't trigger.
+
+    Candle alerts remember the latest closed candle that already existed. Price
+    and zone alerts remember the current Bybit price and whether price was
+    already inside the watched zone.
+    """
+    symbol = (alert.get("symbol") or "").upper()
+    baseline = {"captured_at": datetime.now().isoformat(timespec="seconds")}
+    if not symbol:
+        return baseline
+    typ = (alert.get("type") or "").lower()
+    condition = (alert.get("condition") or "").lower()
+    if "candle" in typ or "close" in typ or "close" in condition:
+        tf = _normalise_tf(alert.get("timeframe") or _tf_from_text(alert.get("condition") or ""))
+        candle = _latest_closed_candle(symbol, tf) if tf else None
+        baseline["kind"] = "candle"
+        baseline["timeframe"] = tf
+        if candle:
+            baseline["candle_start"] = candle.get("start")
+            baseline["candle_close_time"] = candle.get("close_time")
+            baseline["candle_close"] = candle.get("close")
+        return baseline
+
+    price = _live_price(symbol)
+    baseline["kind"] = "price"
+    baseline["price"] = price
+    zone = alert.get("zone") if isinstance(alert.get("zone"), dict) else {}
+    low = _to_float(zone.get("low"))
+    high = _to_float(zone.get("high"))
+    if price is not None and low is not None and high is not None:
+        lo, hi = sorted([low, high])
+        baseline["in_zone"] = lo <= price <= hi
+        baseline["zone"] = {"low": lo, "high": hi}
+    return baseline
 
 
 def check_alerts(limit: int = 80) -> dict:
@@ -28,10 +65,15 @@ def check_alerts(limit: int = 80) -> dict:
     triggered = []
     checked = 0
     errors = []
+    baseline_changed = False
     for alert in active:
         checked += 1
         symbol = (alert.get("symbol") or "").upper()
         if not symbol:
+            continue
+        if not alert.get("baseline"):
+            alert["baseline"] = capture_baseline(alert)
+            baseline_changed = True
             continue
         try:
             result = _evaluate_alert(alert, prices, candles)
@@ -40,6 +82,8 @@ def check_alerts(limit: int = 80) -> dict:
             continue
         if result and alert_store.mark_triggered(alert.get("id"), result):
             triggered.append({**alert, "trigger": result})
+    if baseline_changed:
+        alert_store.save_alerts(alerts)
     return {
         "checked": checked,
         "triggered": triggered,
@@ -69,7 +113,11 @@ def _evaluate_price(alert: dict, prices: dict) -> dict | None:
     high = _to_float(zone.get("high"))
     if low is not None and high is not None:
         lo, hi = sorted([low, high])
+        baseline = alert.get("baseline") if isinstance(alert.get("baseline"), dict) else {}
+        started_in_zone = baseline.get("in_zone") is True
         if lo <= price <= hi:
+            if started_in_zone:
+                return None
             return {
                 "kind": "price_zone",
                 "message": f"Price entered zone {lo:g}-{hi:g}.",
@@ -83,9 +131,15 @@ def _evaluate_price(alert: dict, prices: dict) -> dict | None:
     if level is None:
         return None
     direction = _direction_from_text(alert)
+    baseline = alert.get("baseline") if isinstance(alert.get("baseline"), dict) else {}
+    start_price = _to_float(baseline.get("price"))
     if direction == "below" and price <= level:
+        if start_price is not None and start_price <= level:
+            return None
         return _price_level_trigger("price_below", price, level)
     if direction == "above" and price >= level:
+        if start_price is not None and start_price >= level:
+            return None
         return _price_level_trigger("price_above", price, level)
     return None
 
@@ -101,6 +155,13 @@ def _evaluate_candle_close(alert: dict, candles: dict) -> dict | None:
     candle = candles.get(key)
     if not candle:
         return None
+    created_ms = _created_at_ms(alert.get("created_at"))
+    baseline = alert.get("baseline") if isinstance(alert.get("baseline"), dict) else {}
+    baseline_start = _to_float(baseline.get("candle_start"))
+    if baseline_start is not None and candle["start"] <= baseline_start:
+        return None
+    if created_ms is not None and candle["close_time"] <= created_ms:
+        return None
     level = _to_float(alert.get("level")) or _level_from_text(alert.get("condition") or "")
     if level is None:
         return None
@@ -114,7 +175,7 @@ def _evaluate_candle_close(alert: dict, candles: dict) -> dict | None:
 
 
 def _live_price(symbol: str) -> float | None:
-    q = scanner.live_ticker(symbol)
+    q = scanner.live_bybit_ticker(symbol) or scanner.live_ticker(symbol)
     return float(q["last"]) if q and q.get("last") is not None else None
 
 
@@ -138,6 +199,7 @@ def _latest_closed_candle(symbol: str, tf: str) -> dict | None:
         if start + tf_ms <= now_ms:
             return {
                 "start": start,
+                "close_time": start + tf_ms,
                 "time": datetime.utcfromtimestamp(start / 1000).strftime("%Y-%m-%d %H:%M UTC"),
                 "open": float(raw[1]),
                 "high": float(raw[2]),
@@ -209,6 +271,18 @@ def _to_float(value):
         return float(value)
     except (TypeError, ValueError):
         return None
+
+
+def _created_at_ms(value: str | None) -> int | None:
+    if not value:
+        return None
+    try:
+        dt = datetime.fromisoformat(value)
+    except ValueError:
+        return None
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return int(dt.timestamp() * 1000)
 
 
 def _price_level_trigger(kind: str, price: float, level: float) -> dict:
