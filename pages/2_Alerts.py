@@ -36,10 +36,20 @@ st.markdown(
     ".alert-stat .sub{font-size:.74rem;color:#aab2bd;margin-top:6px;}"
     ".alert-stat .amber{color:#e0a33e}.alert-stat .green{color:#2ebd85}.alert-stat .blue{color:#4c8dff}"
     ".alert-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:18px 0 11px;}"
-    ".alert-tabs{display:flex;gap:7px;flex-wrap:wrap;}"
-    ".alert-tab{border:1px solid rgba(230,232,235,.18);border-radius:999px;background:rgba(10,14,20,.25);"
-    "color:#aab2bd;font-size:.72rem;font-weight:900;padding:7px 11px;text-decoration:none;}"
-    ".alert-tab.active{border-color:rgba(76,141,255,.75);background:rgba(76,141,255,.16);color:#e6e8eb;}"
+    ".st-key-alert_filter_bar{margin:18px 0 11px;}"
+    ".st-key-alert_filter_bar [data-testid='stWidgetLabel']{display:none!important;}"
+    ".st-key-alert_filter_bar [data-testid='stPills']{display:flex;gap:7px;flex-wrap:wrap;}"
+    ".st-key-alert_filter_bar [data-testid='stPills'] button{border:1px solid rgba(230,232,235,.18)!important;"
+    "border-radius:999px!important;background:rgba(10,14,20,.25)!important;color:#4c8dff!important;"
+    "font-size:.72rem!important;font-weight:900!important;padding:7px 11px!important;min-height:0!important;}"
+    ".st-key-alert_filter_bar [data-testid='stPills'] button:hover{border-color:rgba(76,141,255,.55)!important;color:#dce3ec!important;}"
+    ".st-key-alert_filter_bar button[data-testid='stBaseButton-pillsActive'],"
+    ".st-key-alert_filter_bar [data-testid='stPills'] button[aria-pressed='true'],"
+    ".st-key-alert_filter_bar [data-testid='stPills'] button[aria-selected='true']{"
+    "border-color:rgba(76,141,255,.75)!important;background:rgba(76,141,255,.16)!important;color:#e6e8eb!important;}"
+    ".alert-search-placeholder{display:inline-flex;align-items:center;border:1px solid rgba(230,232,235,.18);"
+    "border-radius:999px;background:rgba(10,14,20,.25);color:#aab2bd;font-size:.72rem;font-weight:900;"
+    "padding:7px 11px;text-decoration:none;}"
     ".alert-grid{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:12px;align-items:start;}"
     ".alert-table{background:#10141b;border:1px solid rgba(139,92,246,.36);border-radius:10px;overflow:hidden;}"
     ".alert-head,.alert-row{display:grid;grid-template-columns:110px 92px minmax(220px,1fr) 115px 105px 92px;}"
@@ -308,8 +318,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-view = (st.query_params.get("view") or "active").lower()
-
 tabs = [
     ("active", "All Active"),
     ("approaching", "Approaching"),
@@ -318,16 +326,25 @@ tabs = [
     ("triggered", "Triggered"),
     ("paused", "Paused"),
 ]
-tab_html = "".join(
-    f"<a class='alert-tab {'active' if view == key else ''}' href='?view={key}'>{label}</a>"
-    for key, label in tabs
-)
-st.markdown(
-    "<section class='alert-toolbar'><div class='alert-tabs'>"
-    + tab_html
-    + "</div><div class='alert-tab'>Filter by ticker or condition...</div></section>",
-    unsafe_allow_html=True,
-)
+tab_labels = [label for _, label in tabs]
+tab_by_label = {label: key for key, label in tabs}
+if "alert_view_label" not in st.session_state:
+    st.session_state.alert_view_label = "All Active"
+
+with st.container(key="alert_filter_bar"):
+    filter_cols = st.columns([4.3, 1.2], vertical_alignment="top")
+    with filter_cols[0]:
+        selected_label = st.pills(
+            "",
+            tab_labels,
+            selection_mode="single",
+            key="alert_view_label",
+            label_visibility="collapsed",
+        )
+    with filter_cols[1]:
+        st.markdown("<span class='alert-search-placeholder'>Filter by ticker or condition...</span>", unsafe_allow_html=True)
+
+view = tab_by_label.get(selected_label or st.session_state.get("alert_view_label"), "active")
 
 if view == "approaching":
     visible = approaching
