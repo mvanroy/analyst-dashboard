@@ -3,15 +3,25 @@
 The cloud watcher runs the same mechanical alert checks as the dashboard watcher,
 but from a scheduled cloud job so the laptop does not need to stay on.
 
-Recommended first deployment target: GitHub Actions scheduled workflow.
+Recommended live deployment target: Railway always-on worker.
 
-Render Cron remains an optional paid deployment path later.
+GitHub Actions remains as a free scheduled backup, but it is not real-time enough
+for entry-zone alerts.
 
 ## Worker Command
 
 ```bash
 python cloud_alert_watcher.py
 ```
+
+## Always-On Worker Command
+
+```bash
+python cloud_alert_watcher.py --loop
+```
+
+The loop checks every 20 seconds by default. Set `WATCH_INTERVAL_SECONDS` to
+change this.
 
 ## Smoke Test Command
 
@@ -41,6 +51,28 @@ The workflow lives at:
 
 It runs every 10 minutes and can also be started manually from GitHub Actions
 using "Run workflow".
+
+## Railway
+
+The Railway config lives at:
+
+```text
+railway.json
+```
+
+It starts:
+
+```bash
+python cloud_alert_watcher.py --loop
+```
+
+Required Railway variables:
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `TELEGRAM_BOT_TOKEN`
+- `TELEGRAM_CHAT_ID`
+- optional: `WATCH_INTERVAL_SECONDS`, default `20`
 
 ## Current Alert Scope
 
