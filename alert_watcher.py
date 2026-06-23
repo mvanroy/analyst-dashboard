@@ -7,7 +7,6 @@ import re
 import httpx
 
 import alert_store
-import scanner
 import telegram_notifier
 
 
@@ -190,8 +189,19 @@ def _evaluate_candle_close(alert: dict, candles: dict) -> dict | None:
 
 
 def _live_price(symbol: str) -> float | None:
-    q = scanner.live_bybit_ticker(symbol) or scanner.live_ticker(symbol)
-    return float(q["last"]) if q and q.get("last") is not None else None
+    response = httpx.get(
+        BYBIT_BASE + "/v5/market/tickers",
+        params={"category": "linear", "symbol": symbol},
+        timeout=15,
+    )
+    response.raise_for_status()
+    data = response.json()
+    if data.get("retCode") not in (0, "0"):
+        raise RuntimeError(f"Bybit error {data.get('retCode')}: {data.get('retMsg')}")
+    rows = data.get("result", {}).get("list", []) or []
+    if not rows:
+        return None
+    return float(rows[0]["lastPrice"])
 
 
 def _latest_closed_candle(symbol: str, tf: str) -> dict | None:
