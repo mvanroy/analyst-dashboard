@@ -1,8 +1,10 @@
 """Trade Alerts - saved AI-assisted alert rules."""
 from __future__ import annotations
 
+import base64
 from datetime import datetime
 import html
+import os
 from urllib.parse import quote
 
 import streamlit as st
@@ -11,6 +13,25 @@ import alert_store
 import alert_watcher
 import chrome
 import scanner
+
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_ASSET_DIR = os.path.join(_ROOT, "assets")
+
+
+def _svg_data_uri(filename: str) -> str:
+    path = os.path.join(_ASSET_DIR, filename)
+    try:
+        with open(path, "rb") as f:
+            encoded = base64.b64encode(f.read()).decode("ascii")
+    except OSError:
+        return ""
+    return f"data:image/svg+xml;base64,{encoded}"
+
+
+_ICON_PAUSE = _svg_data_uri("alert-pause.svg")
+_ICON_PLAY = _svg_data_uri("alert-play.svg")
+_ICON_DELETE = _svg_data_uri("alert-delete.svg")
 
 
 st.set_page_config(page_title="Alerts", page_icon="🔔", layout="wide")
@@ -71,6 +92,8 @@ st.markdown(
     ".aacts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}"
     ".aact{display:inline-flex;align-items:center;justify-content:center;width:27px;height:27px;border:1px solid rgba(230,232,235,.18);"
     "border-radius:7px;color:#aab2bd;text-decoration:none;font-size:.86rem;font-weight:900;background:rgba(10,14,20,.22);}"
+    ".aact img{display:block;width:15px;height:15px;filter:invert(75%) sepia(7%) saturate(316%) hue-rotate(177deg) brightness(88%) contrast(86%);}"
+    ".aact:hover img{filter:invert(100%);}.aact.delete:hover img{filter:none;}"
     ".aact:hover{border-color:#4c8dff;color:#e6e8eb;}.aact.delete:hover{border-color:#f6465d;color:#f6465d;}"
     ".alert-side{display:flex;flex-direction:column;gap:12px;}"
     ".alert-panel{background:#13101e;border:1px solid rgba(139,92,246,.36);border-radius:10px;padding:14px;}"
@@ -231,7 +254,9 @@ def _render_row(alert: dict, price: float | None) -> str:
     status = (alert.get("status") or "active").lower()
     pause_action = "resume" if status == "paused" else "pause"
     pause_label = "Resume" if status == "paused" else "Pause"
-    pause_icon = "▶" if status == "paused" else "Ⅱ"
+    pause_src = _ICON_PLAY if status == "paused" else _ICON_PAUSE
+    pause_icon = f"<img src='{pause_src}' alt=''>" if pause_src else ("▶" if status == "paused" else "Ⅱ")
+    delete_icon = f"<img src='{_ICON_DELETE}' alt=''>" if _ICON_DELETE else "×"
     condition = alert.get("condition") or alert.get("note") or "Watch condition"
     note = alert.get("note") or alert.get("type") or "AI-assisted alert rule"
     trigger = alert.get("trigger") if isinstance(alert.get("trigger"), dict) else {}
@@ -249,7 +274,7 @@ def _render_row(alert: dict, price: float | None) -> str:
         f"<div class='astatus'><span class='apill {_esc(prox['class'])}'>{_esc(prox['label'])}</span><small>{_esc(last)}</small></div>"
         "<div class='aacts'>"
         f"<a class='aact' href='{_href(pause_action, aid)}' title='{pause_label}' aria-label='{pause_label}'>{pause_icon}</a>"
-        f"<a class='aact delete' href='{_href('delete', aid)}' title='Delete' aria-label='Delete'>×</a>"
+        f"<a class='aact delete' href='{_href('delete', aid)}' title='Delete' aria-label='Delete'>{delete_icon}</a>"
         "</div></div>"
     )
 
