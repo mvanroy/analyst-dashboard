@@ -94,6 +94,26 @@ def mark_triggered(alert_id: str, trigger: dict) -> bool:
     return changed
 
 
+def mark_notified(alert_id: str, channel: str, result: dict | None = None) -> bool:
+    alerts = load_alerts()
+    changed = False
+    now = datetime.now().isoformat(timespec="seconds")
+    for alert in alerts:
+        if alert.get("id") == alert_id:
+            notified = alert.get("notified") if isinstance(alert.get("notified"), dict) else {}
+            notified[channel] = {
+                "sent_at": now,
+                "ok": bool((result or {}).get("ok", True)),
+            }
+            alert["notified"] = notified
+            alert["updated_at"] = now
+            changed = True
+            break
+    if changed:
+        save_alerts(alerts)
+    return changed
+
+
 def delete_alert(alert_id: str) -> bool:
     alerts = load_alerts()
     kept = [a for a in alerts if a.get("id") != alert_id]

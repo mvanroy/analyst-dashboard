@@ -454,7 +454,7 @@ st.markdown(
     + "<div class='alert-panel'><h3>Watcher Route</h3>"
     + "<div class='routeitem'><b>Data</b><span>Bybit price + candles</span></div>"
     + "<div class='routeitem'><b>Logic</b><span>Price zones + closed candles</span></div>"
-    + "<div class='routeitem'><b>Notify</b><span>Dashboard trigger state now; Telegram/iMessage later</span></div>"
+    + "<div class='routeitem'><b>Notify</b><span>Dashboard trigger state + Telegram</span></div>"
     + "<div class='routeitem'><b>Cloud</b><span>Optional always-on phase</span></div>"
     + "</div></aside></section>",
     unsafe_allow_html=True,

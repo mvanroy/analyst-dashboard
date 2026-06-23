@@ -8,6 +8,7 @@ import httpx
 
 import alert_store
 import scanner
+import telegram_notifier
 
 
 BYBIT_BASE = "https://api.bybit.com"
@@ -81,7 +82,8 @@ def check_alerts(limit: int = 80) -> dict:
             errors.append({"symbol": symbol, "error": str(exc)})
             continue
         if result and alert_store.mark_triggered(alert.get("id"), result):
-            triggered.append({**alert, "trigger": result})
+            delivered = _notify_triggered_alert(alert, result)
+            triggered.append({**alert, "trigger": result, "notification": delivered})
     if baseline_changed:
         alert_store.save_alerts(alerts)
     return {
@@ -90,6 +92,19 @@ def check_alerts(limit: int = 80) -> dict:
         "errors": errors[:5],
         "checked_at": datetime.now().isoformat(timespec="seconds"),
     }
+
+
+def _notify_triggered_alert(alert: dict, trigger: dict) -> dict:
+    notified = alert.get("notified") if isinstance(alert.get("notified"), dict) else {}
+    if notified.get("telegram"):
+        return {"ok": True, "skipped": True, "reason": "Already sent."}
+    try:
+        result = telegram_notifier.send_alert(alert, trigger)
+    except Exception as exc:
+        return {"ok": False, "error": str(exc)}
+    if result.get("ok"):
+        alert_store.mark_notified(alert.get("id"), "telegram", result)
+    return result
 
 
 def _evaluate_alert(alert: dict, prices: dict, candles: dict) -> dict | None:
