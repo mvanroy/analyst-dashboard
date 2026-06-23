@@ -46,7 +46,8 @@ st.markdown(
     ".alert-actions{display:flex;gap:9px;align-items:center;justify-content:flex-end;}"
     ".alert-pillbtn{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(76,141,255,.68);"
     "border-radius:999px;padding:7px 14px;color:#e6e8eb;background:rgba(76,141,255,.12);font-size:.78rem;"
-    "font-weight:800;text-decoration:none;white-space:nowrap;}"
+    "font-weight:800;text-decoration:none!important;white-space:nowrap;}"
+    ".alert-pillbtn:hover,.alert-pillbtn:focus,.alert-pillbtn:visited{text-decoration:none!important;}"
     ".alert-pillbtn.ghost{border-color:rgba(230,232,235,.18);background:rgba(10,14,20,.25);color:#aab2bd;}"
     ".alert-meta{color:#8b94a0;font-size:.8rem;line-height:1.35;margin:0 0 14px;"
     "padding-bottom:8px;border-bottom:1px solid #2a2f3a;}"
@@ -89,9 +90,10 @@ st.markdown(
     ".adist strong{display:block;font-size:1rem;color:#e6e8eb;line-height:1.1;}.adist strong.amber{color:#e0a33e}.adist strong.green{color:#2ebd85}.adist strong.blue{color:#4c8dff}"
     ".abar{height:7px;background:#242b35;border-radius:99px;overflow:hidden;margin-top:8px;}.abar i{display:block;height:100%;border-radius:99px;background:#e0a33e;}"
     ".astatus small{display:block;color:#8b94a0;font-size:.68rem;margin-top:6px;line-height:1.25;}"
-    ".aacts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}"
+    ".aacts{display:flex;flex-direction:column;gap:6px;align-items:center;}"
     ".aact{display:inline-flex;align-items:center;justify-content:center;width:27px;height:27px;border:1px solid rgba(230,232,235,.18);"
-    "border-radius:7px;color:#aab2bd;text-decoration:none;font-size:.86rem;font-weight:900;background:rgba(10,14,20,.22);}"
+    "border-radius:7px;color:#aab2bd;text-decoration:none!important;font-size:.86rem;font-weight:900;background:rgba(10,14,20,.22);}"
+    ".aact:hover,.aact:focus,.aact:visited{text-decoration:none!important;}"
     ".aact img{display:block;width:15px;height:15px;filter:invert(75%) sepia(7%) saturate(316%) hue-rotate(177deg) brightness(88%) contrast(86%);}"
     ".aact:hover img{filter:invert(100%);}.aact.delete:hover img{filter:none;}"
     ".aact:hover{border-color:#4c8dff;color:#e6e8eb;}.aact.delete:hover{border-color:#f6465d;color:#f6465d;}"
@@ -277,11 +279,8 @@ def _render_row(alert: dict, price: float | None) -> str:
     direction = (alert.get("direction") or "watch").lower()
     dcls = "long" if direction == "long" else "short" if direction == "short" else "watch"
     aid = alert.get("id") or ""
-    status = (alert.get("status") or "active").lower()
-    pause_action = "resume" if status == "paused" else "pause"
-    pause_label = "Resume" if status == "paused" else "Pause"
-    pause_src = _ICON_PLAY if status == "paused" else _ICON_PAUSE
-    pause_icon = f"<img src='{pause_src}' alt=''>" if pause_src else ("▶" if status == "paused" else "Ⅱ")
+    pause_icon = f"<img src='{_ICON_PAUSE}' alt=''>" if _ICON_PAUSE else "Ⅱ"
+    resume_icon = f"<img src='{_ICON_PLAY}' alt=''>" if _ICON_PLAY else "▶"
     delete_icon = f"<img src='{_ICON_DELETE}' alt=''>" if _ICON_DELETE else "×"
     condition = alert.get("condition") or alert.get("note") or "Watch condition"
     note = alert.get("note") or alert.get("type") or "AI-assisted alert rule"
@@ -299,7 +298,8 @@ def _render_row(alert: dict, price: float | None) -> str:
         f"<div class='abar'><i style='width:{int(prox['bar'])}%;background:{bar_color}'></i></div></div>"
         f"<div class='astatus'><span class='apill {_esc(prox['class'])}'>{_esc(prox['label'])}</span><small>{_esc(last)}</small></div>"
         "<div class='aacts'>"
-        f"<a class='aact' href='{_href(pause_action, aid)}' title='{pause_label}' aria-label='{pause_label}'>{pause_icon}</a>"
+        f"<a class='aact' href='{_href('pause', aid)}' title='Pause' aria-label='Pause'>{pause_icon}</a>"
+        f"<a class='aact' href='{_href('resume', aid)}' title='Resume' aria-label='Resume'>{resume_icon}</a>"
         f"<a class='aact delete' href='{_href('delete', aid)}' title='Delete' aria-label='Delete'>{delete_icon}</a>"
         "</div></div>"
     )
