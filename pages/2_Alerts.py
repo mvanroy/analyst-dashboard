@@ -132,12 +132,38 @@ def _href(action: str, alert_id: str) -> str:
     return f"?alert_action={quote(action)}&alert_id={quote(alert_id or '')}"
 
 
+def _status_href(action: str) -> str:
+    return f"?alert_action={quote(action)}"
+
+
+def _set_many_alerts_status(current_status: str, new_status: str) -> int:
+    alerts = alert_store.load_alerts()
+    changed = 0
+    now = datetime.now().isoformat(timespec="seconds")
+    for alert in alerts:
+        if (alert.get("status") or "active") == current_status:
+            alert["status"] = new_status
+            alert["updated_at"] = now
+            changed += 1
+    if changed:
+        alert_store.save_alerts(alerts)
+    return changed
+
+
 def _handle_action() -> None:
     action = st.query_params.get("alert_action")
     alert_id = st.query_params.get("alert_id")
-    if not action or not alert_id:
+    if not action:
         return
-    if action == "delete":
+    if action == "pause_all":
+        count = _set_many_alerts_status("active", "paused")
+        st.toast(f"{count} alert{'s' if count != 1 else ''} paused.", icon="🔔")
+    elif action == "resume_all":
+        count = _set_many_alerts_status("paused", "active")
+        st.toast(f"{count} alert{'s' if count != 1 else ''} resumed.", icon="🔔")
+    elif not alert_id:
+        return
+    elif action == "delete":
         alert_store.delete_alert(alert_id)
         st.toast("Alert deleted.", icon="🔔")
     elif action == "pause":
@@ -295,7 +321,8 @@ brand = st.container(key="alertbrand")
 brand.markdown(
     chrome.brand_html("TRADE", "ALERTS")
     + "<div class='alert-actions'>"
-    + "<span class='alert-pillbtn ghost'>Pause All</span>"
+    + f"<a class='alert-pillbtn ghost' href='{_status_href('pause_all')}'>Pause All</a>"
+    + f"<a class='alert-pillbtn ghost' href='{_status_href('resume_all')}'>Resume All</a>"
     + "<a class='alert-pillbtn' href='?'>Refresh Now</a>"
     + "</div>",
     unsafe_allow_html=True,
