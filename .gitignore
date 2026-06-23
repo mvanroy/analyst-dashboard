@@ -12,5 +12,9 @@ venv/
 
 # Streamlit
 .streamlit/secrets.toml
+.streamlit/*.sw?
+.env
+.env.*
+alerts.json
 calc_prefs.json
 journal_config.json
