@@ -69,9 +69,9 @@ st.markdown(
     ".abar{height:7px;background:#242b35;border-radius:99px;overflow:hidden;margin-top:8px;}.abar i{display:block;height:100%;border-radius:99px;background:#e0a33e;}"
     ".astatus small{display:block;color:#8b94a0;font-size:.68rem;margin-top:6px;line-height:1.25;}"
     ".aacts{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}"
-    ".aact{display:inline-flex;align-items:center;justify-content:center;border:1px solid rgba(230,232,235,.18);border-radius:7px;"
-    "padding:5px 7px;color:#aab2bd;text-decoration:none;font-size:.66rem;font-weight:800;background:rgba(10,14,20,.22);}"
-    ".aact:hover{border-color:#4c8dff;color:#e6e8eb;}"
+    ".aact{display:inline-flex;align-items:center;justify-content:center;width:27px;height:27px;border:1px solid rgba(230,232,235,.18);"
+    "border-radius:7px;color:#aab2bd;text-decoration:none;font-size:.86rem;font-weight:900;background:rgba(10,14,20,.22);}"
+    ".aact:hover{border-color:#4c8dff;color:#e6e8eb;}.aact.delete:hover{border-color:#f6465d;color:#f6465d;}"
     ".alert-side{display:flex;flex-direction:column;gap:12px;}"
     ".alert-panel{background:#13101e;border:1px solid rgba(139,92,246,.36);border-radius:10px;padding:14px;}"
     ".alert-panel h3{margin:0 0 12px;font-size:.66rem;color:#8b94a0;letter-spacing:.09em;text-transform:uppercase;}"
@@ -123,9 +123,6 @@ def _handle_action() -> None:
     elif action == "resume":
         alert_store.set_status(alert_id, "active")
         st.toast("Alert resumed.", icon="🔔")
-    elif action == "ack":
-        alert_store.set_status(alert_id, "acknowledged")
-        st.toast("Alert acknowledged.", icon="🔔")
     st.query_params.clear()
     st.rerun()
 
@@ -234,6 +231,7 @@ def _render_row(alert: dict, price: float | None) -> str:
     status = (alert.get("status") or "active").lower()
     pause_action = "resume" if status == "paused" else "pause"
     pause_label = "Resume" if status == "paused" else "Pause"
+    pause_icon = "▶" if status == "paused" else "Ⅱ"
     condition = alert.get("condition") or alert.get("note") or "Watch condition"
     note = alert.get("note") or alert.get("type") or "AI-assisted alert rule"
     trigger = alert.get("trigger") if isinstance(alert.get("trigger"), dict) else {}
@@ -250,9 +248,8 @@ def _render_row(alert: dict, price: float | None) -> str:
         f"<div class='abar'><i style='width:{int(prox['bar'])}%;background:{bar_color}'></i></div></div>"
         f"<div class='astatus'><span class='apill {_esc(prox['class'])}'>{_esc(prox['label'])}</span><small>{_esc(last)}</small></div>"
         "<div class='aacts'>"
-        f"<a class='aact' href='{_href(pause_action, aid)}'>{pause_label}</a>"
-        f"<a class='aact' href='{_href('ack', aid)}'>Ack</a>"
-        f"<a class='aact' href='{_href('delete', aid)}'>Delete</a>"
+        f"<a class='aact' href='{_href(pause_action, aid)}' title='{pause_label}' aria-label='{pause_label}'>{pause_icon}</a>"
+        f"<a class='aact delete' href='{_href('delete', aid)}' title='Delete' aria-label='Delete'>×</a>"
         "</div></div>"
     )
 
@@ -311,7 +308,7 @@ st.markdown(
     f"<div class='alert-stat'><div class='cap'>Approaching</div><div class='big amber'>{len(approaching)}</div>"
     "<div class='sub'>Within 0.8% of level or zone</div></div>"
     f"<div class='alert-stat'><div class='cap'>Triggered</div><div class='big green'>{len(triggered_alerts)}</div>"
-    "<div class='sub'>Triggered or acknowledged alerts</div></div>"
+    "<div class='sub'>Triggered alerts</div></div>"
     "<div class='alert-stat'><div class='cap'>Watcher Status</div><div class='big blue'>Live</div>"
     "<div class='sub'>Runs while Alerts page is open</div></div>"
     "</section>",
