@@ -12,8 +12,10 @@ import telegram_notifier
 
 
 BYBIT_BASE = "https://api.bybit.com"
+OKX_BASE = "https://www.okx.com"
 BINANCE_FUTURES_BASE = "https://fapi.binance.com"
 TF_TO_BYBIT = {"15M": "15", "1H": "60", "4H": "240", "1D": "D", "D": "D"}
+TF_TO_OKX = {"15M": "15m", "1H": "1H", "4H": "4H", "1D": "1D", "D": "1D"}
 TF_TO_BINANCE = {"15M": "15m", "1H": "1h", "4H": "4h", "1D": "1d", "D": "1d"}
 TF_MS = {"15M": 15 * 60_000, "1H": 60 * 60_000, "4H": 4 * 60 * 60_000, "1D": 24 * 60 * 60_000, "D": 24 * 60 * 60_000}
 
@@ -192,12 +194,14 @@ def _evaluate_candle_close(alert: dict, candles: dict) -> dict | None:
 
 
 def _live_price(symbol: str) -> float | None:
-    try:
-        return _bybit_live_price(symbol)
-    except httpx.HTTPStatusError as exc:
-        if exc.response.status_code != 403:
-            raise
-    return _binance_live_price(symbol)
+    for getter in (_bybit_live_price, _okx_live_price, _binance_live_price):
+        try:
+            price = getter(symbol)
+        except httpx.HTTPStatusError:
+            continue
+        if price is not None:
+            return price
+    return None
 
 
 def _bybit_live_price(symbol: str) -> float | None:
@@ -230,13 +234,35 @@ def _binance_live_price(symbol: str) -> float | None:
     return float(price) if price is not None else None
 
 
+def _okx_live_price(symbol: str) -> float | None:
+    inst_id = _okx_swap_inst_id(symbol)
+    if not inst_id:
+        return None
+    response = httpx.get(
+        OKX_BASE + "/api/v5/market/ticker",
+        params={"instId": inst_id},
+        timeout=15,
+    )
+    response.raise_for_status()
+    data = response.json()
+    if data.get("code") not in (0, "0"):
+        return None
+    rows = data.get("data") or []
+    if not rows:
+        return None
+    last = rows[0].get("last")
+    return float(last) if last is not None else None
+
+
 def _latest_closed_candle(symbol: str, tf: str) -> dict | None:
-    try:
-        return _bybit_latest_closed_candle(symbol, tf)
-    except httpx.HTTPStatusError as exc:
-        if exc.response.status_code != 403:
-            raise
-    return _binance_latest_closed_candle(symbol, tf)
+    for getter in (_bybit_latest_closed_candle, _okx_latest_closed_candle, _binance_latest_closed_candle):
+        try:
+            candle = getter(symbol, tf)
+        except httpx.HTTPStatusError:
+            continue
+        if candle is not None:
+            return candle
+    return None
 
 
 def _bybit_latest_closed_candle(symbol: str, tf: str) -> dict | None:
@@ -297,6 +323,43 @@ def _binance_latest_closed_candle(symbol: str, tf: str) -> dict | None:
                 "close": float(raw[4]),
             }
     return None
+
+
+def _okx_latest_closed_candle(symbol: str, tf: str) -> dict | None:
+    inst_id = _okx_swap_inst_id(symbol)
+    interval = TF_TO_OKX.get(tf)
+    if not inst_id or not interval:
+        return None
+    response = httpx.get(
+        OKX_BASE + "/api/v5/market/candles",
+        params={"instId": inst_id, "bar": interval, "limit": 4},
+        timeout=15,
+    )
+    response.raise_for_status()
+    data = response.json()
+    if data.get("code") not in (0, "0"):
+        return None
+    for raw in data.get("data") or []:
+        if len(raw) < 9 or raw[8] != "1":
+            continue
+        start = int(raw[0])
+        return {
+            "start": start,
+            "close_time": start + TF_MS[tf],
+            "time": datetime.utcfromtimestamp(start / 1000).strftime("%Y-%m-%d %H:%M UTC"),
+            "open": float(raw[1]),
+            "high": float(raw[2]),
+            "low": float(raw[3]),
+            "close": float(raw[4]),
+        }
+    return None
+
+
+def _okx_swap_inst_id(symbol: str) -> str:
+    if not symbol.endswith("USDT") or len(symbol) <= 4:
+        return ""
+    base = symbol[:-4]
+    return f"{base}-USDT-SWAP"
 
 
 def _direction_from_text(alert: dict) -> str:
