@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 import re
+import time
 
 import httpx
 
@@ -11,7 +12,9 @@ import telegram_notifier
 
 
 BYBIT_BASE = "https://api.bybit.com"
+BINANCE_FUTURES_BASE = "https://fapi.binance.com"
 TF_TO_BYBIT = {"15M": "15", "1H": "60", "4H": "240", "1D": "D", "D": "D"}
+TF_TO_BINANCE = {"15M": "15m", "1H": "1h", "4H": "4h", "1D": "1d", "D": "1d"}
 TF_MS = {"15M": 15 * 60_000, "1H": 60 * 60_000, "4H": 4 * 60 * 60_000, "1D": 24 * 60 * 60_000, "D": 24 * 60 * 60_000}
 
 
@@ -189,6 +192,15 @@ def _evaluate_candle_close(alert: dict, candles: dict) -> dict | None:
 
 
 def _live_price(symbol: str) -> float | None:
+    try:
+        return _bybit_live_price(symbol)
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code != 403:
+            raise
+    return _binance_live_price(symbol)
+
+
+def _bybit_live_price(symbol: str) -> float | None:
     response = httpx.get(
         BYBIT_BASE + "/v5/market/tickers",
         params={"category": "linear", "symbol": symbol},
@@ -204,7 +216,30 @@ def _live_price(symbol: str) -> float | None:
     return float(rows[0]["lastPrice"])
 
 
+def _binance_live_price(symbol: str) -> float | None:
+    response = httpx.get(
+        BINANCE_FUTURES_BASE + "/fapi/v1/ticker/price",
+        params={"symbol": symbol},
+        timeout=15,
+    )
+    if response.status_code == 400:
+        return None
+    response.raise_for_status()
+    data = response.json()
+    price = data.get("price")
+    return float(price) if price is not None else None
+
+
 def _latest_closed_candle(symbol: str, tf: str) -> dict | None:
+    try:
+        return _bybit_latest_closed_candle(symbol, tf)
+    except httpx.HTTPStatusError as exc:
+        if exc.response.status_code != 403:
+            raise
+    return _binance_latest_closed_candle(symbol, tf)
+
+
+def _bybit_latest_closed_candle(symbol: str, tf: str) -> dict | None:
     interval = TF_TO_BYBIT.get(tf)
     if not interval:
         return None
@@ -225,6 +260,36 @@ def _latest_closed_candle(symbol: str, tf: str) -> dict | None:
             return {
                 "start": start,
                 "close_time": start + tf_ms,
+                "time": datetime.utcfromtimestamp(start / 1000).strftime("%Y-%m-%d %H:%M UTC"),
+                "open": float(raw[1]),
+                "high": float(raw[2]),
+                "low": float(raw[3]),
+                "close": float(raw[4]),
+            }
+    return None
+
+
+def _binance_latest_closed_candle(symbol: str, tf: str) -> dict | None:
+    interval = TF_TO_BINANCE.get(tf)
+    if not interval:
+        return None
+    response = httpx.get(
+        BINANCE_FUTURES_BASE + "/fapi/v1/klines",
+        params={"symbol": symbol, "interval": interval, "limit": 4},
+        timeout=15,
+    )
+    if response.status_code == 400:
+        return None
+    response.raise_for_status()
+    rows = response.json() or []
+    now_ms = int(time.time() * 1000)
+    for raw in reversed(rows):
+        start = int(raw[0])
+        close_time = int(raw[6])
+        if close_time < now_ms:
+            return {
+                "start": start,
+                "close_time": close_time,
                 "time": datetime.utcfromtimestamp(start / 1000).strftime("%Y-%m-%d %H:%M UTC"),
                 "open": float(raw[1]),
                 "high": float(raw[2]),
