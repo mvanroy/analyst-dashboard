@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 import os
+from typing import Optional
 
 import httpx
 
@@ -26,8 +27,9 @@ def send_alert(alert: dict, trigger: dict) -> dict:
     return send_message(_format_alert_message(alert, trigger))
 
 
-def send_message(text: str) -> dict:
-    token, chat_id = _credentials()
+def send_message(text: str, token: Optional[str] = None, chat_id: Optional[str] = None) -> dict:
+    if not token or not chat_id:
+        token, chat_id = _credentials()
     if not token or not chat_id:
         return {"ok": False, "skipped": True, "error": "Telegram is not configured."}
     response = httpx.post(

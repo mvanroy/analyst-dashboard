@@ -37,6 +37,18 @@ python cloud_watchlist_scanner.py --smoke-test
 
 Set these as GitHub repository secrets, not in source control:
 
+Preferred for the Watch List scanner:
+
+- `WATCHLIST_TELEGRAM_BOT_TOKEN`
+- `WATCHLIST_TELEGRAM_CHAT_ID`
+
+Or, if using the existing JCHelper bot:
+
+- `JCHELPER_TELEGRAM_BOT_TOKEN`
+- `JCHELPER_TELEGRAM_CHAT_ID`
+
+Fallback supported:
+
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_CHAT_ID`
 
@@ -84,8 +96,8 @@ python cloud_watchlist_scanner.py --loop
 
 Required Railway variables:
 
-- `TELEGRAM_BOT_TOKEN`
-- `TELEGRAM_CHAT_ID`
+- `JCHELPER_TELEGRAM_BOT_TOKEN`
+- `JCHELPER_TELEGRAM_CHAT_ID`
 - optional: `SCANNER_INTERVAL_SECONDS`, default `300`
 - optional but recommended with a Railway volume: `WATCHLIST_STATE_FILE`
 

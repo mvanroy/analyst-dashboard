@@ -37,8 +37,15 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    if not telegram_notifier.is_configured():
-        print_json({"ok": False, "error": "Telegram is not configured.", "checked_at": now()})
+    telegram = scanner_telegram_credentials()
+    if not telegram["configured"]:
+        print_json(
+            {
+                "ok": False,
+                "error": "Scanner Telegram is not configured.",
+                "checked_at": now(),
+            }
+        )
         return 2
 
     if args.smoke_test:
@@ -46,6 +53,7 @@ def main() -> int:
             {
                 "ok": True,
                 "mode": "smoke-test",
+                "telegram_source": telegram["source"],
                 "state_file": STATE_FILE,
                 "checked_at": now(),
             }
@@ -77,12 +85,17 @@ def run_loop(interval: int) -> int:
 
 
 def run_once() -> int:
+    telegram = scanner_telegram_credentials()
     messages = cron_scan.scan_messages()
     sent = []
     errors = []
     for message in messages:
         try:
-            result = telegram_notifier.send_message(message)
+            result = telegram_notifier.send_message(
+                message,
+                token=telegram["token"],
+                chat_id=telegram["chat_id"],
+            )
             sent.append(result)
         except Exception as exc:
             errors.append(str(exc))
@@ -93,6 +106,7 @@ def run_once() -> int:
             "messages": len(messages),
             "sent": len(sent),
             "errors": errors,
+            "telegram_source": telegram["source"],
             "state_file": STATE_FILE,
             "checked_at": now(),
         }
@@ -102,6 +116,32 @@ def run_once() -> int:
 
 def now() -> str:
     return datetime.now().isoformat(timespec="seconds")
+
+
+def scanner_telegram_credentials() -> dict:
+    """Return scanner-specific Telegram credentials without exposing secrets."""
+    sources = (
+        ("watchlist", "WATCHLIST_TELEGRAM_BOT_TOKEN", "WATCHLIST_TELEGRAM_CHAT_ID"),
+        ("jchelper", "JCHELPER_TELEGRAM_BOT_TOKEN", "JCHELPER_TELEGRAM_CHAT_ID"),
+        ("default", "TELEGRAM_BOT_TOKEN", "TELEGRAM_CHAT_ID"),
+    )
+    for source, token_key, chat_key in sources:
+        token = (os.getenv(token_key) or "").strip()
+        chat_id = (os.getenv(chat_key) or "").strip()
+        if token and chat_id:
+            return {
+                "configured": True,
+                "source": source,
+                "token": token,
+                "chat_id": chat_id,
+            }
+
+    return {
+        "configured": telegram_notifier.is_configured(),
+        "source": "default-secrets-file",
+        "token": None,
+        "chat_id": None,
+    }
 
 
 def print_json(value: dict) -> None:
