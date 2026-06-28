@@ -1,45 +1,59 @@
-# Cloud Alert Watcher
+# Watch List Scanner Worker
 
-The cloud watcher runs the same mechanical alert checks as the dashboard watcher,
-but from a scheduled cloud job so the laptop does not need to stay on.
+This worker is for the Watch List scanner Telegram path only.
+
+It is separate from the old Trade Setup saved-alert system. It runs the scanner,
+compares the latest scan against the previous scanner state, and sends Telegram
+messages when a setup becomes newly ready, matures, flips direction, or becomes
+invalidated.
 
 Recommended live deployment target: Railway always-on worker.
-
-GitHub Actions remains as a free scheduled backup, but it is not real-time enough
-for entry-zone alerts.
 
 ## Worker Command
 
 ```bash
-python cloud_alert_watcher.py
+python cloud_watchlist_scanner.py
 ```
 
 ## Always-On Worker Command
 
 ```bash
-python cloud_alert_watcher.py --loop
+python cloud_watchlist_scanner.py --loop
 ```
 
-The loop checks every 20 seconds by default. Set `WATCH_INTERVAL_SECONDS` to
+The loop checks every 5 minutes by default. Set `SCANNER_INTERVAL_SECONDS` to
 change this.
 
 ## Smoke Test Command
 
-This checks Supabase and Telegram configuration without evaluating or triggering
-alerts:
+This checks Telegram and state configuration without scanning exchanges or
+sending scanner messages:
 
 ```bash
-python cloud_alert_watcher.py --smoke-test
+python cloud_watchlist_scanner.py --smoke-test
 ```
 
 ## Required Environment Variables
 
 Set these as GitHub repository secrets, not in source control:
 
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_CHAT_ID`
+
+Optional:
+
+- `SCANNER_INTERVAL_SECONDS`, default `300`
+- `WATCHLIST_STATE_FILE`, default `watchlist_engine/state/scanner_state.json`
+
+For production, use persistent storage for `WATCHLIST_STATE_FILE`. On Railway,
+mount a volume and point this variable at that volume path, for example:
+
+```text
+WATCHLIST_STATE_FILE=/data/scanner_state.json
+```
+
+Without persistent state, the worker can still scan, but it may forget previous
+setups after a redeploy or restart.
 
 ## GitHub Actions
 
@@ -49,8 +63,10 @@ The workflow lives at:
 .github/workflows/alert-watcher.yml
 ```
 
-It runs every 10 minutes and can also be started manually from GitHub Actions
-using "Run workflow".
+It is deliberately a manual smoke test only. Do not use scheduled GitHub Actions
+for live scanner Telegram alerts unless scanner state is moved to persistent
+storage outside the job, otherwise the scanner can forget previous state between
+runs.
 
 ## Railway
 
@@ -63,24 +79,23 @@ railway.json
 It starts:
 
 ```bash
-python cloud_alert_watcher.py --loop
+python cloud_watchlist_scanner.py --loop
 ```
 
 Required Railway variables:
 
-- `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`
 - `TELEGRAM_BOT_TOKEN`
 - `TELEGRAM_CHAT_ID`
-- optional: `WATCH_INTERVAL_SECONDS`, default `20`
+- optional: `SCANNER_INTERVAL_SECONDS`, default `300`
+- optional but recommended with a Railway volume: `WATCHLIST_STATE_FILE`
 
-## Current Alert Scope
+## Current Scanner Scope
 
-The watcher is deliberately mechanical. It can track saved conditions such as:
+The scanner sends Telegram messages for scanner state changes:
 
-- Price enters a saved entry zone
-- Price reaches or crosses a saved level
-- Candle closes above or below a saved trigger level
-- Price enters a saved HTF demand/supply zone
+- New ready setup
+- Setup matures into ready
+- Dominant direction flips long/short
+- Previously active setup becomes invalidated
 
-Pattern-discovery alerts should be built later as a separate scanner layer.
+It does not use the old Trade Setup suggested-alert UI.

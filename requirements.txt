@@ -1,4 +1,6 @@
 streamlit>=1.30
 httpx>=0.24
 pandas>=2.0
+numpy>=1.26
+ccxt>=4.3
 streamlit-aggrid>=1.0.5

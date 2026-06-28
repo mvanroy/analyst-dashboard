@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "python cloud_alert_watcher.py --loop",
+    "startCommand": "python cloud_watchlist_scanner.py --loop",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

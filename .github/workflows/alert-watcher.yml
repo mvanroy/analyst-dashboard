@@ -1,16 +1,14 @@
-name: Alert Watcher
+name: Watchlist Scanner Smoke Test
 
 on:
-  schedule:
-    - cron: "*/10 * * * *"
   workflow_dispatch:
 
 concurrency:
-  group: alert-watcher
+  group: watchlist-scanner-smoke-test
   cancel-in-progress: false
 
 jobs:
-  check-alerts:
+  check-scanner:
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
@@ -26,10 +24,8 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run alert watcher
+      - name: Check scanner worker configuration
         env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python cloud_alert_watcher.py
+        run: python cloud_watchlist_scanner.py --smoke-test
