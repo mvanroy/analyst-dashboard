@@ -86,7 +86,8 @@ def run_loop(interval: int) -> int:
 
 def run_once() -> int:
     telegram = scanner_telegram_credentials()
-    messages = cron_scan.scan_messages()
+    symbol = (os.getenv("SYMBOL") or "").strip() or None
+    messages = cron_scan.scan_messages(symbol=symbol)
     sent = []
     errors = []
     for message in messages:
@@ -107,6 +108,7 @@ def run_once() -> int:
             "messages": len(messages),
             "sent": len(sent),
             "errors": errors,
+            "symbol": symbol or "watchlist",
             "telegram_source": telegram["source"],
             "state_file": STATE_FILE,
             "checked_at": now(),

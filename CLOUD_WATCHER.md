@@ -18,6 +18,22 @@ Recommended live deployment target: Railway always-on worker.
 python cloud_watchlist_scanner.py
 ```
 
+## Cron-Compatible Per-Coin Command
+
+This mirrors the original JCHelper wrapper:
+
+```bash
+SYMBOL="BTC/USDT:USDT" ./scripts/scan_coin_tg.sh
+```
+
+Cron example:
+
+```cron
+JCHELPER_TELEGRAM_BOT_TOKEN="..."
+JCHELPER_TELEGRAM_CHAT_ID="8973377751"
+*/30 * * * * cd /opt/data/home/analyst-dashboard && SYMBOL="UB/USDT:USDT" ./scripts/scan_coin_tg.sh
+```
+
 ## Always-On Worker Command
 
 ```bash
@@ -102,6 +118,7 @@ Required Railway variables:
 - `JCHELPER_TELEGRAM_BOT_TOKEN`
 - `JCHELPER_TELEGRAM_CHAT_ID`
 - optional: `SCANNER_INTERVAL_SECONDS`, default `300`
+- optional: `SYMBOL`, when running one worker for one coin only
 - optional but recommended with a Railway volume: `WATCHLIST_STATE_FILE`
 
 ## Current Scanner Scope
