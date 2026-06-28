@@ -95,6 +95,7 @@ def run_once() -> int:
                 message,
                 token=telegram["token"],
                 chat_id=telegram["chat_id"],
+                parse_mode="Markdown",
             )
             sent.append(result)
         except Exception as exc:

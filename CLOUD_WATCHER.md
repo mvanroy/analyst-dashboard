@@ -7,6 +7,9 @@ compares the latest scan against the previous scanner state, and sends Telegram
 messages when a setup becomes newly ready, matures, flips direction, or becomes
 invalidated.
 
+This matches the original JCHelper cron pattern: run the scanner, collect stdout,
+and send the resulting setup text to Telegram using Markdown formatting.
+
 Recommended live deployment target: Railway always-on worker.
 
 ## Worker Command

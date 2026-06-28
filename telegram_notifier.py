@@ -27,22 +27,38 @@ def send_alert(alert: dict, trigger: dict) -> dict:
     return send_message(_format_alert_message(alert, trigger))
 
 
-def send_message(text: str, token: Optional[str] = None, chat_id: Optional[str] = None) -> dict:
+def send_message(
+    text: str,
+    token: Optional[str] = None,
+    chat_id: Optional[str] = None,
+    parse_mode: Optional[str] = None,
+) -> dict:
     if not token or not chat_id:
         token, chat_id = _credentials()
     if not token or not chat_id:
         return {"ok": False, "skipped": True, "error": "Telegram is not configured."}
-    response = httpx.post(
-        TELEGRAM_URL.format(token=token),
-        json={
+
+    chunks = _message_chunks(text)
+    results = []
+    for chunk in chunks:
+        payload = {
             "chat_id": chat_id,
-            "text": text,
+            "text": chunk,
             "disable_web_page_preview": True,
-        },
-        timeout=15,
-    )
-    response.raise_for_status()
-    return response.json()
+        }
+        if parse_mode:
+            payload["parse_mode"] = parse_mode
+        response = httpx.post(
+            TELEGRAM_URL.format(token=token),
+            json=payload,
+            timeout=15,
+        )
+        response.raise_for_status()
+        results.append(response.json())
+
+    if len(results) == 1:
+        return results[0]
+    return {"ok": all(result.get("ok") for result in results), "results": results}
 
 
 def _credentials() -> tuple[str, str]:
@@ -78,6 +94,37 @@ def _read_telegram_section(path: str) -> dict:
     except OSError:
         return {}
     return values
+
+
+def _message_chunks(text: str, limit: int = 4000) -> list[str]:
+    text = (text or "").strip()
+    if not text:
+        return [""]
+    if len(text) <= limit:
+        return [text]
+
+    chunks = []
+    current = []
+    current_len = 0
+    for line in text.splitlines(keepends=True):
+        if len(line) > limit:
+            if current:
+                chunks.append("".join(current).strip())
+                current = []
+                current_len = 0
+            for index in range(0, len(line), limit):
+                chunks.append(line[index : index + limit].strip())
+            continue
+        if current_len + len(line) > limit:
+            chunks.append("".join(current).strip())
+            current = [line]
+            current_len = len(line)
+        else:
+            current.append(line)
+            current_len += len(line)
+    if current:
+        chunks.append("".join(current).strip())
+    return [chunk for chunk in chunks if chunk]
 
 
 def _format_alert_message(alert: dict, trigger: dict) -> str:
