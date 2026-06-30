@@ -77,11 +77,11 @@ def format_alert(row) -> str:
             f"<b>Situation:</b> {_esc(_situation(row))}",
             f"<b>Bias:</b> {_esc(_bias(row))}",
             "",
-            "<b>Trade map:</b>",
-            f"Entry: {_fmt_price(entry)}",
-            f"Stop: {_fmt_price(stop)}",
-            f"TP1: {_fmt_price(tp1)} · R:R {_fmt_rr(rr1)}",
-            f"TP2: {_fmt_price(tp2)} · R:R {_fmt_rr(rr2)}",
+            "<b>Trade setup:</b>",
+            f"Entry: {_esc(_entry_setup(row, entry))}",
+            f"Stop: {_esc(_stop_setup(row, stop))}",
+            f"TP1: {_fmt_price(tp1)} ({_fmt_gain(entry, tp1)}) · R:R {_fmt_rr_ratio(rr1)}",
+            f"TP2: {_fmt_price(tp2)} ({_fmt_gain(entry, tp2)}) · R:R {_fmt_rr_ratio(rr2)}",
             "",
             "<b>Trade conditions:</b>",
             f"Trigger: {_esc(_trigger_immediacy(row))}",
@@ -91,10 +91,10 @@ def format_alert(row) -> str:
             f"BTC: {_esc(_btc_correlation(row))}",
             f"Pace: {_esc(_pace(row))}",
             "",
-            f"<b>Verdict:</b> {_esc(_verdict(row, rr1, rr2))}",
+            "<b>Proof / caveats:</b>",
+            *[f"- {_esc(line)}" for line in _proof_lines(row, rr2)],
             "",
-            f"<b>Best case:</b> {_esc(_best_case(row))}",
-            f"<b>Failure case:</b> {_esc(_failure_case(row))}",
+            f"<b>Verdict:</b> {_esc(_verdict(row, rr1, rr2))}",
         ]
     )
 
@@ -124,6 +124,20 @@ def _rr(entry: float | None, stop: float | None, target: float | None) -> float 
     if risk <= 0 or reward <= 0:
         return None
     return reward / risk
+
+
+def _entry_setup(row, entry: float | None) -> str:
+    trigger = _fmt_price(entry)
+    if row.distance_to_resistance_pct is not None and row.distance_to_resistance_pct < -0.15:
+        return f"{trigger} retest hold after price already moved through the trigger."
+    return f"{trigger} breakout above recent high, or retest of the level holds."
+
+
+def _stop_setup(row, stop: float | None) -> str:
+    label = _fmt_price(stop)
+    if row.price_acceptance_score < 55:
+        return f"below {label}; also invalid if VWAP is lost and price falls back inside the base."
+    return f"below {label} invalidation low."
 
 
 def _entry_condition(row) -> str:
@@ -172,6 +186,93 @@ def _invalidation_condition(row) -> str:
     if row.price_acceptance_score < 55:
         return f"Close below {invalid}, or loss of VWAP + back inside base."
     return f"Close below {invalid}, or failed breakout closing back inside range."
+
+
+def _proof_lines(row, rr2: float | None) -> list[str]:
+    lines = [
+        _compression_proof(row),
+        _structure_proof(row),
+        _participation_proof(row),
+        _momentum_acceptance_proof(row),
+        _magnitude_proof(row, rr2),
+    ]
+    return [line for line in lines if line]
+
+
+def _compression_proof(row) -> str:
+    strong_mod = _metric_raw(row, "compression", "_strong_or_moderate_count")
+    strong = _metric_raw(row, "compression", "_strong_count")
+    atr_pct = _metric_raw(row, "compression", "ATR Percentile")
+    bb_pct = _metric_raw(row, "compression", "Bollinger Band Width Percentile")
+    range_ratio = _metric_raw(row, "compression", "Range Compression Ratio")
+    return (
+        f"Compression: {_whole(row.compression_score)}/100; "
+        f"{_fmt_count(strong_mod)}/7 tightness checks are strong/moderate "
+        f"({_fmt_count(strong)} strong). ATR pct {_fmt_plain(atr_pct)}, "
+        f"BB width pct {_fmt_plain(bb_pct)}, range ratio {_fmt_plain(range_ratio)}."
+    )
+
+
+def _structure_proof(row) -> str:
+    tests = _metric_raw(row, "structural_pressure", "Resistance Test Count")
+    holds = _metric_raw(row, "structural_pressure", "Support Holds")
+    higher_lows = _metric_raw(row, "structural_pressure", "Higher Lows Count")
+    near_resistance = _metric_raw(row, "structural_pressure", "Time Near Resistance")
+    distance = row.distance_to_resistance_pct
+    return (
+        f"Structure: {_whole(row.structural_pressure_score)}/100; "
+        f"{_fmt_count(tests)} resistance tests, {_fmt_count(holds)} support holds, "
+        f"{_fmt_count(higher_lows)} higher lows, {_fmt_plain(near_resistance)}% of recent candles near resistance; "
+        f"price is {_distance_text(distance)}."
+    )
+
+
+def _participation_proof(row) -> str:
+    constructive = _metric_raw(row, "participation", "_constructive_count")
+    rvol = _metric_raw(row, "participation", "Relative Volume")
+    cmf = _metric_raw(row, "participation", "Chaikin Money Flow")
+    vwap = _metric_raw(row, "participation", "VWAP Relationship")
+    close_pos = _metric_raw(row, "participation", "_close_position_pct")
+    wick = _metric_raw(row, "participation", "_upper_wick_pct")
+    vwap_text = _vwap_text(vwap)
+    caveat = ""
+    if row.participation_score < 50:
+        caveat = " Main caveat: participation is still thin."
+    elif rvol is not None and rvol < 1.0:
+        caveat = " Caveat: RVOL is still below normal."
+    return (
+        f"Participation: {_whole(row.participation_score)}/100; "
+        f"{_fmt_count(constructive)} constructive checks, RVOL {_fmt_plain(rvol)}x, "
+        f"CMF {_fmt_plain(cmf)}, {vwap_text}, close position {_fmt_plain(close_pos)}%, "
+        f"upper wick {_fmt_plain(wick)}%.{caveat}"
+    )
+
+
+def _momentum_acceptance_proof(row) -> str:
+    improving = _metric_raw(row, "momentum", "_improving_count")
+    rsi = _metric_raw(row, "momentum", "RSI 14")
+    adx = _metric_raw(row, "momentum", "ADX 14")
+    macd_bucket = _metric_bucket(row, "momentum", "MACD Histogram")
+    controlled = _metric_raw(row, "price_acceptance", "_controlled_count")
+    close_pos = _metric_raw(row, "price_acceptance", "Candle Close Position")
+    body = _metric_raw(row, "price_acceptance", "Candle Body %")
+    upper_wick = _metric_raw(row, "price_acceptance", "Upper Wick %")
+    vwap_acceptance = _metric_raw(row, "price_acceptance", "VWAP Acceptance")
+    return (
+        f"Momentum/acceptance: momentum {_whole(row.momentum_score)}/100 with {_fmt_count(improving)} improving checks "
+        f"(RSI {_fmt_plain(rsi)}, ADX {_fmt_plain(adx)}, MACD {macd_bucket or 'n/a'}); "
+        f"acceptance {_whole(row.price_acceptance_score)}/100 with {_fmt_count(controlled)} controlled-candle checks "
+        f"(close {_fmt_plain(close_pos)}%, body {_fmt_plain(body)}%, upper wick {_fmt_plain(upper_wick)}%, VWAP run {_fmt_count(vwap_acceptance)})."
+    )
+
+
+def _magnitude_proof(row, rr2: float | None) -> str:
+    air = _metric_raw(row, "magnitude", "Air Above %")
+    target_capped = _metric_raw(row, "magnitude", "Target Capped")
+    target_note = "target is capped by nearby supply" if target_capped else "target is not capped by nearby supply"
+    if rr2 is None:
+        return f"Magnitude: {target_note}; reward/risk could not be mapped cleanly."
+    return f"Magnitude: {_fmt_plain(air)}% air above; {target_note}; mapped TP2 reward/risk is {_fmt_rr_ratio(rr2)}."
 
 
 def _pressure(row) -> str:
@@ -346,6 +447,27 @@ def _raw_metric(row, engine: str, name: str) -> float | None:
     return _to_float(value)
 
 
+def _metric_raw(row, engine: str, name: str):
+    try:
+        metric = row.raw_metrics.get(engine, {}).get(name)
+    except AttributeError:
+        return None
+    if isinstance(metric, dict) and "raw" in metric:
+        return metric.get("raw")
+    return metric
+
+
+def _metric_bucket(row, engine: str, name: str) -> str | None:
+    try:
+        metric = row.raw_metrics.get(engine, {}).get(name)
+    except AttributeError:
+        return None
+    if isinstance(metric, dict):
+        bucket = metric.get("bucket")
+        return str(bucket) if bucket is not None else None
+    return None
+
+
 def _to_float(value) -> float | None:
     try:
         return float(value)
@@ -390,3 +512,77 @@ def _fmt_price(value: float | None) -> str:
 
 def _fmt_rr(value: float | None) -> str:
     return "—" if value is None else f"{value:.2f}"
+
+
+def _fmt_rr_ratio(value: float | None) -> str:
+    return "—" if value is None else f"1:{value:.2f}"
+
+
+def _fmt_gain(entry: float | None, target: float | None) -> str:
+    if not entry or not target:
+        return "—"
+    return f"{((target / entry) - 1) * 100:+.1f}%"
+
+
+def _fmt_plain(value) -> str:
+    if value is None:
+        return "—"
+    if isinstance(value, bool):
+        return "yes" if value else "no"
+    if isinstance(value, dict):
+        return "available"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    if abs(number) >= 100:
+        return f"{number:.0f}"
+    if abs(number) >= 10:
+        return f"{number:.1f}"
+    return f"{number:.2f}"
+
+
+def _fmt_count(value) -> str:
+    if value is None:
+        return "—"
+    try:
+        return str(int(round(float(value))))
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def _fmt_signed(value) -> str:
+    if value is None:
+        return "—"
+    try:
+        return f"{float(value):+.1f}%"
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def _distance_text(value) -> str:
+    if value is None:
+        return "an unknown distance from trigger"
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return f"{value} from trigger"
+    if abs(number) < 0.15:
+        return "sitting on the trigger"
+    if number > 0:
+        return f"{number:.1f}% below trigger"
+    return f"{abs(number):.1f}% above trigger"
+
+
+def _vwap_text(value) -> str:
+    if not isinstance(value, dict):
+        return "VWAP unavailable"
+    price = _to_float(value.get("price"))
+    vwap = _to_float(value.get("vwap"))
+    distance = _to_float(value.get("distance"))
+    if price is None or vwap is None:
+        return "VWAP unavailable"
+    side = "above" if price >= vwap else "below"
+    if distance is None:
+        return f"price {side} VWAP"
+    return f"price {side} VWAP by {distance * 100:+.1f}%"
