@@ -19,8 +19,11 @@ def score(df: pd.DataFrame, config: dict) -> EngineResult:
     price = float(df["close"].iloc[-1])
     swing_lows = _swing_lows(df, params)
     swing_highs = _swing_highs(df, params)
-    resistance, resistance_source = _select_resistance(
+    resistance, resistance_source, resistance_candidates = _select_resistance(
         price=price,
+        df=df,
+        prior_start=prior_start,
+        prior_end=prior_end,
         swing_highs=[(idx, value) for idx, value in swing_highs if prior_start <= idx < prior_end],
         fallback_high=float(look["high"].max()),
         near_pct=near_resistance_pct,
@@ -80,6 +83,7 @@ def score(df: pd.DataFrame, config: dict) -> EngineResult:
         "Volume Dry-Up Into Base": metric(volume_dryup, _volume_dryup_score(volume_dryup, params), "recent volume / prior volume"),
         "_resistance": resistance,
         "_resistance_source": resistance_source,
+        "_resistance_candidates": resistance_candidates,
         "_resistance_excluded_recent_bars": exclude_recent,
         "_coil_recent_bars": coil_bars,
         "_support": support,
@@ -167,36 +171,88 @@ def _distinct_level_touches(points: list[tuple[int, float]], min_gap: int) -> in
 
 def _select_resistance(
     price: float,
+    df: pd.DataFrame,
+    prior_start: int,
+    prior_end: int,
     swing_highs: list[tuple[int, float]],
     fallback_high: float,
     near_pct: float,
     max_distance_pct: float,
     min_gap: int,
-) -> tuple[float, str]:
-    if not swing_highs:
-        return fallback_high, "prior_window_high"
-
-    candidates = []
+) -> tuple[float, str, list[dict]]:
+    candidates = [
+        _candidate("prior_window_high", fallback_high, price, swing_highs, near_pct, min_gap, prior_end),
+    ]
+    for bars in (72, 100):
+        start = max(0, prior_end - bars)
+        window = df.iloc[start:prior_end]
+        if not window.empty:
+            candidates.append(
+                _candidate(
+                    f"recent_{bars}h_high",
+                    float(window["high"].max()),
+                    price,
+                    swing_highs,
+                    near_pct,
+                    min_gap,
+                    prior_end,
+                )
+            )
     for idx, level in swing_highs:
-        distance = (level - price) / level * 100 if level else 999.0
-        if distance > max_distance_pct or distance < -near_pct:
-            continue
-        touches = _distinct_level_touches(
-            [(touch_idx, value) for touch_idx, value in swing_highs if _within_pct(value, level, near_pct)],
-            min_gap,
-        )
         candidates.append(
-            {
-                "level": level,
-                "touches": touches,
-                "abs_distance": abs(distance),
-                "idx": idx,
-            }
+            _candidate(
+                "prior_swing_high_cluster",
+                level,
+                price,
+                swing_highs,
+                near_pct,
+                min_gap,
+                idx,
+            )
         )
-    if not candidates:
-        return fallback_high, "prior_window_high"
-    selected = sorted(candidates, key=lambda item: (-item["touches"], item["abs_distance"], -item["idx"]))[0]
-    return float(selected["level"]), "prior_swing_high_cluster"
+    viable = [
+        item for item in candidates
+        if item["distance_pct"] <= max_distance_pct and item["distance_pct"] >= -near_pct
+    ]
+    if not viable:
+        viable = [min(candidates, key=lambda item: abs(item["distance_pct"]))]
+    selected = sorted(
+        viable,
+        key=lambda item: (
+            0 if item["distance_pct"] >= 0 else 1,
+            abs(item["distance_pct"]),
+            -item["touches"],
+            -item["idx"],
+        ),
+    )[0]
+    slim = [
+        {
+            "source": item["source"],
+            "level": round(item["level"], 8),
+            "distance_pct": round(item["distance_pct"], 2),
+            "touches": item["touches"],
+        }
+        for item in sorted(candidates, key=lambda item: abs(item["distance_pct"]))[:8]
+    ]
+    return float(selected["level"]), selected["source"], slim
+
+
+def _candidate(source: str, level: float, price: float, swing_highs: list[tuple[int, float]], near_pct: float, min_gap: int, idx: int) -> dict:
+    distance = (level - price) / level * 100 if level else 999.0
+    touches = _distinct_level_touches(
+        [(touch_idx, value) for touch_idx, value in swing_highs if _within_pct(value, level, near_pct)],
+        min_gap,
+    )
+    if source.startswith("recent_"):
+        touches = max(touches, 1)
+    return {
+        "source": source,
+        "level": level,
+        "distance_pct": distance,
+        "touches": touches,
+        "abs_distance": abs(distance),
+        "idx": idx,
+    }
 
 
 def _within_pct(value: float, level: float, pct: float) -> bool:

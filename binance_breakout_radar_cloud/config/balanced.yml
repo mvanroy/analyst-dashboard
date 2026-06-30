@@ -86,10 +86,19 @@ compression:
   expanded_cap_score: 45
   require_range_ratio_below: 1.10
   range_fail_cap_score: 55
+  release_recent_compression_percentile: 45
+  release_expansion_percentile: 60
+  release_range_ratio_min: 1.05
+  release_close_position_pct: 60
+  release_body_pct: 35
+  release_rel_volume_min: 1.0
+  release_energy_min_score: 75
+  release_energy_floor_score: 60
 
 participation:
   min_constructive_metrics: 3
   constructive_score: 75
+  constructive_miss_cap_score: 55
   coil_context_rvol_threshold: 1.3
   coil_context_strong_rvol_threshold: 1.5
   coil_context_rvol_score: 75
@@ -100,28 +109,32 @@ participation:
   coil_context_min_resistance_pressure_score: 50
   vwap_near_pct: 0.005
   vwap_reclaim_close_position_pct: 65
-  vwap_below_cap_score: 45
+  vwap_below_cap_score: 50
   cmf_deep_negative_threshold: -0.10
-  cmf_deep_negative_cap_score: 45
+  cmf_deep_negative_cap_score: 50
   rejection_upper_wick_pct: 45
   rejection_close_position_pct: 50
-  volume_spike_rejection_cap_score: 50
+  volume_spike_rejection_cap_score: 55
 
 momentum:
   min_improving_metrics: 4
   improving_score: 75
+  improving_miss_cap_score: 60
   require_rsi_slope_positive: true
   require_adx_slope_positive: true
-  falling_macd_cap_score: 50
+  rsi_slope_cap_score: 55
+  adx_slope_cap_score: 55
+  falling_macd_cap_score: 55
   overheated_cap_score: 45
 
 acceptance:
   min_controlled_metrics: 4
   controlled_score: 75
-  upper_wick_rejection_cap_score: 45
-  weak_body_cap_score: 55
+  controlled_miss_cap_score: 60
+  upper_wick_rejection_cap_score: 50
+  weak_body_cap_score: 60
   require_vwap_hold_for_valid: true
-  vwap_fail_cap_score: 50
+  vwap_fail_cap_score: 55
   near_resistance_requires_controlled_candle: true
 
 magnitude:
@@ -130,6 +143,8 @@ magnitude:
   expected_range_atr_min: 3.5
   expected_range_atr_max: 6.1
   directional_target_fraction: 0.55
+  recent_range_target_fraction: 0.80
+  min_tp2_atr_multiple: 2.2
   base_lookback_bars: 100
   base_recent_bars: 30
   small_base_atr: 1.5
@@ -142,14 +157,14 @@ magnitude:
 
 classification_gates:
   developing:
-    min_overall: 65
-    min_compression: 70
-    min_structure: 60
-    min_participation: 60
-    min_momentum: 50
-    min_acceptance: 55
+    min_overall: 50
+    min_compression: 35
+    min_structure: 45
+    min_participation: 35
+    min_momentum: 35
+    min_acceptance: 35
     max_distance_to_resistance_pct: 10
-    min_magnitude: 50
+    min_magnitude: 35
   high_watch:
     min_overall: 75
     min_compression: 70
@@ -196,9 +211,9 @@ alerts:
   cooldown_hours: 4
   state_change_only: false
   max_per_scan: 8
-  min_overall_score: 55
-  min_compression_score: 55
-  min_structure_score: 50
+  min_overall_score: 50
+  min_compression_score: 35
+  min_structure_score: 45
   min_participation_score: 25
   min_acceptance_score: 25
   min_rr: 1.0

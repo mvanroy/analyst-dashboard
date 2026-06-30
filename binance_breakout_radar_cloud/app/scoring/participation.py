@@ -82,7 +82,7 @@ def score(df: pd.DataFrame, config: dict, structure_metrics: dict | None = None)
     evidence = [f"{k}: {v['bucket']}" for k, v in items.items() if v["score"] and v["score"] >= 75]
     missing = [f"{k}: {v['bucket']}" for k, v in items.items() if v["score"] == 0]
     if constructive < min_constructive:
-        final_score = min(final_score, 50)
+        final_score = min(final_score, float(params.get("constructive_miss_cap_score", 55)))
         missing.append(f"Only {constructive} participation metrics are constructive; need {min_constructive}")
     hard_below_vwap = vwap_distance < -vwap_near_pct and vwap_slope <= 0 and close_position < reclaim_close_position
     if hard_below_vwap:

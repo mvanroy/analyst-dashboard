@@ -54,6 +54,8 @@ def score(df: pd.DataFrame, config: dict) -> EngineResult:
         missing.append(f"Range compression ratio is {ratio:.2f}")
 
     raw_score = round(average(scores), 2)
+    release_score, release_bucket, release_checks = _release_energy_score(metrics, ratio, df, params)
+    metrics["Release Energy"] = metric(release_checks, release_score, release_bucket)
     strong_or_moderate = sum(
         1 for item in metrics.values()
         if item["score"] is not None and item["score"] >= 75
@@ -79,7 +81,69 @@ def score(df: pd.DataFrame, config: dict) -> EngineResult:
     if ratio is not None and ratio > float(params.get("require_range_ratio_below", 1.10)):
         final_score = min(final_score, float(params.get("range_fail_cap_score", 55)))
         missing.append(f"Range ratio {ratio:.2f} does not prove compression")
+    if release_score >= float(params.get("release_energy_min_score", 75)):
+        release_floor = float(params.get("release_energy_floor_score", 60))
+        if final_score < release_floor:
+            final_score = release_floor
+        evidence.append("Compression has started releasing with constructive expansion")
+    elif release_score >= 50:
+        evidence.append("Compression release is starting, but confirmation is incomplete")
     metrics["_raw_average_score"] = raw_score
     metrics["_strong_or_moderate_count"] = strong_or_moderate
     metrics["_strong_count"] = strong_count
     return EngineResult("Compression", round(final_score, 2), metrics, evidence, missing)
+
+
+def _release_energy_score(metrics: dict, ratio: float | None, df: pd.DataFrame, params: dict) -> tuple[int, str, dict]:
+    recent = df.iloc[-1]
+    prior = df.iloc[-4:-1]
+    close = float(recent["close"])
+    open_price = float(recent["open"])
+    high = float(recent["high"])
+    low = float(recent["low"])
+    candle_range = high - low
+    close_pos = (close - low) / candle_range * 100 if candle_range else 0.0
+    body_pct = abs(close - open_price) / candle_range * 100 if candle_range else 0.0
+    vol20 = df["volume"].rolling(20).mean().iloc[-1]
+    rel_volume = float(recent["volume"] / vol20) if vol20 else 0.0
+    prior_low_vol = any(
+        (metrics.get(name, {}).get("raw") is not None and metrics[name]["raw"] <= float(params.get("release_recent_compression_percentile", 45)))
+        for name in ["Bollinger Band Width Percentile", "Donchian Width Percentile", "Keltner Width Percentile", "Standard Deviation Percentile"]
+    )
+    atr_expanding = _metric_raw(metrics, "ATR Percentile") >= float(params.get("release_expansion_percentile", 60))
+    width_expanding = any(
+        _metric_raw(metrics, name) >= float(params.get("release_expansion_percentile", 60))
+        for name in ["Bollinger Band Width Percentile", "Donchian Width Percentile", "Keltner Width Percentile"]
+    )
+    range_expanding = ratio is not None and ratio >= float(params.get("release_range_ratio_min", 1.05))
+    closes_up = int((prior["close"] < close).sum()) if not prior.empty else 0
+    constructive_candle = close_pos >= float(params.get("release_close_position_pct", 60)) and body_pct >= float(params.get("release_body_pct", 35))
+    volume_confirming = rel_volume >= float(params.get("release_rel_volume_min", 1.0))
+    checks = {
+        "recent_compression_present": prior_low_vol,
+        "atr_expanding": atr_expanding,
+        "width_expanding": width_expanding,
+        "range_expanding": range_expanding,
+        "constructive_candle": constructive_candle,
+        "volume_confirming": volume_confirming,
+        "closes_up_count": closes_up,
+        "close_position_pct": round(close_pos, 2),
+        "body_pct": round(body_pct, 2),
+        "relative_volume": round(rel_volume, 2),
+    }
+    passed = sum(1 for key in ["recent_compression_present", "atr_expanding", "width_expanding", "range_expanding", "constructive_candle", "volume_confirming"] if checks[key])
+    if passed >= 5:
+        return 100, "release confirmed", checks
+    if passed >= 4:
+        return 75, "release building", checks
+    if passed >= 3:
+        return 50, "release early", checks
+    return 0, "no release proof", checks
+
+
+def _metric_raw(metrics: dict, name: str) -> float:
+    raw = metrics.get(name, {}).get("raw")
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return 0.0

@@ -33,13 +33,13 @@ def score(df: pd.DataFrame, config: dict) -> EngineResult:
     evidence = [f"{k}: {v['raw']:.2f}" for k, v in metrics.items() if v["score"] and v["score"] >= 75]
     missing = [f"{k} is weak/negative" for k, v in metrics.items() if v["score"] == 0]
     if improving < min_improving:
-        final_score = min(final_score, 55)
+        final_score = min(final_score, float(params.get("improving_miss_cap_score", 60)))
         missing.append(f"Only {improving} momentum metrics are improving; need {min_improving}")
     if params.get("require_rsi_slope_positive", True) and rsi_slope <= 0:
-        final_score = min(final_score, 50)
+        final_score = min(final_score, float(params.get("rsi_slope_cap_score", 55)))
         missing.append(f"RSI slope is not improving ({rsi_slope:.2f})")
     if params.get("require_adx_slope_positive", True) and adx_slope <= 0:
-        final_score = min(final_score, 50)
+        final_score = min(final_score, float(params.get("adx_slope_cap_score", 55)))
         missing.append(f"ADX slope is not improving ({adx_slope:.2f})")
     if macd < macd_prev:
         final_score = min(final_score, float(params.get("falling_macd_cap_score", 50)))

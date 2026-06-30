@@ -23,36 +23,45 @@ def score(df: pd.DataFrame, trigger_resistance: float | None, invalidation: floa
     directional_fraction = float(params.get("directional_target_fraction", 0.55))
     atr_target_move = expected_mid_atr * directional_fraction * atr
     measured_move = min(base_height, atr_target_move) if atr_target_move else base_height
+    expansion_move = max(
+        measured_move,
+        recent_height * float(params.get("recent_range_target_fraction", 0.80)),
+        atr * float(params.get("min_tp2_atr_multiple", 2.2)),
+    )
     raw_target = price + measured_move
+    expansion_target = price + expansion_move
     prior_supply = df.iloc[-lookback:-recent]
     overhead_floor = max(price, trigger_resistance or price)
     overhead = prior_supply[prior_supply["high"] > overhead_floor]["high"].sort_values()
-    nearest_supply = float(overhead.iloc[0]) if not overhead.empty else raw_target
-    realistic_target = min(raw_target, nearest_supply)
+    nearest_supply = float(overhead.iloc[0]) if not overhead.empty else None
+    conservative_target = min(raw_target, nearest_supply) if nearest_supply else raw_target
+    realistic_target = max(expansion_target, conservative_target)
     air_above_pct = (realistic_target / price - 1) * 100 if price else 0.0
     risk_pct = ((price - invalidation) / price * 100) if invalidation and invalidation < price else None
     reward_pct = (realistic_target / price - 1) * 100 if realistic_target else 0.0
     reward_risk = reward_pct / risk_pct if risk_pct and risk_pct > 0 else None
-    capped = realistic_target < raw_target
+    nearby_supply = nearest_supply is not None and nearest_supply < expansion_target
 
     base_score = _base_score(base_height_atr, params)
     air_score = 100 if air_above_pct >= float(params.get("air_above_good_pct", 6)) else 75 if air_above_pct >= float(params.get("air_above_min_pct", 3)) else 0
     rr_score = 100 if reward_risk is not None and reward_risk >= float(params.get("reward_risk_good", 2.5)) else 75 if reward_risk is not None and reward_risk >= float(params.get("reward_risk_min", 1.5)) else 0
-    cap_score = 50 if capped else 100
+    supply_score = 75 if nearby_supply else 100
     metrics = {
         "ATR": metric(atr, None, "scale input"),
         "Expected Range ATR": metric(expected_mid_atr, None, "scale input"),
         "Trigger Resistance": metric(trigger_resistance, None, "local trigger"),
         "Base Height ATR": metric(base_height_atr, base_score, "base height"),
         "Recent Base Height ATR": metric(recent_height_atr, None, "context"),
-        "Raw ATR/Base Target": metric(raw_target, None, "uncapped target"),
-        "Nearest Supply Target": metric(nearest_supply, None, "structure snap"),
-        "Realistic Target": metric(realistic_target, None, "capped target" if capped else "target"),
+        "Raw ATR/Base Target": metric(raw_target, None, "measured target"),
+        "Expansion Target": metric(expansion_target, None, "release target"),
+        "Nearest Supply Target": metric(nearest_supply, None, "structure context"),
+        "Conservative Target": metric(conservative_target, None, "tp1 context"),
+        "Realistic Target": metric(realistic_target, None, "tp2 expansion target"),
         "Air Above %": metric(air_above_pct, air_score, "air above"),
         "Reward To Invalidation": metric(reward_risk, rr_score, "reward/risk"),
-        "Target Capped": metric(capped, cap_score, "capped by supply" if capped else "uncapped"),
+        "Nearby Supply": metric(nearby_supply, supply_score, "nearby supply noted" if nearby_supply else "clear expansion target"),
     }
-    scored = [base_score, air_score, rr_score, cap_score]
+    scored = [base_score, air_score, rr_score, supply_score]
     evidence = []
     missing = []
     if base_score >= 75:
@@ -67,8 +76,8 @@ def score(df: pd.DataFrame, trigger_resistance: float | None, invalidation: floa
         evidence.append(f"Reward to invalidation is {reward_risk:.2f}R")
     else:
         missing.append("Reward to invalidation is below threshold")
-    if capped:
-        missing.append("Measured target is capped by nearby supply")
+    if nearby_supply:
+        evidence.append("Nearby supply noted, but TP2 uses expansion runway")
     return EngineResult("Magnitude", round(average(scored), 2), metrics, evidence, missing)
 
 

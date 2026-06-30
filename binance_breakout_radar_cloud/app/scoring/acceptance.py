@@ -43,7 +43,7 @@ def score(df: pd.DataFrame, resistance: float, config: dict) -> EngineResult:
     missing = [f"{k}: {v['bucket']}" for k, v in metrics.items() if v["score"] == 0]
     min_controlled = int(params.get("min_controlled_metrics", 4))
     if controlled_count < min_controlled:
-        final_score = min(final_score, 55)
+        final_score = min(final_score, float(params.get("controlled_miss_cap_score", 60)))
         missing.append(f"Only {controlled_count} acceptance metrics are controlled; need {min_controlled}")
     if upper > 45:
         final_score = min(final_score, float(params.get("upper_wick_rejection_cap_score", 45)))
