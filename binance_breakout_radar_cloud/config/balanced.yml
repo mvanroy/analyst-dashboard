@@ -200,6 +200,7 @@ alerts:
   min_structure_score: 70
   min_participation_score: 50
   min_acceptance_score: 50
+  min_rr: 1.0
   max_distance_to_resistance_pct: 3
   require_4h_confirmation: false
 

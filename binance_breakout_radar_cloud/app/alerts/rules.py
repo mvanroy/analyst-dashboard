@@ -46,6 +46,11 @@ def should_alert(row, config: dict, state: dict) -> tuple[bool, str]:
     if max_distance is not None and row.distance_to_resistance_pct is not None:
         if row.distance_to_resistance_pct > float(max_distance):
             return False, "too far from resistance"
+    min_rr = alerts.get("min_rr")
+    if min_rr is not None:
+        _, _, _, _, _, rr2 = _trade_map(row)
+        if rr2 is None or rr2 < float(min_rr):
+            return False, "reward/risk below alert threshold"
     previous = state.get(row.symbol, {})
     if alerts.get("state_change_only", True) and previous.get("last_state") == state_name:
         return False, "state unchanged"

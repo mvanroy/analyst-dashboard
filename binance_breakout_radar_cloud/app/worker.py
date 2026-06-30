@@ -194,6 +194,8 @@ def apply_env_overrides(config: dict) -> None:
         alerts["min_participation_score"] = float(os.getenv("RADAR_ALERT_MIN_PARTICIPATION_SCORE", "50"))
     if os.getenv("RADAR_ALERT_MIN_ACCEPTANCE_SCORE"):
         alerts["min_acceptance_score"] = float(os.getenv("RADAR_ALERT_MIN_ACCEPTANCE_SCORE", "50"))
+    if os.getenv("RADAR_ALERT_MIN_RR"):
+        alerts["min_rr"] = float(os.getenv("RADAR_ALERT_MIN_RR", "1"))
     if os.getenv("RADAR_ALERT_MAX_DISTANCE_TO_RESISTANCE_PCT"):
         alerts["max_distance_to_resistance_pct"] = float(os.getenv("RADAR_ALERT_MAX_DISTANCE_TO_RESISTANCE_PCT", "3"))
 
