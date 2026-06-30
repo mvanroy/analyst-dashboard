@@ -304,11 +304,11 @@ def _btc_correlation(row) -> str:
     if corr is None:
         return "Unavailable."
     label = {
-        "btc drag risk": "High correlation. If BTC keeps falling, this setup is less likely to follow.",
-        "btc tailwind": "High correlation. If BTC keeps rising, this setup has market support behind it.",
-        "idiosyncratic strength": "Low correlation. This coin is moving more on its own.",
-        "low btc dependence": "Low correlation. BTC is less useful as a guide here.",
-        "moderate btc link": "Moderate correlation. BTC matters, but the coin's own structure still leads.",
+        "btc drag risk": "High correlation.",
+        "btc tailwind": "High correlation.",
+        "idiosyncratic strength": "Low correlation.",
+        "low btc dependence": "Low correlation.",
+        "moderate btc link": "Moderate correlation.",
     }.get(relationship, relationship)
     btc_bit = f" BTC {btc_change:+.2f}%." if btc_change is not None else ""
     return f"{label} 1H corr {corr:.2f}.{btc_bit}"
@@ -379,34 +379,34 @@ def _edge_read(row) -> str:
     strongest = getattr(row, "strongest_engine", "")
     if strongest == "Compression":
         if row.structural_pressure_score >= 70:
-            return "The read is a tight base with structure pressing the level."
-        return "The read is mostly compression: tight, but not fully proven structurally."
+            return "Price is coiling tightly under resistance, with structure starting to press the level."
+        return "Price is compressed, but the structure still needs to prove itself."
     if strongest == "Structural Pressure":
-        return "The read is structural pressure: repeated work near the level rather than a random pop."
+        return "Price has been working the same resistance area repeatedly, which makes the level relevant."
     if strongest == "Participation":
-        return "The read is participation-led, which means volume/flow is doing more than just price drifting higher."
+        return "Volume and flow are supporting the move, not just price drifting higher."
     if strongest == "Momentum":
-        return "The read is impulse-led, so follow-through matters more than patience here."
+        return "Momentum is leading, so follow-through matters more than patience here."
     if strongest == "Price Acceptance":
-        return "The read is acceptance-led: candles are holding the area better than they are rejecting it."
+        return "Candles are holding the area better than they are rejecting it."
     if strongest == "Smart Money":
-        return "The read is derivatives-led, with positioning adding weight to the setup."
+        return "Derivatives positioning is adding weight to the setup."
     if row.compression_score >= 70 and row.structural_pressure_score >= 65:
-        return "The read is a compressed structure leaning into resistance."
-    return "The read is still mixed rather than clean."
+        return "Price is compressed and leaning into resistance."
+    return "The setup is still mixed rather than clean."
 
 
 def _drag_read(row) -> str:
     if row.participation_score < 45:
-        return "The issue is participation: buyers have not properly stepped in yet."
+        return "The weak spot is participation: volume still needs to confirm the move."
     if row.price_acceptance_score < 55:
-        return "The issue is acceptance: price has not held the area cleanly enough yet."
+        return "The weak spot is acceptance: price has not held the area cleanly enough yet."
     if row.momentum_score < 45:
-        return "The issue is pace: the setup is forming, but impulse is still thin."
+        return "The weak spot is pace: the setup is forming, but impulse is still thin."
     if row.structural_pressure_score < 60:
-        return "The issue is structure: the level needs cleaner pressure before it deserves more attention."
+        return "The weak spot is structure: the level needs cleaner pressure before it deserves more attention."
     if row.compression_score < 60:
-        return "The issue is expansion: it is not as tight as a proper coil should be."
+        return "The weak spot is compression: it is not as tight as a proper coil should be."
     return "There is no obvious single failure point; the next candle quality matters."
 
 
