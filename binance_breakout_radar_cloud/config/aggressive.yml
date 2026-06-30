@@ -1,0 +1,11 @@
+extends: config/balanced.yml
+
+alerts:
+  cooldown_hours: 2
+  state_change_only: false
+  min_overall_score: 65
+  min_compression_score: 60
+  min_structure_score: 60
+  min_participation_score: 35
+  min_acceptance_score: 35
+  max_distance_to_resistance_pct: 6

@@ -1,0 +1,215 @@
+scan:
+  timeframe: 1h
+  confirmation_timeframe: 4h
+  lookback_candles: 200
+  percentile_lookback: 100
+  scan_interval_seconds: 300
+  top_n: 30
+  workers: 5
+  include_derivatives: true
+
+market_context:
+  benchmark_symbol: BTCUSDT
+  correlation_lookback_bars: 50
+  benchmark_trend_bars: 6
+
+universe:
+  quote_asset: USDT
+  contract_type: PERPETUAL
+  status: TRADING
+  min_quote_volume_24h: 0
+  exclude_base_assets:
+    - USDC
+    - FDUSD
+    - TUSD
+    - BUSD
+    - DAI
+    - USDP
+    - USDD
+    - USD1
+    - USDE
+    - RLUSD
+    - EUR
+    - TRY
+    - XAU
+    - XAG
+    - SPY
+    - IWM
+    - EWY
+    - QQQ
+    - SKHYNIX
+    - NVDA
+    - TSLA
+    - AAPL
+    - MSFT
+    - GOOGL
+    - META
+    - AMZN
+  exclude_symbols:
+    - ETHBTCUSDT
+  crypto_only: true
+
+structure:
+  lookback_bars: 100
+  resistance_exclude_recent_bars: 1
+  near_resistance_pct: 2.0
+  near_support_pct: 1.5
+  swing_left_bars: 2
+  swing_right_bars: 2
+  distinct_test_min_gap_bars: 6
+  breakout_distance_strong_pct: 3
+  breakout_distance_moderate_pct: 6
+  breakout_distance_weak_pct: 10
+  cap_score_if_distance_above_pct: 8
+  capped_structure_score: 50
+  coil_recent_bars: 12
+  base_tight_atr_strong: 2.0
+  base_tight_atr_moderate: 3.0
+  base_tight_atr_weak: 4.0
+  max_base_extension_atr_for_coil: 3.5
+  base_extension_cap_score: 55
+  body_overlap_strong: 0.55
+  body_overlap_moderate: 0.40
+  body_overlap_weak: 0.25
+  body_overlap_fail_cap_score: 55
+  volume_dryup_strong: 0.70
+  volume_dryup_moderate: 0.90
+  volume_dryup_weak: 1.10
+  require_distinct_resistance_tests: true
+  require_distinct_support_holds: true
+
+compression:
+  min_strong_or_moderate_metrics: 4
+  min_strong_metrics_for_deep: 3
+  cap_score_if_atr_percentile_above: 70
+  cap_score_if_bb_width_percentile_above: 70
+  expanded_cap_score: 45
+  require_range_ratio_below: 1.10
+  range_fail_cap_score: 55
+
+participation:
+  min_constructive_metrics: 3
+  constructive_score: 75
+  coil_context_rvol_threshold: 1.3
+  coil_context_strong_rvol_threshold: 1.5
+  coil_context_rvol_score: 75
+  coil_context_min_base_tightness_score: 75
+  coil_context_min_base_extension_score: 50
+  coil_context_min_body_overlap_score: 50
+  coil_context_min_distance_score: 75
+  coil_context_min_resistance_pressure_score: 50
+  vwap_near_pct: 0.005
+  vwap_reclaim_close_position_pct: 65
+  vwap_below_cap_score: 45
+  cmf_deep_negative_threshold: -0.10
+  cmf_deep_negative_cap_score: 45
+  rejection_upper_wick_pct: 45
+  rejection_close_position_pct: 50
+  volume_spike_rejection_cap_score: 50
+
+momentum:
+  min_improving_metrics: 4
+  improving_score: 75
+  require_rsi_slope_positive: true
+  require_adx_slope_positive: true
+  falling_macd_cap_score: 50
+  overheated_cap_score: 45
+
+acceptance:
+  min_controlled_metrics: 4
+  controlled_score: 75
+  upper_wick_rejection_cap_score: 45
+  weak_body_cap_score: 55
+  require_vwap_hold_for_valid: true
+  vwap_fail_cap_score: 50
+  near_resistance_requires_controlled_candle: true
+
+magnitude:
+  enabled: true
+  atr_period: 14
+  expected_range_atr_min: 3.5
+  expected_range_atr_max: 6.1
+  directional_target_fraction: 0.55
+  base_lookback_bars: 100
+  base_recent_bars: 30
+  small_base_atr: 1.5
+  moderate_base_atr: 2.5
+  large_base_atr: 3.5
+  air_above_min_pct: 3
+  air_above_good_pct: 6
+  reward_risk_min: 1.5
+  reward_risk_good: 2.5
+
+classification_gates:
+  developing:
+    min_overall: 65
+    min_compression: 70
+    min_structure: 60
+    min_participation: 60
+    min_momentum: 50
+    min_acceptance: 55
+    max_distance_to_resistance_pct: 10
+    min_magnitude: 50
+  high_watch:
+    min_overall: 75
+    min_compression: 70
+    min_structure: 65
+    min_participation: 65
+    min_momentum: 55
+    min_acceptance: 60
+    max_distance_to_resistance_pct: 6
+    min_magnitude: 50
+  priority:
+    min_overall: 85
+    min_compression: 75
+    min_structure: 70
+    min_participation: 70
+    min_momentum: 65
+    min_acceptance: 65
+    max_distance_to_resistance_pct: 3
+    min_magnitude: 60
+
+scores:
+  strong: 100
+  moderate: 75
+  weak: 50
+  negative: 0
+
+weights:
+  with_smart_money:
+    compression: 0.22
+    structure: 0.22
+    participation: 0.18
+    momentum: 0.13
+    smart_money: 0.10
+    acceptance: 0.15
+  without_smart_money:
+    compression: 0.25
+    structure: 0.25
+    participation: 0.20
+    momentum: 0.15
+    acceptance: 0.15
+
+alerts:
+  enabled: true
+  dry_run: false
+  cooldown_hours: 6
+  state_change_only: true
+  min_overall_score: 75
+  min_compression_score: 70
+  min_structure_score: 70
+  min_participation_score: 50
+  min_acceptance_score: 50
+  max_distance_to_resistance_pct: 3
+  require_4h_confirmation: false
+
+risk_filters:
+  reject_if_rsi_above: 75
+  reject_if_mfi_above: 80
+  reject_if_funding_above_pct: 0.08
+  reject_if_long_short_above: 1.8
+
+outputs:
+  json_path: outputs/latest_top30.json
+  csv_path: outputs/latest_top30.csv
+  db_path: data/radar.sqlite

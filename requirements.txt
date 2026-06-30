@@ -4,3 +4,4 @@ pandas>=2.0
 numpy>=1.26
 ccxt>=4.3
 streamlit-aggrid>=1.0.5
+PyYAML>=6.0

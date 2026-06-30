@@ -15,6 +15,13 @@ venv/
 .streamlit/*.sw?
 .env
 .env.*
+.tradingview_profile/
+.chrome_home/
+.playwright-browsers/
 alerts.json
 calc_prefs.json
 journal_config.json
+runtime/
+watchlist_engine/state/
+binance_breakout_radar_cloud/data/
+binance_breakout_radar_cloud/outputs/
