@@ -79,10 +79,15 @@ async def run_once(config: dict, symbols: list[str] | None = None) -> int:
     state = db.load_alert_state(outputs["db_path"])
     sent = []
     skipped = []
+    max_alerts = int(config.get("alerts", {}).get("max_per_scan", 0) or 0)
     for row in all_rows:
         ok, reason = rules.should_alert(row, config, state)
         state_name = rules.setup_state(row)
         if ok:
+            if max_alerts and len(sent) >= max_alerts:
+                skipped.append({"symbol": row.symbol, "reason": "per-scan alert cap reached", "state": state_name, "classification": row.classification})
+                db.save_alert_state(outputs["db_path"], row.symbol, state_name, state.get(row.symbol, {}).get("last_alert_at"), asdict(row))
+                continue
             message = rules.format_alert(row)
             if config.get("alerts", {}).get("dry_run", True):
                 sent.append({"symbol": row.symbol, "dry_run": True, "state": state_name, "classification": row.classification})
@@ -198,6 +203,8 @@ def apply_env_overrides(config: dict) -> None:
         alerts["min_rr"] = float(os.getenv("RADAR_ALERT_MIN_RR", "1"))
     if os.getenv("RADAR_ALERT_MAX_DISTANCE_TO_RESISTANCE_PCT"):
         alerts["max_distance_to_resistance_pct"] = float(os.getenv("RADAR_ALERT_MAX_DISTANCE_TO_RESISTANCE_PCT", "3"))
+    if os.getenv("RADAR_ALERT_MAX_PER_SCAN"):
+        alerts["max_per_scan"] = int(os.getenv("RADAR_ALERT_MAX_PER_SCAN", "8"))
 
 
 def _env_bool(name: str) -> bool:

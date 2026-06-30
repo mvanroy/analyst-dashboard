@@ -32,15 +32,15 @@ def should_alert(row, config: dict, state: dict) -> tuple[bool, str]:
     state_name = setup_state(row)
     if not alerts.get("enabled", False):
         return False, "alerts disabled"
-    if row.overall_score < float(alerts.get("min_overall_score", 75)):
+    if row.overall_score < float(alerts.get("min_overall_score", 55)):
         return False, "overall score below alert threshold"
-    if row.compression_score < float(alerts.get("min_compression_score", 70)):
+    if row.compression_score < float(alerts.get("min_compression_score", 55)):
         return False, "compression below alert threshold"
-    if row.structural_pressure_score < float(alerts.get("min_structure_score", 70)):
+    if row.structural_pressure_score < float(alerts.get("min_structure_score", 50)):
         return False, "structure below alert threshold"
-    if row.participation_score < float(alerts.get("min_participation_score", 50)):
+    if row.participation_score < float(alerts.get("min_participation_score", 25)):
         return False, "participation below alert threshold"
-    if row.price_acceptance_score < float(alerts.get("min_acceptance_score", 50)):
+    if row.price_acceptance_score < float(alerts.get("min_acceptance_score", 25)):
         return False, "acceptance below alert threshold"
     max_distance = alerts.get("max_distance_to_resistance_pct")
     if max_distance is not None and row.distance_to_resistance_pct is not None:
