@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 import requests
 
-BASE = "https://api.bybit.com"
+BASE = os.getenv("BYBIT_API_BASE", "https://api.bybit.com")
 STABLES = {"USDCUSDT", "FDUSDUSDT", "TUSDUSDT", "DAIUSDT", "USDEUSDT",
            "BUSDUSDT", "USTCUSDT", "EURUSDT", "USD1USDT"}
 EPS = 1e-12
@@ -40,14 +40,19 @@ TAIL_CLASS = [(2.0, 88), (1.0, 55), (0.5, 38), (0.25, 29), (0.0, 24)]
 
 
 def _get(path, **params):
+    last = ""
     for a in range(3):
         try:
-            j = requests.get(BASE + path, params=params, timeout=20).json()
+            r = requests.get(BASE + path, params=params, timeout=20)
+            j = r.json()
             if j.get("retCode") == 0:
                 return j["result"]
-        except Exception:
-            pass
+            last = f"retCode {j.get('retCode')} {str(j.get('retMsg'))[:60]}"
+        except Exception as exc:
+            last = f"{type(exc).__name__}: {str(exc)[:80]}"
         time.sleep(1 + a)
+    if path.endswith("tickers"):          # surface hard failures once
+        print(f"bybit request failed [{BASE}{path}]: {last}", flush=True)
     return None
 
 
