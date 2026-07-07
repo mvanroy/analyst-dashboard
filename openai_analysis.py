@@ -12,16 +12,20 @@ import os
 import re
 import json
 import time
+import base64
+import glob
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
 
 import httpx
 
+import coinalyze
 import scanner
 
 BYBIT_BASE = "https://api.bybit.com"
 OPENAI_URL = "https://api.openai.com/v1/responses"
 DEFAULT_MODEL = "gpt-5.2"
+TRADINGVIEW_CAPTURE_DIR = os.environ.get("TRADINGVIEW_CAPTURE_DIR", "/private/tmp/tradingview-captures")
 OPENAI_PRICING_USD_PER_1M = {
     # Estimate used for dashboard receipts. Update this map if the configured
     # model changes or OpenAI publishes a different rate for this account.
@@ -146,14 +150,39 @@ def _ticker(client: httpx.Client, symbol: str):
         "last": num("lastPrice"),
         "mark": num("markPrice"),
         "index": num("indexPrice"),
+        "bid1": num("bid1Price"),
+        "ask1": num("ask1Price"),
         "change_24h_pct": (num("price24hPcnt") or 0.0) * 100,
         "high_24h": num("highPrice24h"),
         "low_24h": num("lowPrice24h"),
         "turnover_24h": num("turnover24h"),
         "volume_24h": num("volume24h"),
         "funding_rate_pct": (num("fundingRate") or 0.0) * 100,
+        "next_funding_time_ms": num("nextFundingTime"),
+        "funding_interval_hours": num("fundingIntervalHour"),
         "open_interest": num("openInterest"),
     }
+
+
+def _orderbook(client: httpx.Client, symbol: str, limit: int = 200):
+    result = _get_json(
+        client,
+        "/v5/market/orderbook",
+        {"category": "linear", "symbol": symbol, "limit": limit},
+    )
+
+    def rows(side):
+        out = []
+        for raw in result.get(side) or []:
+            try:
+                price = float(raw[0])
+                size = float(raw[1])
+                out.append({"price": price, "size": size, "notional": price * size})
+            except (TypeError, ValueError, IndexError):
+                continue
+        return out
+
+    return {"bids": rows("b"), "asks": rows("a"), "ts": int(result.get("ts") or 0)}
 
 
 def _returns(candles):
@@ -296,6 +325,38 @@ def _trend_summary(rows):
     return out
 
 
+def _price_change_from_15m(candles, bars_back: int):
+    if len(candles) <= bars_back:
+        return None
+    return _pct_change(candles[-1]["close"], candles[-1 - bars_back]["close"])
+
+
+def _positioning_read(price_change, oi_change):
+    if price_change is None or oi_change is None:
+        return "insufficient data"
+    price_up = price_change > 0.02
+    price_down = price_change < -0.02
+    oi_up = oi_change > 0.05
+    oi_down = oi_change < -0.05
+    if not price_up and not price_down and not oi_up and not oi_down:
+        return "flat price and flat OI: no meaningful positioning edge"
+    if price_up and not oi_up and not oi_down:
+        return "price up with flat OI: mild move without strong new positioning confirmation"
+    if price_down and not oi_up and not oi_down:
+        return "price down with flat OI: mild sell pressure without strong new positioning confirmation"
+    if not price_up and not price_down and oi_up:
+        return "flat price with OI up: positioning is building without directional resolution"
+    if not price_up and not price_down and oi_down:
+        return "flat price with OI down: positions are closing without directional confirmation"
+    if price_up and oi_up:
+        return "price up with OI up: trend participation / new longs likely supporting the move"
+    if price_up and oi_down:
+        return "price up with OI down: short-covering/deleveraging, weaker continuation quality"
+    if price_down and oi_up:
+        return "price down with OI up: aggressive shorts or trapped longs building, squeeze/follow-through risk rises"
+    return "price down with OI down: deleveraging, continuation signal is less reliable"
+
+
 def _funding_summary(rows, current):
     rates = [r["funding_rate_pct"] for r in rows]
     avg = sum(rates) / len(rates) if rates else None
@@ -311,6 +372,169 @@ def _funding_summary(rows, current):
                 "funding_rate_pct": _round(row["funding_rate_pct"], 6),
             }
             for row in rows[-8:]
+        ],
+    }
+
+
+def _funding_countdown(ticker):
+    raw = ticker.get("next_funding_time_ms")
+    if not raw:
+        return {}
+    try:
+        next_dt = datetime.fromtimestamp(float(raw) / 1000, timezone.utc)
+    except (TypeError, ValueError, OSError):
+        return {}
+    seconds = max(0, int((next_dt - datetime.now(timezone.utc)).total_seconds()))
+    return {
+        "next_funding_time_utc": next_dt.replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "seconds_until_next_funding": seconds,
+        "minutes_until_next_funding": _round(seconds / 60, 1),
+        "hours_until_next_funding": _round(seconds / 3600, 2),
+        "funding_interval_hours": _round(ticker.get("funding_interval_hours"), 2),
+    }
+
+
+def _funding_positioning_label(current_pct):
+    if current_pct is None:
+        return "funding unavailable"
+    if current_pct >= 0.08:
+        return "very positive funding: long crowding / long-squeeze risk if price stalls"
+    if current_pct >= 0.03:
+        return "positive funding: longs are paying; be careful chasing late longs"
+    if current_pct <= -0.08:
+        return "very negative funding: short crowding / upside squeeze risk"
+    if current_pct <= -0.03:
+        return "negative funding: shorts are paying; short continuation needs stronger confirmation"
+    return "neutral funding: positioning is not obviously crowded from funding alone"
+
+
+def _orderbook_depth_summary(book, last_price):
+    bids = sorted(book.get("bids") or [], key=lambda row: row["price"], reverse=True)
+    asks = sorted(book.get("asks") or [], key=lambda row: row["price"])
+    best_bid = bids[0]["price"] if bids else None
+    best_ask = asks[0]["price"] if asks else None
+    mid = ((best_bid + best_ask) / 2) if best_bid and best_ask else last_price
+    spread_pct = _pct_change(best_ask, best_bid) if best_bid and best_ask else None
+
+    def depth(side_rows, pct, direction):
+        if not mid:
+            return {"base": None, "notional": None}
+        if direction == "bid":
+            selected = [row for row in side_rows if row["price"] >= mid * (1 - pct / 100)]
+        else:
+            selected = [row for row in side_rows if row["price"] <= mid * (1 + pct / 100)]
+        return {
+            "base": _round(sum(row["size"] for row in selected), 4),
+            "notional": _round(sum(row["notional"] for row in selected), 2),
+        }
+
+    depth_bands = {}
+    for pct in (0.25, 0.5, 1.0):
+        bid_depth = depth(bids, pct, "bid")
+        ask_depth = depth(asks, pct, "ask")
+        bid_notional = bid_depth.get("notional") or 0
+        ask_notional = ask_depth.get("notional") or 0
+        depth_bands[f"within_{str(pct).replace('.', '_')}_pct"] = {
+            "bid_depth": bid_depth,
+            "ask_depth": ask_depth,
+            "book_imbalance": _round(
+                ((bid_notional - ask_notional) / (bid_notional + ask_notional) * 100)
+                if (bid_notional + ask_notional)
+                else None,
+                2,
+            ),
+        }
+
+    top_bids = sorted(bids[:50], key=lambda row: row["notional"], reverse=True)[:3]
+    top_asks = sorted(asks[:50], key=lambda row: row["notional"], reverse=True)[:3]
+    return {
+        "source": "Bybit public order book snapshot",
+        "best_bid": _round(best_bid, 8),
+        "best_ask": _round(best_ask, 8),
+        "mid": _round(mid, 8),
+        "spread_pct": _round(spread_pct, 4),
+        "depth_bands": depth_bands,
+        "largest_nearby_bid_walls": [
+            {"price": _round(row["price"], 8), "notional": _round(row["notional"], 2)}
+            for row in top_bids
+        ],
+        "largest_nearby_ask_walls": [
+            {"price": _round(row["price"], 8), "notional": _round(row["notional"], 2)}
+            for row in top_asks
+        ],
+    }
+
+
+def _positioning_edge(ticker, funding_rows, oi_rows, candles_15m, orderbook, coinalyze_edge=None):
+    oi_changes = _trend_summary(oi_rows)
+    horizons = {
+        "15m": {"oi_offset": 3, "price_bars": 1},
+        "1h": {"oi_offset": 12, "price_bars": 4},
+        "4h": {"oi_offset": 48, "price_bars": 16},
+    }
+    horizon_reads = {}
+    current_oi = oi_rows[-1]["open_interest"] if oi_rows else None
+    for label, cfg in horizons.items():
+        oi_change = None
+        if current_oi is not None and len(oi_rows) > cfg["oi_offset"]:
+            oi_change = _pct_change(current_oi, oi_rows[-1 - cfg["oi_offset"]]["open_interest"])
+        price_change = _price_change_from_15m(candles_15m, cfg["price_bars"])
+        horizon_reads[label] = {
+            "price_change_pct": _round(price_change, 2),
+            "open_interest_change_pct": _round(oi_change, 2),
+            "read": _positioning_read(price_change, oi_change),
+        }
+
+    funding_context = _funding_summary(funding_rows, ticker.get("funding_rate_pct"))
+    orderbook_context = _orderbook_depth_summary(orderbook, ticker.get("last"))
+    coinalyze_edge = coinalyze_edge or {}
+    spread = orderbook_context.get("spread_pct")
+    thin_warning = None
+    if spread is not None and spread > 0.08:
+        thin_warning = "Wide spread: tight stops and market entries carry higher slippage/wick risk."
+    elif spread is not None and spread > 0.03:
+        thin_warning = "Moderate spread: use caution with very tight stops."
+
+    liquidation_read = "Mixed: not available yet; do not use as edge."
+    spot_perp_read = "Mixed: not available yet; do not use as edge."
+    if coinalyze_edge.get("available"):
+        liquidation_read = ((coinalyze_edge.get("liquidations") or {}).get("read")) or liquidation_read
+        spot_perp_read = ((coinalyze_edge.get("spot_perp_cvd") or {}).get("read")) or spot_perp_read
+    elif coinalyze_edge.get("error"):
+        liquidation_read = f"Mixed: Coinalyze unavailable ({coinalyze_edge.get('error')})."
+        spot_perp_read = f"Mixed: Coinalyze unavailable ({coinalyze_edge.get('error')})."
+
+    return {
+        "purpose": "Use this positioning layer to judge whether the chart setup is supported, crowded, thin, or squeeze-prone.",
+        "funding": {
+            **funding_context,
+            **_funding_countdown(ticker),
+            "positioning_read": _funding_positioning_label(funding_context.get("current_pct")),
+        },
+        "open_interest": {
+            "source": "Bybit open-interest history, 5-minute sampling",
+            **oi_changes,
+            "horizon_reads": horizon_reads,
+        },
+        "order_book": {
+            **orderbook_context,
+            "liquidity_warning": thin_warning,
+        },
+        "liquidations": {
+            "source": "Coinalyze liquidation history",
+            "read": liquidation_read,
+            **((coinalyze_edge.get("liquidations") or {}) if coinalyze_edge.get("available") else {}),
+        },
+        "spot_perp_cvd": {
+            "source": "Coinalyze OHLCV buy-volume proxy",
+            "read": spot_perp_read,
+            **((coinalyze_edge.get("spot_perp_cvd") or {}) if coinalyze_edge.get("available") else {}),
+            "spot_flow": coinalyze_edge.get("spot_flow") if coinalyze_edge.get("available") else None,
+            "perp_flow": coinalyze_edge.get("perp_flow") if coinalyze_edge.get("available") else None,
+        },
+        "coinalyze": coinalyze_edge,
+        "missing_edge_data": [
+            "Spot-vs-perp CVD is derived from buy-volume history where spot coverage exists.",
         ],
     }
 
@@ -393,14 +617,18 @@ def build_evidence_pack(symbol: str):
         eth_15m = _klines(client, "ETHUSDT", "15", limit=CANDLE_WINDOWS["15M"])
         oi_5m = _open_interest_history(client, symbol, "5min", limit=60)
         funding = _funding_history(client, symbol, limit=24)
+        orderbook = _orderbook(client, symbol, limit=200)
 
     cor = scanner._pearson(_returns(candles["15M"]), _returns(btc_15m))
     generated = datetime.now(ZoneInfo("Australia/Melbourne")).strftime("%b %-d, %Y, %-I:%M %p %Z")
+    coinalyze_edge = coinalyze.enhanced_positioning(symbol)
+    positioning_edge = _positioning_edge(ticker, funding, oi_5m, candles["15M"], orderbook, coinalyze_edge)
     return {
         "symbol": symbol,
         "generated_at_melbourne": generated,
         "source": "Bybit public linear perpetual market data",
         "ticker": {k: _round(v, 6) if isinstance(v, (int, float)) else v for k, v in ticker.items()},
+        "positioning_edge": positioning_edge,
         "btc_cor_15m": _round(cor, 4),
         "candle_window_policy": {
             "context": {
@@ -443,8 +671,7 @@ def build_evidence_pack(symbol: str):
             "eth_15m_recent": _candle_summary(eth_15m, limit=CANDLE_WINDOWS["15M"]),
         },
         "limitations": [
-            "This prototype uses Bybit public market data, not a TradingView chart screenshot.",
-            "CVD and detailed order-flow are not included yet.",
+            "Detailed order-flow is approximated from available public market data.",
             "Volume profile is approximated from candle data, not tick-level traded volume at price.",
             "AVWAP anchors are algorithmic swing/recent anchors; treat them as context unless they align with visible structure.",
         ],
@@ -520,6 +747,7 @@ def _extract_text(payload: dict) -> str:
 
 def _post_openai(payload: dict, api_key: str, timeout: int = 120) -> dict:
     last_exc = None
+    last_retry = None
     for attempt in range(3):
         try:
             response = httpx.post(
@@ -532,6 +760,10 @@ def _post_openai(payload: dict, api_key: str, timeout: int = 120) -> dict:
                 timeout=timeout,
             )
             if response.status_code in (429, 500, 502, 503, 504, 520):
+                body = response.text[:800].strip()
+                last_retry = f"OpenAI returned {response.status_code}"
+                if body:
+                    last_retry += f": {body}"
                 time.sleep(2 ** attempt)
                 continue
             response.raise_for_status()
@@ -541,7 +773,42 @@ def _post_openai(payload: dict, api_key: str, timeout: int = 120) -> dict:
             time.sleep(2 ** attempt)
     if last_exc:
         raise last_exc
+    if last_retry:
+        raise RuntimeError(f"OpenAI request failed after retries. Last response: {last_retry}")
     raise RuntimeError("OpenAI request failed after retries.")
+
+
+def _capture_tradingview_chart(symbol: str, setup_timeframe: str) -> dict:
+    """TradingView screenshots must be handed in from the Codex in-app browser."""
+    raise RuntimeError(
+        "AI mode requires a TradingView screenshot captured from the in-app browser. "
+        "No app-owned browser capture was attempted."
+    )
+
+
+def _latest_tradingview_capture(symbol: str, setup_timeframe: str):
+    safe_tf = re.sub(r"[^A-Z0-9]", "", (setup_timeframe or "4H").upper())
+    pattern = os.path.join(TRADINGVIEW_CAPTURE_DIR, f"{symbol}_{safe_tf}_*.png")
+    matches = sorted(glob.glob(pattern), key=os.path.getmtime, reverse=True)
+    if not matches:
+        return None
+    image_path = matches[0]
+    age_seconds = time.time() - os.path.getmtime(image_path)
+    if age_seconds > 10 * 60:
+        return None
+    with open(image_path, "rb") as f:
+        image_base64 = base64.b64encode(f.read()).decode("ascii")
+    return {
+        "ok": True,
+        "symbol": symbol,
+        "timeframe": setup_timeframe,
+        "url": "TradingView screenshot handoff",
+        "title": f"{symbol} {setup_timeframe} TradingView screenshot",
+        "image_path": image_path,
+        "image_base64": image_base64,
+        "captured_at": datetime.fromtimestamp(os.path.getmtime(image_path), timezone.utc).isoformat(),
+        "fallback": True,
+    }
 
 
 def _parse_json_response(text: str) -> dict:
@@ -618,6 +885,14 @@ def _schema_hint(symbol: str, evidence: dict, setup_timeframe: str = "4H") -> di
             "cor_tf": "15M",
             "note": "prose",
         },
+        "positioning_edge": {
+            "funding": "plain-language implication of funding and next funding timing",
+            "open_interest": "plain-language implication of 15m/1h/4h OI changes",
+            "liquidations": "plain-language implication of recent liquidation history",
+            "spot_perp_cvd": "spot-vs-perp CVD implication, or unavailable caveat",
+            "liquidity": "plain-language implication of order-book depth/spread for entries and stops",
+            "missing": "CVD availability caveat if relevant",
+        },
         "pattern_candidates": [
             {
                 "name": "pattern name",
@@ -626,7 +901,22 @@ def _schema_hint(symbol: str, evidence: dict, setup_timeframe: str = "4H") -> di
                 "classification": "Continuation | Reversal | Compression | Liquidity / Reversal | Trap",
                 "qualifier": "short qualifier",
                 "grade": "A | B | C | D",
+                "success_likelihood": {
+                    "percent": 55,
+                    "definition": "Estimated chance this setup reaches TP1 before invalidation",
+                    "reason": "<=12 words explaining the probability driver",
+                },
                 "summary": "free-form honest reasoning, max 2 sentences",
+                "positioning_edge": {
+                    "funding": "Strengthens|Weakens|Mixed: one plain consequence sentence for this exact trade",
+                    "funding_timing": "Strengthens|Weakens|Mixed: one plain consequence sentence for this exact trade",
+                    "open_interest": "Strengthens|Weakens|Mixed: one plain consequence sentence for this exact trade",
+                    "liquidations": "Strengthens|Weakens|Mixed: one plain consequence sentence from recent liquidation history",
+                    "spot_perp_cvd": "Strengthens|Weakens|Mixed: one plain consequence sentence, or unavailable caveat",
+                    "liquidity": "Strengthens|Weakens|Mixed: one plain entry/stop consequence sentence, not raw book data",
+                    "trade_implication": "Strengthens|Weakens|Mixed: one plain sentence saying what to do differently",
+                    "warnings": ["<=10 words each; only if needed"],
+                },
                 "entry": {
                     "direction": "long | short",
                     "zone": {
@@ -660,8 +950,8 @@ def _schema_hint(symbol: str, evidence: dict, setup_timeframe: str = "4H") -> di
                 "missing": ["what prevents progression"],
                 "confluence": {
                     "strength": "STRONG | MODERATE | WEAK",
-                    "checks": [],
-                    "warnings": [],
+                    "checks": ["include relevant positioning-edge confirmations such as funding/OI/order-book support"],
+                    "warnings": ["include relevant positioning-edge warnings such as crowded funding, OI divergence, or thin book"],
                 },
             }
         ],
@@ -709,6 +999,27 @@ def _stamp_dashboard_metadata(
     data["intermarket"] = data.get("intermarket") or {}
     data["intermarket"]["cor"] = evidence.get("btc_cor_15m")
     data["intermarket"]["cor_tf"] = "15M"
+    if not data.get("positioning_edge"):
+        edge = evidence.get("positioning_edge") or {}
+        funding = edge.get("funding") or {}
+        oi = edge.get("open_interest") or {}
+        book = edge.get("order_book") or {}
+        liquidations = edge.get("liquidations") or {}
+        spot_perp = edge.get("spot_perp_cvd") or {}
+        data["positioning_edge"] = {
+            "funding": funding.get("positioning_read") or "Funding read unavailable.",
+            "open_interest": "; ".join(
+                read.get("read", "")
+                for read in (oi.get("horizon_reads") or {}).values()
+                if read.get("read")
+            )
+            or "Open-interest read unavailable.",
+            "liquidity": book.get("liquidity_warning")
+            or f"Spread {book.get('spread_pct', '—')}%; use order-book depth bands for tight-stop context.",
+            "liquidations": liquidations.get("read") or "Mixed: liquidation history unavailable.",
+            "spot_perp_cvd": spot_perp.get("read") or "Mixed: spot/perp flow unavailable.",
+            "missing": "Spot/perp flow depends on available spot coverage.",
+        }
     _sanitize_candidate_numbers(data, last)
     return data
 
@@ -718,6 +1029,20 @@ def _valid_price(value) -> bool:
         return float(value) > 0
     except (TypeError, ValueError):
         return False
+
+
+def _risk_reward(entry_mid, stop_value, target_value, direction):
+    try:
+        entry_mid = float(entry_mid)
+        stop_value = float(stop_value)
+        target_value = float(target_value)
+    except (TypeError, ValueError):
+        return None
+    risk = abs(entry_mid - stop_value)
+    reward = target_value - entry_mid if direction == "long" else entry_mid - target_value
+    if risk <= 0 or reward <= 0:
+        return None
+    return reward / risk
 
 
 def _sanitize_candidate_numbers(data: dict, fallback_price):
@@ -743,6 +1068,16 @@ def _sanitize_candidate_numbers(data: dict, fallback_price):
             block = entry.setdefault(key, {})
             if not _valid_price(block.get("value")):
                 block["value"] = fallback_price
+        direction = (entry.get("direction") or "").strip().lower()
+        if direction not in {"long", "short"}:
+            direction = "short" if float(entry["t1"]["value"]) < float(zone["low"]) else "long"
+            entry["direction"] = direction
+        entry_mid = (float(zone["low"]) + float(zone["high"])) / 2
+        stop_value = float(entry["stop"]["value"])
+        for key in ("t1", "t2"):
+            rr = _risk_reward(entry_mid, stop_value, float(entry[key]["value"]), direction)
+            if rr is not None:
+                entry[key]["rr"] = f"~1 : {rr:.1f}"
         risk = entry.setdefault("risk", {})
         risk.setdefault("label", "N/A")
         risk.setdefault("unit", "")
@@ -754,14 +1089,40 @@ def generate_dashboard_analysis(
     model: str = DEFAULT_MODEL,
     tactical_mode: bool = False,
     setup_timeframe: str = "4H",
+    prompt_mode: str = "prompt",
+    chart_image_path: str = None,
+    chart_image_meta: dict = None,
 ) -> dict:
     """Call OpenAI and write analyses/<SYMBOL>.json for the Trade Dashboard."""
     symbol = normalise_symbol(symbol)
     setup_timeframe = (setup_timeframe or "4H").upper()
     if setup_timeframe not in {"4H", "1H", "15M"}:
         setup_timeframe = "4H"
+    prompt_mode = "ai" if (prompt_mode or "").lower() == "ai" else "prompt"
     evidence = build_evidence_pack(symbol)
     evidence["selected_setup_chart"] = setup_timeframe
+    chart_capture = None
+    if prompt_mode == "ai" and chart_image_path:
+        if not os.path.exists(chart_image_path):
+            raise RuntimeError("TradingView screenshot path is not readable.")
+        with open(chart_image_path, "rb") as f:
+            chart_capture = {
+                "image_path": chart_image_path,
+                "image_base64": base64.b64encode(f.read()).decode("ascii"),
+                **(chart_image_meta or {}),
+            }
+        evidence["tradingview_chart"] = {
+            "source": chart_capture.get("url") or "Codex in-app browser screenshot",
+            "title": chart_capture.get("title"),
+            "timeframe": setup_timeframe,
+            "observed_symbol": chart_capture.get("observed_symbol"),
+            "captured_at": chart_capture.get("captured_at"),
+        }
+    elif prompt_mode == "ai":
+        raise RuntimeError(
+            "AI mode requires a TradingView chart screenshot. No analysis was run because "
+            "TradingView visual capture was not performed."
+        )
     framework = _read_framework_prompt()
     tactical_instruction = ""
     if tactical_mode:
@@ -794,6 +1155,26 @@ def generate_dashboard_analysis(
         "Ask whether the pattern is actually tradable at this location, whether the trigger is present or near, "
         "whether the stop/target structure is defensible, and whether participation/structure supports the idea. "
         "If the validation evidence does not support the setup, say so plainly rather than upgrading the grade.\n\n"
+        "Positioning edge rule: explicitly use evidence.positioning_edge. Explain how funding plus the next funding "
+        "timing, 15m/1h/4h open-interest change, and order-book depth/spread change the trade decision. Use this "
+        "to identify crowded longs/shorts, short-covering moves, deleveraging, weak breakouts, squeeze risk, and "
+        "whether a tight stop is realistic in the current book. If spot-vs-perp CVD would matter but is not available, "
+        "say that as a limitation; do not invent it. Include the practical implication "
+        "inside the top-level positioning_edge object and inside every candidate's positioning_edge object. Each "
+        "candidate must explain how the same data changes that specific trade idea, not merely repeat a market summary. "
+        "For each candidate positioning_edge field, start with exactly one of: Strengthens, Weakens, Mixed. Keep each "
+        "field to one plain-English consequence sentence, not shorthand. Do not write raw observations by themselves. "
+        "Bad: 'OI down; bounce likely covering.' Good: 'Weakens: the bounce may be short-covering, so take profits quickly.' "
+        "Bad: 'spot+perp deltas negative.' Good: 'Strengthens: selling is coming from both spot and perps, so the short has better follow-through odds.' "
+        "Bad: 'tight spread enables invalidation.' Good: 'Strengthens: orders should execute close to plan, so the tight stop is more realistic.' "
+        "Bad: 'positive funding makes shorts slightly paid against.' Good: 'Strengthens: longs are paying shorts, so holding the short is slightly easier.' "
+        "Explain whether the factor helps the entry, argues for smaller size, requires faster profit-taking, "
+        "forces a stricter stop, or warns the setup may fail. For liquidity/order-book comments, do not say 'supportive for "
+        "scalps' unless the candidate is explicitly a scalp and the entry/stop logic supports that. A bid-side imbalance "
+        "does not prove scalpers are active; it only suggests visible bids may cushion a long entry or slow a breakdown until "
+        "those bids pull or get filled. Say that practical implication plainly. Every candidate must include rows for "
+        "funding, funding_timing, open_interest, liquidations, spot_perp_cvd, and liquidity. If spot-vs-perp CVD "
+        "is unavailable, write 'Mixed: not available yet; do not use as edge.'\n\n"
         "Trade grade model: grade opportunity quality, not certainty. A means a high-quality opportunity is still "
         "available: the setup is validated, the entry is not stale, risk/reward is strong, enough move remains, "
         "and the trade is not chasing into nearby support/resistance. B means a good setup with one or more major "
@@ -831,10 +1212,92 @@ def generate_dashboard_analysis(
         "BYBIT EVIDENCE PACK:\n"
         f"{json.dumps(evidence, indent=2)}\n"
     )
+    if prompt_mode == "ai":
+        prompt = (
+            f"You are acting like an unconstrained chart-analysis assistant for {symbol}.\n\n"
+            "The user has attached the actual TradingView chart screenshot for the selected symbol and timeframe. "
+            "Use the TradingView screenshot as the primary evidence. Use the Bybit evidence pack below as supporting "
+            "market data for current price, recent candles, OI, funding, and cross-market context. "
+            "Do your own chart-style assessment first: structure, trend, support/resistance, momentum, "
+            "volatility, Fibonacci swings, measured moves, entry quality, invalidation, and target logic. "
+            "Do not use the user's framework prompt, framework grading model, or framework decision rules in "
+            "this mode. The dashboard schema below is ONLY a rendering template so the existing boxes can display "
+            "your answer; it must not constrain the analytical method or force a framework-style response.\n\n"
+            "Answer this task:\n"
+            "What are the three best trade setups for this chart? Present them in order of viability. "
+            "Run Fibonacci analysis and any other assessment needed to decide the best setups.\n\n"
+            "Trading style for this AI mode: prioritise open trade opportunities right now. Prefer aggressive but "
+            "defensible entries with tight stops and clear invalidation when the chart supports them. Do not make "
+            "the user wait for a perfect future confirmation if there is a reasonable live entry already available. "
+            "Only use conditional wait-for-confirmation setups when the current chart location is genuinely poor, "
+            "the risk is too wide, or the trade would be pure chasing. Put live/aggressive opportunities before "
+            "slow conservative triggers when both are valid.\n\n"
+            "Return ONLY valid JSON matching the dashboard schema. The existing dashboard boxes will render "
+            "your output, so you must still populate the schema fields completely. Treat field names such as "
+            "pattern_candidates, grade, confluence, evidence, and missing as UI slots, not as instructions to follow "
+            "the older framework. Do not force a long or short if the evidence does not support it. If one of the "
+            "three best ideas is conditional, early, late, or a no-trade/watchlist idea, say that plainly inside "
+            "the candidate fields rather than upgrading it.\n\n"
+            "You must return exactly three pattern_candidates, ordered by viability from best to weakest. "
+            "For each candidate, include executable trade-location fields: direction, entry zone, trigger "
+            "context, stop/invalidation, TP1, TP2, risk:reward, tools used, evidence, missing conditions, "
+            "alert_suggestions where useful, and success_likelihood.percent. success_likelihood is the estimated "
+            "chance that this setup reaches TP1 before invalidation based on the visible chart and supporting data; "
+            "it is not a guaranteed win rate and it does not mean TP2. "
+            "For aggressive setups, keep stops tight around visible invalidation, not wide around distant structural "
+            "levels unless the setup truly requires that wider stop. "
+            "Use Fibonacci retracement/extension or measured-move logic where relevant, and name that in the "
+            "tools/evidence text when used.\n\n"
+            "Evidence limits: the screenshot shows the user's TradingView chart and indicators, but you still "
+            "cannot see hidden settings beyond what is visible. Do not claim detailed order-flow or CVD unless "
+            "it is visibly present in the screenshot or supplied evidence. You may use supplied EMA, RSI, ATR, "
+            "anchored VWAP, approximate volume profile, candle swings, support/resistance, compression, measured "
+            "moves, OI/funding, BTC/ETH context, Fibonacci-style swing analysis, and 15M trigger context.\n\n"
+            "Positioning edge rule: explicitly use evidence.positioning_edge as the data layer behind the chart. "
+            "For each setup, explain whether funding and next funding timing help or hurt the trade, whether "
+            "15m/1h/4h open-interest confirms the direction or warns of short covering/deleveraging/crowding, "
+            "and whether order-book depth/spread makes tight stops realistic. Use this to find edge that is not "
+            "obvious from the screenshot alone. If spot-vs-perp CVD would matter but is not available, say so briefly; "
+            "do not invent unavailable data. Put this inside every candidate's "
+            "positioning_edge object as setup-specific trade advice, not as a generic summary at the top. "
+            "For each candidate positioning_edge field, start with exactly one of: Strengthens, Weakens, Mixed. Keep each "
+            "field to one plain-English consequence sentence, not shorthand. Do not write raw observations by themselves. "
+            "Bad: 'OI down; bounce likely covering.' Good: 'Weakens: the bounce may be short-covering, so take profits quickly.' "
+            "Bad: 'spot+perp deltas negative.' Good: 'Strengthens: selling is coming from both spot and perps, so the short has better follow-through odds.' "
+            "Bad: 'tight spread enables invalidation.' Good: 'Strengthens: orders should execute close to plan, so the tight stop is more realistic.' "
+            "Bad: 'positive funding makes shorts slightly paid against.' Good: 'Strengthens: longs are paying shorts, so holding the short is slightly easier.' "
+            "Explain whether the factor helps the entry, argues for smaller size, requires faster profit-taking, "
+            "forces a stricter stop, or warns the setup may fail. For liquidity/order-book comments, do not say 'supportive for "
+            "scalps' unless the candidate is explicitly a scalp and the entry/stop logic supports that. A bid-side imbalance "
+            "does not prove scalpers are active; it only suggests visible bids may cushion a long entry or slow a breakdown until "
+            "those bids pull or get filled. Say that practical implication plainly. Every candidate must include rows for "
+            "funding, funding_timing, open_interest, liquidations, spot_perp_cvd, and liquidity. If spot-vs-perp CVD "
+            "is unavailable, write 'Mixed: not available yet; do not use as edge.'\n\n"
+            f"Selected setup chart: {setup_timeframe}. Build the actual setup options primarily from this chart, "
+            "using broader/lower timeframes only for context, confluence, risk, invalidation, and timing nuance.\n\n"
+            "Dashboard schema hint:\n"
+            f"{json.dumps(_schema_hint(symbol, evidence, setup_timeframe), indent=2)}\n\n"
+            "BYBIT EVIDENCE PACK:\n"
+            f"{json.dumps(evidence, indent=2)}\n"
+        )
+    input_payload = prompt
+    if chart_capture and chart_capture.get("image_base64"):
+        input_payload = [
+            {
+                "role": "user",
+                "content": [
+                    {"type": "input_text", "text": prompt},
+                    {
+                        "type": "input_image",
+                        "image_url": f"data:image/png;base64,{chart_capture['image_base64']}",
+                    },
+                ],
+            }
+        ]
     payload = _post_openai(
         {
             "model": model,
-            "input": prompt,
+            "input": input_payload,
             "max_output_tokens": 6000,
         },
         api_key=api_key,
@@ -845,6 +1308,14 @@ def generate_dashboard_analysis(
         raise RuntimeError("OpenAI returned no text output.")
     receipt = _openai_usage_receipt(payload, model)
     data = _stamp_dashboard_metadata(_parse_json_response(raw), symbol, evidence, setup_timeframe, receipt)
+    data["meta"]["prompt_mode"] = prompt_mode
+    if chart_capture:
+        data["meta"]["tradingview_chart"] = {
+            "url": chart_capture.get("url"),
+            "title": chart_capture.get("title"),
+            "image_path": chart_capture.get("image_path"),
+            "captured_at": chart_capture.get("captured_at"),
+        }
     os.makedirs(_ANALYSES_DIR, exist_ok=True)
     json_path = os.path.join(_ANALYSES_DIR, f"{symbol}.json")
     raw_path = os.path.join(_ANALYSES_DIR, f"{symbol}.openai.raw.txt")

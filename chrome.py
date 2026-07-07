@@ -416,7 +416,7 @@ def _mobile_footer_html(word1, word2):
     tracking_active = "active" if "tracker" in current or "tracking" in current else ""
     trade_icon = _inline_icon("target.svg")
     calc_icon = _inline_icon("balance.svg")
-    trades_icon = _inline_icon("live-stream.svg")
+    trades_icon = _inline_icon("alert-play.svg")
     tracking_icon = _inline_icon("data-analytics.svg")
     watch_icon = (
         '<svg viewBox="0 0 24 24" aria-hidden="true">'

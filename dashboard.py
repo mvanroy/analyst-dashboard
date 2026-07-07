@@ -16,7 +16,6 @@ import json
 import math
 import os
 import re
-from urllib.parse import quote
 
 import streamlit as st
 
@@ -74,10 +73,6 @@ def latest_symbol(default="HYPEUSDT"):
 # ----------------------------------------------------------------- helpers
 def _e(v):
     return _html.escape(str(v if v is not None else ""))
-
-
-def _json_qs(data):
-    return quote(json.dumps(data, separators=(",", ":")), safe="")
 
 
 def _cls(v):
@@ -504,6 +499,22 @@ def _live_badge():
     return f'<span class="livebadge" title="Live — updates every 2s">{_LIVE_SVG}</span>'
 
 
+def _load_down_arrow_svg():
+    path = os.path.join(os.path.dirname(__file__), "assets", "down-arrow.svg")
+    try:
+        with open(path, "r") as f:
+            svg = f.read().strip()
+    except OSError:
+        return '<svg class="down-arrow-svg" viewBox="0 0 128 128"><path fill="currentColor" d="M64 88 21 45l6-6 37 37 37-37 6 6z"/></svg>'
+    svg = re.sub(r'\s(width|height)="[^"]*"', "", svg)
+    svg = re.sub(r"<svg\b", '<svg class="down-arrow-svg"', svg, count=1)
+    svg = svg.replace("<path ", '<path fill="currentColor" ')
+    return svg
+
+
+_DOWN_ARROW_SVG = _load_down_arrow_svg()
+
+
 # ----------------------------------------------------------------- header
 def _price_bias_card(d, live_price=None, live_chg=None, right_html=None, left_html=None, badge_inline=False):
     """The first dashboard box: symbol/price/headline + Market Bias. Pass
@@ -734,7 +745,14 @@ def _market_condition_box(d):
         + "</div>"
         + "</div>"
     )
-    return _card("", body, "mc-cond")
+    card = _card("", body, "mc-cond")
+    return (
+        f'<div class="mc-desktop">{card}</div>'
+        '<details class="mc-collapse">'
+        f'<summary aria-label="Toggle market state"><span class="mc-summary-label">Market State</span>{_DOWN_ARROW_SVG}</summary>'
+        + card
+        + "</details>"
+    )
 
 
 def _bias_box(d):
@@ -757,6 +775,36 @@ def _bias_box(d):
         inner += f'<div class="biasnote">{_hl_numbers(note)}</div>'
     body = f'<div class="biaswrap">{inner}</div>'
     return _card("Market Bias", body, "mc-bias")
+
+
+def _positioning_edge_box(d):
+    edge = d.get("positioning_edge") or {}
+    if not edge:
+        return ""
+
+    items = [
+        ("Funding", edge.get("funding")),
+        ("Open Interest", edge.get("open_interest")),
+        ("Liquidity", edge.get("liquidity")),
+        ("Missing Data", edge.get("missing")),
+    ]
+    cells = ""
+    for label, text in items:
+        if not text:
+            continue
+        cells += (
+            '<div class="pecell">'
+            f'<div class="pelabel">{_e(label)}</div>'
+            f'<div class="petext">{_hl_numbers(text)}</div>'
+            "</div>"
+        )
+    if not cells:
+        return ""
+    return _card(
+        "Positioning Edge",
+        '<div class="pegrid">' + cells + "</div>",
+        "positioning-edge",
+    )
 
 
 def _regime_thesis(d):
@@ -884,6 +932,13 @@ _CSS = """
 .drow4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:12px;align-items:stretch;}
 .drow2 .dcard,.drow3 .dcard,.drow4 .dcard{margin-bottom:0;}
 .dstack{display:flex;flex-direction:column;gap:12px;}
+.positioning-edge{border-color:rgba(224,163,62,.36)!important;background:rgba(18,16,28,.78);}
+.pegrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;}
+.pecell{min-width:0;border:1px solid rgba(139,92,246,.20);border-radius:8px;background:rgba(8,10,18,.30);padding:9px 10px;}
+.pelabel{font-size:10px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;color:#e0a33e;margin-bottom:5px;}
+.petext{font-size:12.5px;line-height:1.42;color:#dce3ec;}
+@media(max-width:1100px){.pegrid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+@media(max-width:760px){.pegrid{grid-template-columns:1fr;}.petext{font-size:12.2px;}}
 /* pattern candidate cards (Phase 3/4) — hex glyph · name + maturity pill ·
    qualifier subtitle · large grade box · classification · summary */
 .drowlab{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:#8b94a0;margin:2px 0 8px;}
@@ -919,7 +974,10 @@ _CSS = """
 .plist{margin:0;padding-left:15px;font-size:13px;color:#cdd3da;line-height:1.5;}
 .dash .plist li{font-size:13px;}
 .plist.miss{color:#9aa3ad;}
+.note-section .plist,.note-section .plist.miss,.note-section .plist li{color:#f2f4f8;}
+.note-section .success-note{color:#f2f4f8;font-weight:400;}
 .pconf{font-size:11px;color:#cdd3da;line-height:1.5;}
+.psec-mobile-collapse{display:none;}
 /* coloured number tokens in pattern prose */
 .numpos{color:#2ebd85;font-weight:700;}
 .numneg{color:#f6465d;font-weight:700;}
@@ -989,13 +1047,29 @@ _CSS = """
 .t-t1 .etsub,.t-t2 .etsub{font-size:12.5px;font-weight:800;}
 /* analysis sections with icon column */
 .psec{display:flex;gap:11px;margin-top:13px;}
+.psec-plain{display:block;}
 .psecic{flex:0 0 auto;width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;border:1px solid #2a323c;background:#161b22;}
 .psecic .sic{width:15px;height:15px;}
 .psecic.ic-ev{color:#eef2f8;background:transparent;border-color:#eef2f8;}
 .psecic.ic-note{color:#eef2f8;background:transparent;border-color:#eef2f8;}
 .psecic.ic-conf{color:#eef2f8;background:transparent;border-color:#eef2f8;}
+.psecic.ic-edge{color:#e0a33e;background:rgba(228,160,8,.06);border-color:rgba(228,160,8,.34);}
 .psecbody{flex:1;min-width:0;}
 .psechd{font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase;color:#8b94a0;margin-bottom:5px;display:flex;align-items:center;gap:9px;}
+.pe-detail{display:flex;flex-direction:column;gap:7px;}
+.perow{display:grid;grid-template-columns:92px minmax(0,1fr);gap:10px;align-items:start;padding:7px 0;border-top:1px solid rgba(139,148,158,.12);}
+.perow:first-child{border-top:0;padding-top:0;}
+.perlab{font-size:9px;font-weight:850;letter-spacing:.07em;text-transform:uppercase;color:#8b94a0;line-height:1.35;}
+.pertext{font-size:12.5px;color:#cdd3da;line-height:1.45;}
+.perow.pe-impact{grid-template-columns:1fr;padding:9px 10px;border:1px solid rgba(228,160,8,.28);border-radius:9px;background:rgba(228,160,8,.06);}
+.perow.pe-impact .perlab{color:#e0a33e;}
+.perow.pe-impact .pertext{font-size:13px;color:#f0e6cf;font-weight:650;}
+.peverdict{display:inline-flex;align-items:center;margin-right:7px;padding:2px 7px;border-radius:999px;
+  font-size:9px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;border:1px solid currentColor;line-height:1.15;}
+.peverdict.strengthens{color:#2ebd85;background:rgba(46,189,133,.10);}
+.peverdict.weakens{color:#f6465d;background:rgba(246,70,93,.10);}
+.peverdict.mixed,.peverdict.neutral{color:#e0a33e;background:rgba(228,160,8,.10);}
+.pe-list li{color:#d9d0bd;}
 .pconfcols{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;}
 .cchk{display:flex;align-items:flex-start;gap:7px;font-size:11px;color:#cdd3da;line-height:1.4;margin:3px 0;}
 .cic{width:14px;height:14px;flex:0 0 auto;margin-top:1px;}
@@ -1023,16 +1097,16 @@ _CSS = """
 .oppstat.st-missed{background:rgba(139,148,158,.13);color:#8b94a0;border:1px solid rgba(139,148,158,.4);}
 .oppstat.st-unavail{background:rgba(139,148,158,.07);color:#5b636e;border:1px solid rgba(91,99,110,.3);}
 .oppstat.st-invalid{background:rgba(246,70,93,.15);color:#f6465d;border:1px solid rgba(246,70,93,.45);}
-.psecic.ic-alert{color:#e0a33e;border-color:rgba(228,160,8,.3);background:rgba(228,160,8,.06);}
 .alertwrap{display:flex;flex-direction:column;gap:8px;}
-.alertrow{display:flex;align-items:flex-start;gap:10px;padding:9px 10px;border:1px solid #232a33;border-radius:9px;background:#11161d;}
+.alertrow{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:10px;padding:9px 10px;border:1px solid #232a33;border-radius:9px;background:#11161d;}
 .alertbody{flex:1;min-width:0;}
 .alerttop{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:11px;font-weight:800;color:#e6e8eb;line-height:1.25;}
 .alerttop em{font-style:normal;font-size:9px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;color:#e0a33e;border:1px solid rgba(228,160,8,.38);border-radius:999px;padding:2px 7px;}
 .alertcond{font-size:11.5px;color:#cdd3da;line-height:1.4;margin-top:4px;}
 .alertnote{font-size:10px;color:#7d8794;line-height:1.35;margin-top:3px;}
-.dash a.alertbtn{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border:1px solid rgba(76,141,255,.55);border-radius:999px;color:#9fc0ff;font-size:10px;font-weight:800;text-decoration:none;white-space:nowrap;background:rgba(76,141,255,.08);}
+.dash a.alertbtn{justify-self:end;display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border:1px solid rgba(76,141,255,.55);border-radius:999px;color:#9fc0ff;font-size:10px;font-weight:800;text-decoration:none;white-space:nowrap;background:rgba(76,141,255,.08);}
 .dash a.alertbtn:hover{border-color:#4c8dff;color:#e6e8eb;background:rgba(76,141,255,.16);text-decoration:none;}
+@media(max-width:700px){.alertrow{grid-template-columns:1fr;align-items:start;}.dash a.alertbtn{justify-self:start;}}
 /* Decision-zone convergence callout — full width above the pattern cards */
 .convg{display:flex;gap:13px;align-items:flex-start;margin:2px 0 14px;padding:12px 16px;border-radius:11px;
   background:linear-gradient(90deg,rgba(228,160,8,.10),rgba(228,160,8,.02));border:1px solid rgba(228,160,8,.34);}
@@ -1059,6 +1133,10 @@ _CSS = """
 @media(max-width:980px){.drow3{grid-template-columns:1fr;}}
 @media(max-width:1200px){.drow4{grid-template-columns:repeat(2,minmax(0,1fr));}}
 @media(max-width:760px){.drow4{grid-template-columns:1fr;}}
+@media(max-width:980px){
+  .drow2,.drow3{grid-template-rows:auto!important;}
+  .drow2 .pcard,.drow3 .pcard{display:flex;grid-row:auto;row-gap:11px;}
+}
 
 /* header — two decoupled grids so the bottom row (setup|trade|wcmm) can be
    even thirds while the top row keeps the price card wider than the meta strip */
@@ -1098,6 +1176,7 @@ _CSS = """
 .hhead{color:#8b94a0;font-size:12px;margin-top:2px;}
 /* v3 header — layout only, reuses .hsym/.hperp/.hprice/.hhead/.amber type scale */
 .v3banner{position:relative;padding:2px 2px 4px;}
+.mobilelive{display:none;}
 .v3striprow{display:flex;align-items:center;margin:8px 0 0;min-width:0;}
 .v3strip{flex:1 1 auto;width:100%;min-width:0;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px 12px;padding:10px 2px;border-top:1px solid #1e242c;border-bottom:1px solid #1e242c;}
 .v3strip .livebadge{position:static;display:inline-flex;align-items:center;}
@@ -1123,6 +1202,31 @@ _CSS = """
 @media(max-width:980px){.mc-grid{grid-template-columns:1fr;}}
 .mc-sv{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 .mc-im{padding-left:14px;}
+@media(max-width:700px){
+  .mc-sv{grid-template-columns:1fr;gap:18px;}
+  .mc-im{padding-left:0;}
+  .v3left{position:relative;}
+  .v3banner{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto;
+    column-gap:14px;row-gap:5px;padding:0 12px 4px 14px;margin:-7px 0 0;align-items:start;}
+  .v3banner .hperp{display:none;}
+  .v3banner .hsym{grid-column:1;grid-row:1;font-size:18px;line-height:1.15;max-width:220px;
+    display:flex;align-items:center;gap:8px;}
+  .mobilelive{display:inline-flex;align-items:center;line-height:0;}
+  .mobilelive .livebadge{position:static;display:inline-flex;animation:livepulse 1.6s ease-in-out infinite;}
+  .mobilelive .livebadge-svg{width:26px;height:26px;}
+  .v3banner .hprice{grid-column:1;grid-row:2;display:flex;align-items:baseline;justify-content:flex-start;
+    gap:8px;margin-top:0;padding-right:0;font-size:30px;line-height:1.05;width:100%;}
+  .v3banner .hchg{font-size:15px;line-height:1.25;margin-left:0;text-align:left;padding-top:0;min-width:0;}
+  .v3striprow{display:none;}
+  .v3biasinline{position:static!important;grid-column:2!important;grid-row:1 / 3!important;
+    justify-self:end!important;align-self:stretch!important;margin-right:8px!important;}
+  .v3biasv2{height:100%!important;flex-direction:column!important;align-items:center!important;
+    justify-content:space-between!important;gap:2px!important;}
+  .v3biasword{font-size:18px!important;line-height:1.05!important;}
+  .v3biasicon{margin-top:0!important;line-height:0!important;}
+  .v3biasinline .bias-ico{width:48px!important;height:48px!important;}
+  .v3condside{margin-top:-2px;}
+}
 .v3banntop{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;}
 .v3biasinline{position:absolute;top:5px;right:2px;}
 .v3biasinline.bull{color:#2ebd85;}.v3biasinline.bear{color:#f6465d;}.v3biasinline.neu{color:#e3a008;}
@@ -1135,6 +1239,10 @@ _CSS = """
 .v3right{display:flex;flex-direction:column;gap:14px;}
 .v3right .dcard{margin-bottom:0;}
 .v3right .mc-cond{flex:1;}
+.v3condside .mc-desktop{width:100%;}
+.v3condside .mc-collapse{width:100%;}
+.mc-collapse{display:none;}
+.mc-collapse>summary{display:none;}
 .mc-bias .biasrow{display:flex;align-items:center;gap:12px;}
 .mc-bias .biasrow.bull{color:#2ebd85;}.mc-bias .biasrow.bear{color:#f6465d;}.mc-bias .biasrow.neu{color:#e3a008;}
 .mc-bias .biasval{font-size:22px;font-weight:800;line-height:1;color:inherit;}
@@ -1172,6 +1280,36 @@ _CSS = """
 .mc-cond .tone-cor-off{color:#4493f8;}
 .mc-cond .tone-cor-inverse{color:#a855f7;}
 @media(max-width:1100px){.mc-cond .mcsteps{flex-direction:column;gap:18px;}.mc-cond .mcseg{padding-right:0;}.mc-cond .mcline{display:none;}}
+@media(max-width:700px){
+  .mc-desktop{display:none!important;}
+  .mc-collapse{position:relative;display:block;}
+  .mc-collapse>summary{position:absolute;top:12px;right:12px;z-index:3;display:flex;align-items:center;justify-content:flex-end;
+    min-height:16px;list-style:none;color:#8b94a0;cursor:pointer;}
+  .mc-collapse>summary::-webkit-details-marker{display:none;}
+  .mc-collapse>summary .down-arrow-svg{width:13px;height:13px;display:block;}
+  .mc-collapse>summary .mc-summary-label{display:none;}
+  .mc-collapse[open]>summary .down-arrow-svg{transform:rotate(180deg);}
+  .mc-collapse:not([open]){border:1px solid rgba(139,92,246,.38);border-radius:10px;background:#13101e;
+    min-height:42px;margin-bottom:12px;box-shadow:0 0 0 1px rgba(124,58,237,.06),0 0 22px rgba(124,58,237,.15);}
+  .mc-collapse:not([open]) .mc-cond{display:none!important;}
+  .mc-collapse:not([open])>summary{position:static;min-height:40px;padding:12px 14px;justify-content:space-between;}
+  .mc-collapse:not([open])>summary .mc-summary-label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:#8b94a0;line-height:1;}
+  .mt-detail .psec-desktop-copy{display:none!important;}
+  .mt-detail .psec-mobile-collapse{display:block;margin:0 0 12px 0;}
+  .mt-detail .psec-mobile-collapse>summary{min-height:24px;padding:0;display:flex;align-items:center;
+    justify-content:space-between;list-style:none;color:#8b94a0;cursor:pointer;}
+  .mt-detail .psec-mobile-collapse>summary::-webkit-details-marker{display:none;}
+  .mt-detail .psec-mobile-collapse>summary .mc-summary-label{display:block;font-size:10.5px;font-weight:700;letter-spacing:.08em;
+    text-transform:uppercase;color:#8b94a0;line-height:1;}
+  .mt-detail .psec-mobile-collapse>summary .down-arrow-svg{width:13px;height:13px;display:block;}
+  .mt-detail .psec-mobile-collapse[open]>summary .down-arrow-svg{transform:rotate(180deg);}
+  .mt-detail .psec-mobile-collapse:not([open]) .psec{display:none!important;}
+  .mt-detail .psec-mobile-collapse[open] .psec{margin:0!important;border:0!important;background:transparent!important;box-shadow:none!important;}
+  .mt-detail .psec-mobile-collapse[open] .psecic,
+  .mt-detail .psec-mobile-collapse[open] .psechd{display:none!important;}
+  .mt-detail .psec-mobile-collapse[open] .psecbody{width:100%!important;}
+}
 .mcnote{font-size:13px;color:#ffffff;margin-top:14px;line-height:1.5;}
 .mcchips{display:flex;gap:20px;}
 .mclab{font-size:11px;color:#8b94a0;letter-spacing:.07em;margin-bottom:6px;}
@@ -1353,6 +1491,51 @@ _CSS = """
 .dvnote{color:#9aa3ae;}
 .dvsplit{display:flex;flex-direction:column;}
 .dvsummary{border-top:1px solid #2a2f37;margin-top:8px;padding-top:8px;font-size:11.5px;line-height:1.5;color:#dfe3e8;font-weight:500;}
+.mobile-trades{display:none;}
+@media(max-width:700px){
+  .desktop-patterns{display:none!important;}
+  .mobile-trades{display:block;margin:6px 0 12px;}
+  .mt-head{display:none;}
+  .mt-head h3{margin:0;color:#f2f4f8;font-size:20px;line-height:1.15;font-weight:820;letter-spacing:0;}
+  .mt-head span{color:#a855f7;font-size:14px;font-weight:780;}
+  .mt-setup{border:1px solid rgba(139,92,246,.38);border-radius:14px;background:rgba(10,18,28,.58);
+    margin:0 0 12px;overflow:hidden;box-shadow:0 0 0 1px rgba(124,58,237,.06),0 0 22px rgba(124,58,237,.15),inset 0 1px 0 rgba(255,255,255,.035);}
+  .mt-setup.long[open]{border-color:rgba(14,203,129,.58);box-shadow:0 0 0 1px rgba(14,203,129,.10),0 0 24px rgba(14,203,129,.18),inset 0 1px 0 rgba(255,255,255,.035);}
+  .mt-setup.short[open]{border-color:rgba(246,70,93,.58);box-shadow:0 0 0 1px rgba(246,70,93,.10),0 0 24px rgba(246,70,93,.18),inset 0 1px 0 rgba(255,255,255,.035);}
+  .mt-setup summary{list-style:none;display:grid;grid-template-columns:54px minmax(0,1fr);gap:10px;
+    align-items:center;padding:10px 11px;cursor:pointer;min-height:78px;}
+  .mt-setup summary::-webkit-details-marker{display:none;}
+  .mt-sketch{width:54px;height:44px;stroke:#eef1f5;stroke-width:2.25;stroke-linecap:round;stroke-linejoin:round;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.55));}
+  .mt-sketch .dash{stroke:#9aa3ae;stroke-width:1.5;stroke-dasharray:7 7;}
+  .mt-main{min-width:0;display:flex;flex-direction:column;gap:7px;overflow:hidden;}
+  .mt-titleline{display:grid;grid-template-columns:minmax(0,auto) auto 1fr auto;align-items:center;gap:8px;min-width:0;}
+  .mt-name{min-width:0;color:#e6e8eb;font-size:14.5px;font-weight:620;line-height:1.18;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mt-dir{flex:0 0 auto;border:1px solid currentColor;border-radius:5px;padding:2px 6px;font-size:10.5px;
+    line-height:1.1;font-weight:760;letter-spacing:.02em;color:#0ecb81;background:rgba(14,203,129,.045);}
+  .mt-setup.short .mt-dir{color:#f6465d;background:rgba(246,70,93,.06);}
+  .mt-facts{display:grid;grid-template-columns:62px minmax(0,1fr) 26px;gap:9px;min-width:0;align-items:end;}
+  .mt-fact{min-width:0;border-left:1px solid rgba(139,148,158,.20);padding-left:8px;}
+  .mt-fact:first-child{border-left:0;padding-left:0;}
+  .mt-fact em{display:block;font-style:normal;color:#8b94a0;font-size:9.5px;font-weight:680;line-height:1.15;text-transform:uppercase;letter-spacing:.04em;}
+  .mt-fact strong{display:block;color:#dfe3e8;font-size:12.5px;font-weight:650;line-height:1.18;margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mt-setup.long .mt-entry strong{color:#0ecb81;}
+  .mt-setup.short .mt-entry strong{color:#f6465d;}
+  .mt-grade{justify-self:end;display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:18px;
+    border:1px solid rgba(255,255,255,.72);border-radius:5px;color:#f2f4f8;background:transparent;
+    font-size:10px;font-weight:760;line-height:1;}
+  .mt-grade-empty{visibility:hidden;}
+  .mt-side{display:flex;align-items:flex-end;justify-content:flex-end;height:100%;min-height:32px;}
+  .mt-caret{width:14px;height:14px;color:#cdd3da;display:flex;align-items:center;justify-content:center;align-self:flex-end;
+    justify-self:end;margin-bottom:0;transition:transform .18s ease;opacity:.9;}
+  .mt-caret .down-arrow-svg{width:14px;height:14px;display:block;}
+  .mt-setup[open] .mt-caret{transform:rotate(180deg);}
+  .mt-detail{border-top:1px solid rgba(139,148,158,.18);padding:12px;background:rgba(7,12,19,.36);}
+  .mt-detail .psummary{margin-bottom:12px;}
+  .mt-detail .pentry{margin-top:0;}
+  .mt-detail .psec{padding:10px 0;border-top:1px solid rgba(139,148,158,.14);}
+  .mt-detail .psec:first-child{border-top:0;}
+}
 """
 
 
@@ -1758,6 +1941,256 @@ def _pattern_entry_rows(entry):
     return f'<div class="pentry">{hd}{out}</div>'
 
 
+def _rr_compact(rr):
+    txt = (rr or "").replace("~", "").strip()
+    if not txt or txt.upper() == "N/A":
+        return "N/A"
+    m = re.search(r"1\s*:\s*([0-9]+(?:\.[0-9]+)?)", txt)
+    return f"1:{m.group(1)}" if m else _e(txt)
+
+
+def _top_rr(entry):
+    entry = entry or {}
+    for key in ("t2", "t1"):
+        rr = (entry.get(key) or {}).get("rr")
+        if rr and rr.upper() != "N/A":
+            return _rr_compact(rr)
+    return "N/A"
+
+
+def _setup_name(name):
+    low = (name or "").lower()
+    explicit_patterns = (
+        ("inverse head", "Inverse H&S"),
+        ("head and shoulders", "Head & Shoulders"),
+        ("head-and-shoulders", "Head & Shoulders"),
+        ("bull flag", "Bull Flag"),
+        ("bear flag", "Bear Flag"),
+        ("double bottom", "Double Bottom"),
+        ("double top", "Double Top"),
+        ("triple bottom", "Triple Bottom"),
+        ("triple top", "Triple Top"),
+        ("falling wedge", "Falling Wedge"),
+        ("rising wedge", "Rising Wedge"),
+        ("wedge", "Wedge"),
+        ("ascending triangle", "Ascending Triangle"),
+        ("descending triangle", "Descending Triangle"),
+        ("symmetrical triangle", "Sym Triangle"),
+        ("triangle", "Triangle"),
+        ("rectangle", "Rectangle"),
+        ("range", "Range"),
+        ("pennant", "Pennant"),
+    )
+    contextual_setups = (
+        ("failed breakdown", "Failed Breakdown"),
+        ("failed breakout", "Failed Breakout"),
+        ("breakout retest", "Breakout Retest"),
+        ("breakdown retest", "Breakdown Retest"),
+        ("breakout", "Breakout"),
+        ("breakdown", "Breakdown"),
+        ("retest", "Retest"),
+        ("pullback", "Pullback"),
+        ("support", "Support Test"),
+        ("resistance", "Resistance Test"),
+        ("base", "Base"),
+        ("reversal", "Reversal"),
+        ("continuation", "Continuation"),
+    )
+    for needle, label in explicit_patterns + contextual_setups:
+        if needle in low:
+            return label
+    return (name or "Trade Setup").split("(")[0].split("/")[0].strip()[:28]
+
+
+def _entry_label(entry):
+    zone = (entry or {}).get("zone") or {}
+    label = zone.get("label")
+    if label:
+        if "no valid" in label.lower() or len(label) > 24:
+            prices = re.findall(r"\$?\d+(?:\.\d+)?", label)
+            if len(prices) >= 2:
+                return f"${prices[0].lstrip('$')}-${prices[1].lstrip('$')}"
+            if prices:
+                return f"${prices[0].lstrip('$')}"
+            return "No entry"
+        return label.replace(" – ", "-").replace(" — ", "-")
+    low, high = zone.get("low"), zone.get("high")
+    if low is not None and high is not None:
+        return f"{_money(low)}-{_money(high)}"
+    if low is not None:
+        return _money(low)
+    if high is not None:
+        return _money(high)
+    return "No entry"
+
+
+def _setup_sketch(name):
+    low = (name or "").lower()
+    if "inverse head" in low:
+        lines = (
+            '<path d="M8 18 C18 30 24 30 34 18 C40 44 58 48 64 18 C74 30 82 30 92 18" />'
+            '<path d="M10 18 H92" class="dash" />'
+        )
+    elif "head" in low and "shoulder" in low:
+        lines = (
+            '<path d="M8 54 C18 38 26 38 34 54 C42 16 56 10 64 54 C74 38 84 38 94 54" />'
+            '<path d="M10 54 H92" class="dash" />'
+        )
+    elif "triple bottom" in low:
+        lines = (
+            '<path d="M8 20 L20 56 L34 24 L48 56 L62 24 L76 56 L92 20" />'
+            '<path d="M14 56 H82" class="dash" />'
+        )
+    elif "triple top" in low:
+        lines = (
+            '<path d="M8 56 L20 20 L34 52 L48 20 L62 52 L76 20 L92 56" />'
+            '<path d="M14 20 H82" class="dash" />'
+        )
+    elif "double top" in low:
+        lines = (
+            '<path d="M10 56 L30 18 L50 54 L70 18 L90 56" />'
+            '<path d="M22 18 H78" class="dash" />'
+        )
+    elif "wedge" in low:
+        lines = (
+            '<path d="M8 40 L22 12 L92 48" />'
+            '<path d="M8 40 L86 24" />'
+            '<path d="M27 20 L27 43 M48 27 L48 39 M68 30 L68 35" />'
+        )
+    elif "ascending triangle" in low:
+        lines = (
+            '<path d="M10 18 H92" class="dash" />'
+            '<path d="M12 60 L92 18" />'
+            '<path d="M20 52 L34 18 L48 42 L62 18 L76 32" />'
+        )
+    elif "descending triangle" in low:
+        lines = (
+            '<path d="M10 58 H92" class="dash" />'
+            '<path d="M12 18 L92 58" />'
+            '<path d="M20 24 L34 58 L48 34 L62 58 L76 46" />'
+        )
+    elif "triangle" in low or "pennant" in low:
+        lines = (
+            '<path d="M10 18 L92 38 L10 58 Z" />'
+            '<path d="M22 24 L36 52 L50 31 L64 46 L78 36" />'
+        )
+    elif "rectangle" in low or "range" in low:
+        lines = (
+            '<path d="M12 20 H90 M12 56 H90" class="dash" />'
+            '<path d="M14 44 L28 22 L42 54 L56 24 L72 54 L88 30" />'
+        )
+    elif "bottom" in low:
+        lines = (
+            '<path d="M10 18 L28 58 L48 26 L66 58 L88 12" />'
+            '<path d="M12 28 H34 M40 58 H62 M70 22 H94" class="dash" />'
+        )
+    elif "flag" in low:
+        lines = (
+            '<path d="M18 60 L30 10" />'
+            '<path d="M30 14 L92 44 M26 35 L84 64 M26 35 L30 14 M84 64 L92 44" />'
+            '<path d="M37 50 L45 28 L54 48 L65 31 L75 55" />'
+        )
+    elif "failed breakdown" in low or "support" in low or "retest" in low:
+        lines = (
+            '<path d="M10 52 H92" class="dash" />'
+            '<path d="M12 22 L28 50 L45 28 L62 52 L80 36 L92 28" />'
+            '<path d="M54 52 L62 52 L62 44" />'
+        )
+    elif "failed breakout" in low or "resistance" in low:
+        lines = (
+            '<path d="M10 22 H92" class="dash" />'
+            '<path d="M12 52 L28 24 L45 48 L62 20 L80 36 L92 46" />'
+            '<path d="M54 22 L62 22 L62 30" />'
+        )
+    elif "pullback" in low:
+        lines = (
+            '<path d="M10 56 L28 40 L44 22 L58 34 L72 28 L92 12" />'
+            '<path d="M44 22 L58 34 L72 28" class="dash" />'
+        )
+    elif "breakout" in low:
+        lines = (
+            '<path d="M10 44 H58" class="dash" />'
+            '<path d="M14 54 L30 38 L46 48 L60 30 L78 20 L92 10" />'
+        )
+    elif "breakdown" in low:
+        lines = (
+            '<path d="M10 30 H58" class="dash" />'
+            '<path d="M14 20 L30 36 L46 26 L60 44 L78 54 L92 64" />'
+        )
+    elif "base" in low:
+        lines = (
+            '<path d="M12 56 H90" class="dash" />'
+            '<path d="M12 44 L28 56 L44 46 L60 56 L76 48 L90 54" />'
+        )
+    elif "reversal" in low:
+        lines = (
+            '<path d="M12 18 L28 36 L44 56 L60 42 L76 28 L92 18" />'
+            '<path d="M48 56 C58 38 72 24 92 18" class="dash" />'
+        )
+    elif "continuation" in low:
+        lines = (
+            '<path d="M10 56 L30 36 L48 22" />'
+            '<path d="M48 22 L66 34 L82 26" class="dash" />'
+            '<path d="M82 26 L94 14" />'
+        )
+    else:
+        lines = (
+            '<path d="M10 50 L28 36 L45 42 L62 22 L88 30" />'
+            '<path d="M12 58 H88" class="dash" />'
+        )
+    return f'<svg class="mt-sketch" viewBox="0 0 100 74" fill="none">{lines}</svg>'
+
+
+def _mobile_trade_setups(built):
+    if not built:
+        return ""
+    rows = ""
+    for i, b in enumerate(built[:3], 1):
+        p = b["raw"]
+        entry = p.get("entry") or {}
+        direction = (entry.get("direction") or "").upper()
+        dcls = "long" if direction == "LONG" else "short" if direction == "SHORT" else "neu"
+        grade = (p.get("grade") or "").strip().upper()[:1]
+        grade_html = f'<span class="mt-grade">{_e(grade)}</span>' if grade else '<span class="mt-grade mt-grade-empty"></span>'
+        details = (
+            (b.get("sum") or "")
+            + (b.get("note") or "")
+            + (b.get("entry") or "")
+            + (b.get("edge") or "")
+            + (b.get("opp") or "")
+            + (b.get("ev") or "")
+            + (b.get("conf") or "")
+            + (b.get("tools") or "")
+        )
+        rows += (
+            f'<details class="mt-setup {dcls}">'
+            '<summary>'
+            f'{_setup_sketch(p.get("name"))}'
+            '<span class="mt-main">'
+            '<span class="mt-titleline">'
+            f'<span class="mt-name">{_e(_setup_name(p.get("name")))}</span>'
+            f'<span class="mt-dir">{_e(direction)}</span>'
+            '<span></span>'
+            f'{grade_html}'
+            '</span>'
+            '<span class="mt-facts">'
+            f'<span class="mt-fact"><em>RR</em><strong>{_e(_top_rr(entry))}</strong></span>'
+            f'<span class="mt-fact mt-entry"><em>Entry</em><strong>{_e(_entry_label(entry))}</strong></span>'
+            f'<span class="mt-side"><span class="mt-caret">{_DOWN_ARROW_SVG}</span></span>'
+            '</span>'
+            '</span>'
+            '</summary>'
+            f'<div class="mt-detail">{details}</div>'
+            '</details>'
+        )
+    return (
+        '<div class="mobile-trades">'
+        '<div class="mt-head"><h3>Top Trade Setups</h3></div>'
+        f'{rows}'
+        '</div>'
+    )
+
+
 def _section(icon, label, body, iccls, pill=""):
     if not body:
         return ""
@@ -1765,6 +2198,45 @@ def _section(icon, label, body, iccls, pill=""):
         f'<div class="psec"><div class="psecic {iccls}">{icon}</div>'
         f'<div class="psecbody"><div class="psechd">{label}{pill}</div>{body}</div></div>'
     )
+
+
+def _section_plain(label, body, cls="", pill=""):
+    if not body:
+        return ""
+    return f'<div class="psec psec-plain {cls}"><div class="psecbody"><div class="psechd">{label}{pill}</div>{body}</div></div>'
+
+
+def _mobile_collapsible_section(label, section_html):
+    if not section_html:
+        return ""
+    return (
+        f'<div class="psec-desktop-copy">{section_html}</div>'
+        f'<details class="psec-mobile-collapse">'
+        f'<summary><span class="mc-summary-label">{_e(label)}</span>{_DOWN_ARROW_SVG}</summary>'
+        f'{section_html}'
+        '</details>'
+    )
+
+
+def _success_likelihood_note(candidate):
+    raw = (
+        candidate.get("success_likelihood")
+        or candidate.get("trade_success_likelihood")
+        or candidate.get("ai_confidence")
+        or candidate.get("success_probability")
+        or candidate.get("setup_confidence")
+    )
+    if raw is None:
+        return ""
+    if isinstance(raw, dict):
+        pct = raw.get("percent") or raw.get("probability") or raw.get("value")
+    else:
+        pct = raw
+    try:
+        pct_val = max(0, min(100, round(float(str(pct).replace("%", "").strip()))))
+    except (TypeError, ValueError):
+        return ""
+    return f'<li class="success-note">Estimated chance this reaches TP1 before invalidation: {pct_val}%.</li>'
 
 
 def _confluence(conf):
@@ -1782,132 +2254,208 @@ def _confluence(conf):
     return pill, body
 
 
-def _fallback_alert_suggestions(p):
-    entry = p.get("entry") or {}
-    zone = entry.get("zone") or {}
-    stop = entry.get("stop") or {}
-    suggestions = []
-    zlo = _num(zone.get("low"))
-    zhi = _num(zone.get("high"))
-    zlab = zone.get("label")
-    if zlo and zhi:
-        suggestions.append({
-            "label": "Entry zone touch",
-            "type": "Price enters zone",
-            "timeframe": "",
-            "condition": f"Alert when price trades into {zlab or (fmt_price(min(zlo, zhi)) + ' - ' + fmt_price(max(zlo, zhi)))}.",
-            "zone": {"low": min(zlo, zhi), "high": max(zlo, zhi)},
-            "note": "Entry-zone reminder from the AI trade location.",
-        })
-    subtitle = (zone.get("subtitle") or "").strip()
-    if subtitle:
-        suggestions.append({
-            "label": "Setup condition",
-            "type": "Condition reminder",
-            "timeframe": "",
-            "condition": subtitle,
-            "note": "The setup is conditional; use this as the alert you may want watched or edited.",
-        })
-    sval = _num(stop.get("value"))
-    if sval:
-        suggestions.append({
-            "label": "Invalidation",
-            "type": "Invalidation",
-            "timeframe": "",
-            "condition": f"Alert if price reaches invalidation near {fmt_price(sval)}.",
-            "level": sval,
-            "note": stop.get("note") or "Setup invalidation level.",
-        })
-    return suggestions[:3]
+_POSITIONING_TERMS = (
+    "funding", "open interest", "oi ", "oi-", "oi:", "order book", "order-book",
+    "depth", "spread", "liquidity", "liquidation", "cvd", "bid", "ask", "book",
+    "wall", "crowd", "crowded", "squeeze", "short covering", "deleverag",
+)
 
 
-def _pattern_alerts(p, symbol=None):
-    raw = p.get("alert_suggestions")
-    if raw is None:
-        raw = p.get("alerts")
-    suggestions = raw if isinstance(raw, list) else []
-    if not suggestions:
-        suggestions = _fallback_alert_suggestions(p)
-    rows = []
-    for item in suggestions[:3]:
-        if isinstance(item, str):
-            item = {"label": "Watch condition", "condition": item}
-        if not isinstance(item, dict):
+def _is_positioning_text(text):
+    low = f" {str(text or '').lower()} "
+    return any(term in low for term in _POSITIONING_TERMS)
+
+
+def _candidate_positioning_items(p):
+    raw = p.get("positioning_edge")
+    items = []
+    if isinstance(raw, dict):
+        for key in ("funding", "open_interest", "liquidity", "trade_implication", "implication"):
+            val = raw.get(key)
+            if val:
+                items.append(str(val))
+        warnings = raw.get("warnings")
+        if isinstance(warnings, list):
+            items.extend(str(w) for w in warnings if w)
+        elif warnings:
+            items.append(str(warnings))
+    elif isinstance(raw, list):
+        items.extend(str(x) for x in raw if x)
+    elif raw:
+        items.append(str(raw))
+
+    conf = p.get("confluence") or {}
+    if isinstance(conf, dict):
+        for key in ("checks", "warnings"):
+            for text in conf.get(key, []) or []:
+                if _is_positioning_text(text):
+                    items.append(str(text))
+    for text in p.get("evidence", []) or []:
+        if _is_positioning_text(text):
+            items.append(str(text))
+
+    out, seen = [], set()
+    for item in items:
+        item = item.strip()
+        if not item:
             continue
-        label = item.get("label") or item.get("type") or "Watch condition"
-        typ = item.get("type") or "AI suggestion"
-        tf = item.get("timeframe") or item.get("tf") or ""
-        condition = item.get("condition") or item.get("trigger") or item.get("note") or ""
-        note = item.get("note") or ""
-        if not condition:
+        norm = re.sub(r"\s+", " ", item.lower())
+        if norm in seen:
             continue
-        entry = p.get("entry") or {}
-        zone = entry.get("zone") or {}
-        stop = entry.get("stop") or {}
-        t1 = entry.get("t1") or {}
-        t2 = entry.get("t2") or {}
-        setup_snapshot = {
-            "pattern": p.get("name") or "",
-            "grade": (p.get("grade") or "").strip().upper()[:1],
-            "direction": entry.get("direction") or "",
-            "summary": p.get("summary") or "",
-            "entry_zone": {
-                "label": zone.get("label") or "",
-                "subtitle": zone.get("subtitle") or "",
-                "low": zone.get("low"),
-                "high": zone.get("high"),
-            },
-            "stop": {
-                "label": stop.get("label") or "",
-                "value": stop.get("value"),
-                "note": stop.get("note") or "",
-            },
-            "t1": {
-                "label": t1.get("label") or "",
-                "value": t1.get("value"),
-                "rr": t1.get("rr") or "",
-                "note": t1.get("note") or "",
-            },
-            "t2": {
-                "label": t2.get("label") or "",
-                "value": t2.get("value"),
-                "rr": t2.get("rr") or "",
-                "note": t2.get("note") or "",
-            },
-        }
-        rule = {
-            "symbol": symbol or "",
-            "pattern": p.get("name") or "",
-            "grade": (p.get("grade") or "").strip().upper()[:1],
-            "direction": ((p.get("entry") or {}).get("direction") or ""),
-            "label": label,
-            "type": typ,
-            "timeframe": tf,
-            "condition": condition,
-            "level": item.get("level"),
-            "zone": item.get("zone"),
-            "note": note,
-            "setup_snapshot": setup_snapshot,
-        }
-        meta = " · ".join(x for x in [typ, tf] if x)
-        rows.append(
-            '<div class="alertrow">'
-            '<div class="alertbody">'
-            f'<div class="alerttop"><span>{_e(label)}</span>{("<em>" + _e(meta) + "</em>") if meta else ""}</div>'
-            f'<div class="alertcond">{_hl_numbers(condition)}</div>'
-            + (f'<div class="alertnote">{_hl_numbers(note)}</div>' if note else "")
-            + "</div>"
-            f'<a class="alertbtn" href="?set_alert={_json_qs(rule)}">Set Alert</a>'
+        seen.add(norm)
+        out.append(item)
+    return out[:4]
+
+
+def _positioning_factor_label(text):
+    low = str(text or "").lower()
+    if "funding" in low:
+        return "Funding"
+    if "open interest" in low or re.search(r"\boi\b", low):
+        return "OI"
+    if any(k in low for k in ("order book", "order-book", "bid", "ask", "spread", "depth", "wall", "liquidity")):
+        return "Liquidity"
+    if "btc" in low or "correlation" in low:
+        return "Correlation"
+    return "Edge"
+
+
+def _positioning_verdict(text):
+    low = str(text or "").lower()
+    if re.match(r"^\s*(strengthens|weakens|mixed|neutral)\b", low):
+        return re.match(r"^\s*(strengthens|weakens|mixed|neutral)\b", low).group(1)
+    weak = any(k in low for k in (
+        "weakens", "cost", "reduces", "danger", "risk", "fail", "failed", "squeeze risk",
+        "not too tight", "moderate spread", "wide spread", "thin", "stall", "less reliable",
+    ))
+    strong = any(k in low for k in (
+        "strengthens", "supports", "supportive", "benefit", "adequate", "confirms",
+        "stronger", "helps", "receive", "follow through",
+    ))
+    if weak and strong:
+        return "mixed"
+    if weak:
+        return "weakens"
+    if strong:
+        return "strengthens"
+    return "mixed"
+
+
+def _positioning_display_text(text):
+    text = str(text or "").strip()
+    low = text.lower()
+    if "supportive for scalps" in low:
+        return re.sub(
+            r"supportive for scalps\.?",
+            "may cushion a tight long entry; not proof scalpers are active.",
+            text,
+            flags=re.I,
+        )
+    if "bid-side depth" in low and "stronger than ask" in low:
+        return text.rstrip(".") + "; useful only if bids stay in place."
+    return text
+
+
+def _positioning_consequence_text(label, text):
+    text = _positioning_display_text(text)
+    verdict = ""
+    match = re.match(r"^(strengthens|weakens|mixed|neutral)\b\s*[:—-]?\s*(.*)$", text, re.I)
+    if match:
+        verdict = match.group(1).lower()
+        text = match.group(2).strip() or text
+    cleaned = text
+    replacements = {
+        "OI": "open interest",
+        "positive funding makes shorts slightly paid against": "longs are paying shorts, so holding a short is slightly easier",
+        "positive funding charges longs to hold": "longs are paying funding, so holding a long is slightly less attractive",
+        "negative funding pays long holds": "shorts are paying longs, so holding a long is slightly easier",
+        "negative funding penalizes shorts on hold": "shorts are paying funding, so holding a short is slightly less attractive",
+        "positive funding slightly offsets short holding costs": "longs are paying shorts, so funding slightly helps the short",
+        "open interest down; bounce likely covering not new longs": "the bounce may be short-covering, so take profits quickly if price stalls",
+        "open interest falling can reduce breakdown follow-through": "falling participation can make the breakdown weaker, so do not overstay it",
+        "spot+perp": "spot and perp",
+        "deltas negative": "selling pressure",
+        "deltas positive": "buying pressure",
+        "tight spread enables tight invalidation": "orders should execute close to plan, so the tight stop is more realistic",
+        "tight spread supports tight stop execution": "orders should execute close to plan, so the tight stop is more realistic",
+        "tight spread helps breakout execution": "orders should execute close to plan if the breakout triggers",
+        "tight spread helps quick invalidation": "orders should execute close to plan if the trade is wrong",
+        "take trigger": "take the trigger",
+        "take profits fast": "take profits quickly",
+    }
+    for old, new in replacements.items():
+        cleaned = re.sub(rf"\b{re.escape(old)}\b", new, cleaned, flags=re.I)
+    low_cleaned = cleaned.lower()
+    if "holding a short is slightly easier" in low_cleaned or "funding slightly helps the short" in low_cleaned:
+        verdict = "strengthens"
+    elif "holding a long is slightly less attractive" in low_cleaned or "holding a short is slightly less attractive" in low_cleaned:
+        verdict = "weakens"
+    cleaned = re.sub(r"^(this\s+)?(strengthens|weakens)\s+(the\s+)?idea\s*:\s*", "", cleaned, flags=re.I)
+    cleaned = re.sub(r"^(mixed|neutral)\s+read\s*:\s*", "", cleaned, flags=re.I)
+    return verdict, cleaned
+
+
+def _candidate_positioning_edge(p):
+    raw = p.get("positioning_edge")
+    if isinstance(raw, dict):
+        rows = []
+
+        def edge_row(label, value, cls=""):
+            if not value:
+                return ""
+            verdict, text = _positioning_consequence_text(label, value)
+            vchip = f'<span class="peverdict {verdict}">{_e(verdict)}</span>' if verdict else ""
+            return (
+                f'<div class="perow {cls}">'
+                f'<div class="perlab">{_e(label)}</div>'
+                f'<div class="pertext">{vchip}{_hl_numbers(text)}</div>'
+                "</div>"
+            )
+
+        rows.append(edge_row("Net", raw.get("trade_implication") or raw.get("implication"), "pe-impact"))
+        rows.append(edge_row("Funding", raw.get("funding")))
+        rows.append(edge_row("Funding Timing", raw.get("funding_timing") or raw.get("funding_countdown")))
+        rows.append(edge_row("Open Interest", raw.get("open_interest")))
+        rows.append(edge_row("Liquidations", raw.get("liquidations") or raw.get("liquidation_history") or "Mixed: not available yet; do not use as edge."))
+        rows.append(edge_row("Spot/Perp CVD", raw.get("spot_perp_cvd") or raw.get("cvd") or "Mixed: not available yet; do not use as edge."))
+        rows.append(edge_row("Liquidity", raw.get("liquidity")))
+        warnings = raw.get("warnings")
+        if isinstance(warnings, list):
+            warn_body = "".join(f"<li>{_hl_numbers(w)}</li>" for w in warnings if w)
+            if warn_body:
+                rows.append(
+                    '<div class="perow">'
+                    '<div class="perlab">Watch-outs</div>'
+                    '<div class="pertext"><ul class="plist pe-list">' + warn_body + "</ul></div>"
+                    "</div>"
+                )
+        elif warnings:
+            rows.append(edge_row("Watch-outs", str(warnings)))
+        body = "".join(rows)
+        if body:
+            return _section_plain("Positioning Edge", f'<div class="pe-detail">{body}</div>', "positioning-edge-section")
+
+    items = _candidate_positioning_items(p)
+    if not items:
+        return ""
+    rows = ""
+    for item in items:
+        verdict, item = _positioning_consequence_text("", item)
+        verdict = verdict or _positioning_verdict(item)
+        label = _positioning_factor_label(item)
+        rows += (
+            '<div class="perow">'
+            f'<div class="perlab">{_e(label)}</div>'
+            f'<div class="pertext"><span class="peverdict {verdict}">{_e(verdict)}</span>{_hl_numbers(item)}</div>'
             "</div>"
         )
-    if not rows:
-        return ""
-    return _section(
-        _IC_OPP,
-        "Suggested Alerts",
-        '<div class="alertwrap">' + "".join(rows) + "</div>",
-        "ic-alert",
+    rows += (
+        '<div class="perow"><div class="perlab">Liquidations</div>'
+        '<div class="pertext"><span class="peverdict mixed">mixed</span>not available yet; do not use as edge.</div></div>'
+        '<div class="perow"><div class="perlab">Spot/Perp CVD</div>'
+        '<div class="pertext"><span class="peverdict mixed">mixed</span>not available yet; do not use as edge.</div></div>'
     )
+    return _section_plain("Positioning Edge", f'<div class="pe-detail">{rows}</div>', "positioning-edge-section")
 
 
 def _pattern_cards(cands, current=None, symbol=None):
@@ -1970,30 +2518,37 @@ def _pattern_cards(cands, current=None, symbol=None):
         entryblock = _pattern_entry(p.get("entry"), current, symbol)
         ev = "".join(f"<li>{_hl_numbers(x)}</li>" for x in p.get("evidence", []))
         miss = "".join(f"<li>{_hl_numbers(x)}</li>" for x in p.get("missing", []))
+        note_body = miss + _success_likelihood_note(p)
         cpill, cbody = _confluence(p.get("confluence"))
+        ev_section = _section(_IC_EV, "Evidence", f'<ul class="plist">{ev}</ul>' if ev else "", "ic-ev")
+        conf_section = _section(_IC_CONF, "Confluence", cbody, "ic-conf", cpill)
         tools = (p.get("entry") or {}).get("tools")
         toolsfoot = (
             f'<div class="ptools"><span class="ptlab">Tools used:</span> {_e(tools)}</div>'
             if tools else ""
         )
         built.append({
+            "raw": p,
             "head": head,
             "sum": summary,
             "entry": entryblock,
-            "alerts": _pattern_alerts(p, symbol),
+            "edge": _candidate_positioning_edge(p),
             "opp": _section(_IC_OPP, "Opportunity Window", _opportunity(p.get("opportunity")), "ic-opp"),
-            "ev": _section(_IC_EV, "Evidence", f'<ul class="plist">{ev}</ul>' if ev else "", "ic-ev"),
-            "note": _section(_IC_NOTE, "Note", f'<ul class="plist miss">{miss}</ul>' if miss else "", "ic-note"),
-            "conf": _section(_IC_CONF, "Confluence", cbody, "ic-conf", cpill),
+            "ev": _mobile_collapsible_section("Evidence", ev_section),
+            "note": _section_plain("Note", f'<ul class="plist miss">{note_body}</ul>' if note_body else "", "note-section"),
+            "conf": _mobile_collapsible_section("Confluence", conf_section),
             "tools": toolsfoot,
         })
 
     # One subgrid row per slot. Fixed slots first, then any optional section that
     # appears in at least one card (so empty rows don't leave gaps). Tools last so
     # it pins to the bottom of every card.
-    fixed = [("head", "pc-head"), ("sum", "pc-sum"), ("entry", "pc-entry")]
-    optional = [("alerts", "pc-alerts"), ("opp", "pc-opp"), ("ev", "pc-ev"),
-                ("note", "pc-note"), ("conf", "pc-conf"), ("tools", "pc-tools")]
+    fixed = [("head", "pc-head"), ("sum", "pc-sum")]
+    if any(b["note"] for b in built):
+        fixed.append(("note", "pc-note"))
+    fixed.append(("entry", "pc-entry"))
+    optional = [("edge", "pc-edge"), ("opp", "pc-opp"), ("ev", "pc-ev"),
+                ("conf", "pc-conf"), ("tools", "pc-tools")]
     slots = fixed + [s for s in optional if any(b[s[0]] for b in built)]
     nrows = len(slots)
 
@@ -2005,9 +2560,13 @@ def _pattern_cards(cands, current=None, symbol=None):
     # Adapt the grid to the number of cards so 2 patterns aren't left in a 3-up row.
     grid = "drow3" if len(cands) >= 3 else "drow2" if len(cands) == 2 else "dstack"
     rows_style = f"grid-template-rows:repeat({nrows},auto);" if grid in ("drow2", "drow3") else ""
+    mobile = _mobile_trade_setups(built)
     return (
+        f'{mobile}'
+        '<div class="desktop-patterns">'
         '<div class="drowlab">&nbsp;</div>'
         f'<div class="{grid}" style="{rows_style}">{cells}</div>'
+        '</div>'
     )
 
 
@@ -2102,7 +2661,7 @@ def _dhead_top(d, q):
     banner = (
         '<div class="v3banner">'
         + bias_inline
-        + f'<div class="hsym">{_e(d.get("symbol"))} <span class="hperp">{_e(sub)}</span></div>'
+        + f'<div class="hsym">{_e(d.get("symbol"))}<span class="mobilelive">{_live_badge()}</span> <span class="hperp">{_e(sub)}</span></div>'
         + f'<div class="hprice">{_e(price)} <span class="{chg_cls} hchg">{_e(chg_str)}</span></div>'
         + "</div>"
     )
