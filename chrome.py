@@ -349,10 +349,10 @@ def inject_background():
 _NAV = [
     ("pages/0_Scanner.py", "Scanner"),
     ("pages/1_Trade_Setup.py", "Trade Setup"),
-    ("pages/2_Alerts.py", "Alerts"),
     ("pages/2_Watch_List.py", "Watch List"),
+    ("pages/4_Live_Trades.py", "Live Trades"),
     ("pages/2_Position_Size_Calculator.py", "Calculator"),
-    ("pages/3_Trade_Analytics.py", "Analytics"),
+    ("pages/5_Tracker.py", "Tracking"),
 ]
 
 
@@ -409,15 +409,15 @@ def _mobile_nav_html(word1, word2):
 
 def _mobile_footer_html(word1, word2):
     current = f"{word1} {word2}".strip().lower()
-    trade_active = "active" if "trade setup" in current else ""
+    setup_active = "active" if "trade setup" in current else ""
     calc_active = "active" if "calculator" in current else ""
     watch_active = "active" if "watch list" in current else ""
-    alerts_active = "active" if "alerts" in current else ""
-    analytics_active = "active" if "analytics" in current else ""
+    trades_active = "active" if "live trades" in current else ""
+    tracking_active = "active" if "tracker" in current or "tracking" in current else ""
     trade_icon = _inline_icon("target.svg")
     calc_icon = _inline_icon("balance.svg")
-    alerts_icon = _inline_icon("alert-play.svg")
-    analytics_icon = _inline_icon("data-analytics.svg")
+    trades_icon = _inline_icon("live-stream.svg")
+    tracking_icon = _inline_icon("data-analytics.svg")
     watch_icon = (
         '<svg viewBox="0 0 24 24" aria-hidden="true">'
         '<path d="M4 5h16v3H4z"/>'
@@ -436,10 +436,10 @@ def _mobile_footer_html(word1, word2):
         )
     return (
         '<nav class="mobile-footer-nav" aria-label="Mobile navigation">'
-        + item(trade_active, "/Trade_Setup", trade_icon, "Setup")
+        + item(setup_active, "/Trade_Setup", trade_icon, "Setup")
         + item(watch_active, "/Watch_List", watch_icon, "Watchlist")
-        + item(alerts_active, "/Alerts", alerts_icon, "Alerts")
+        + item(trades_active, "/Live_Trades", trades_icon, "Trades")
         + item(calc_active, "/Position_Size_Calculator", calc_icon, "Calc")
-        + item(analytics_active, "/Trade_Analytics", analytics_icon, "Analytics")
+        + item(tracking_active, "/Tracker", tracking_icon, "Tracking")
         + '</nav>'
     )
