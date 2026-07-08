@@ -240,7 +240,7 @@ st.markdown(
   .xi-compact-status{grid-column:1 / 2;grid-row:2 / 3;grid-template-columns:30px minmax(0,1fr);gap:8px;border-left:0;padding-left:43px;margin-top:-2px;}
   .xi-compact-status-icon{width:28px;height:28px;}
   .xi-compact-status-icon svg{width:18px;height:18px;}
-  .xi-compact-status span{display:none;}
+  .xi-compact-status span{display:block;font-size:8px;margin-bottom:2px;}
   .xi-compact-status strong{display:inline;color:#f1f4fb;font-size:12px;margin-top:0;margin-right:5px;}
   .xi-compact-status b{display:inline;font-size:16px;margin-top:0;}
   .xi-compact-exit{grid-column:2 / 3;grid-row:1 / 3;border-left:1px solid rgba(111,122,149,.2);padding-left:10px;align-self:center;}
@@ -251,20 +251,19 @@ st.markdown(
   .xi-compact-exit strong{font-size:10px;margin-top:5px;white-space:normal;}
   .xi-compact-exit em{display:none;}
   .xi-compact-chevron{grid-column:3 / 4;grid-row:1 / 3;}
-  .xi-compact-decision-row{grid-template-columns:78px minmax(0,1fr);gap:8px;padding:10px 12px;}
-  .xi-compact-decision-main{border-right:1px solid rgba(243,180,65,.22);padding-right:8px;}
+  .xi-compact-decision-row{grid-template-columns:68px minmax(0,1fr) 24px minmax(0,1fr);gap:6px;padding:9px 10px;}
+  .xi-compact-decision-main{border-right:1px solid rgba(243,180,65,.22);padding-right:7px;}
   .xi-compact-decision-main span{font-size:9px;}
-  .xi-compact-decision-main b{font-size:28px;margin-top:5px;}
-  .xi-compact-wait-copy{grid-column:2 / 3;font-size:11px;margin-bottom:7px;}
+  .xi-compact-decision-main b{font-size:24px;margin-top:5px;}
+  .xi-compact-wait-copy{display:none;}
   .xi-compact-sell-stack{grid-column:2 / 3;min-width:0;}
-  .xi-compact-gate{grid-template-columns:28px minmax(0,1fr);gap:7px;padding:8px 9px;}
-  .xi-compact-gate-icon{width:27px;height:27px;}
-  .xi-compact-gate-icon svg{width:18px;height:18px;}
-  .xi-compact-gate b{font-size:15px;}
-  .xi-compact-gate span{font-size:11px;}
-  .xi-compact-or{display:none;}
+  .xi-compact-gate{grid-template-columns:minmax(0,1fr);gap:0;padding:7px 8px;}
+  .xi-compact-gate-icon{display:none;}
+  .xi-compact-gate b{font-size:12px;}
+  .xi-compact-gate span{font-size:10px;}
+  .xi-compact-or{display:flex;width:24px;height:24px;font-size:8px;}
   .xi-compact-gate.sell{grid-column:2 / 3;}
-  .xi-compact-gate.exit{grid-column:2 / 3;}
+  .xi-compact-gate.exit{grid-column:4 / 5;}
   .xi-top{grid-template-columns:minmax(0,1fr) auto;gap:9px;padding:16px 14px 10px;}
   .xi-symbol{font-size:24px;}
   .xi-valid{grid-column:2;grid-row:1;padding:7px 10px;font-size:10px;}
