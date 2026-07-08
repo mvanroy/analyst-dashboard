@@ -255,11 +255,11 @@ st.markdown(
   .xi-compact-token{width:34px;height:34px;font-size:11px;}
   .xi-compact-symbol{font-size:21px;}
   .xi-compact-meta{font-size:12px;display:flex;align-items:center;gap:6px;min-width:0;}
-  .xi-inline-status{grid-column:2 / 3;grid-row:1 / 2;display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0;color:#f1f4fb;align-self:start;margin-top:1px;white-space:nowrap;}
+  .xi-inline-status{grid-column:2 / 3;grid-row:1 / 2;display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0;color:#f1f4fb;align-self:start;margin-top:0;white-space:nowrap;line-height:1;}
   .xi-inline-status svg{width:20px;height:20px;fill:currentColor;color:#ff4d66;flex:0 0 auto;}
   .xi-inline-status.winning svg{color:#18d486;}
-  .xi-inline-status strong{font-size:15px;font-weight:850;color:#f1f4fb;}
-  .xi-inline-status b{font-size:18px;font-weight:930;color:#ff465f;}
+  .xi-inline-status strong{font-size:15px;font-weight:850;color:#f1f4fb;line-height:1;}
+  .xi-inline-status b{font-size:18px;font-weight:930;color:#ff465f;line-height:1;}
   .xi-compact-status{display:none;}
   .xi-compact-exit{grid-column:1 / 3;grid-row:2 / 3;grid-template-columns:auto minmax(0,1fr);gap:8px;border-left:1px solid rgba(111,122,149,.2);padding-left:43px;margin-top:2px;}
   .xi-compact-exit-score{gap:4px;}
