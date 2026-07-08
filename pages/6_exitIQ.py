@@ -6,6 +6,7 @@ not touch the existing data-driven Exit IQ page.
 from __future__ import annotations
 
 import html
+import os
 
 import streamlit as st
 
@@ -22,6 +23,7 @@ def _e(value) -> str:
 
 POSITION = {
     "symbol": "ALTUSDT",
+    "base_symbol": "ALT",
     "venue": "Bybit Perp",
     "side": "Long",
     "leverage": "10x",
@@ -97,13 +99,29 @@ def _status_icon(kind: str = "down") -> str:
     return "<svg viewBox='0 0 24 24'><path d='M5 7h4l4.5 5.5L16 10h3v2h-2.2l-3.3 4L8 9H5z'/><path d='M16 15h4v4h-2v-1.6l-4.7-4.7 1.4-1.4 4.7 4.7H16z'/></svg>"
 
 
+def _asset_svg(filename: str) -> str:
+    try:
+        with open(os.path.join(chrome.ASSETS_DIR, filename), "r") as f:
+            svg = f.read().strip()
+    except OSError:
+        return ""
+    svg = svg.replace("<svg ", '<svg aria-hidden="true" focusable="false" ')
+    svg = svg.replace("<path ", '<path fill="currentColor" ')
+    return svg
+
+
+def _position_status_icon(status: str) -> str:
+    filename = "status-winning.svg" if str(status).lower() == "winning" else "status-losing.svg"
+    return _asset_svg(filename)
+
+
 st.markdown(
     "<style>"
     + chrome._PAGE_BG_CSS.replace("<style>", "").replace("</style>", "")
     + """
 .st-key-brandrow{display:none!important;}
 .xi-shell{max-width:1160px;margin:-42px auto 0;padding:0 10px 18px;}
-.xi-card{position:relative;border:1px solid rgba(93,104,130,.42);border-radius:8px;background:
+.xi-card{position:relative;border:1px solid rgba(93,104,130,.42);border-radius:0;background:
   radial-gradient(900px 360px at 8% -10%,rgba(72,96,150,.18),transparent 58%),
   linear-gradient(145deg,rgba(9,15,31,.96),rgba(7,11,23,.92));box-shadow:0 18px 44px rgba(0,0,0,.25);overflow:hidden;}
 .xi-card summary{list-style:none;cursor:pointer;}
@@ -115,15 +133,15 @@ st.markdown(
 .xi-compact-top{display:grid;grid-template-columns:minmax(170px,.82fr) minmax(150px,.5fr) minmax(170px,.58fr) 24px;gap:14px;align-items:center;padding:16px 18px;border-bottom:1px solid rgba(86,100,138,.26);}
 .xi-compact-asset{min-width:0;}
 .xi-compact-identity{display:grid;grid-template-columns:42px minmax(0,1fr);gap:12px;align-items:center;min-width:0;}
-.xi-compact-token{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(165,174,196,.28);color:#f2f5fb;font-size:26px;font-weight:900;background:rgba(13,18,32,.72);}
+.xi-compact-token{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(165,174,196,.28);color:#f2f5fb;font-size:14px;font-weight:950;background:rgba(13,18,32,.72);line-height:1;}
 .xi-compact-symbol{display:flex;align-items:center;gap:8px;color:#f6f8fd;font-size:28px;font-weight:950;line-height:1;letter-spacing:.02em;white-space:nowrap;}
-.xi-compact-star{color:#697184;font-size:16px;}
 .xi-compact-meta{margin-top:6px;color:#9ea7b8;font-size:12px;font-weight:740;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .xi-compact-meta b{color:#18d486;}
 .xi-compact-status{display:grid;grid-template-columns:42px minmax(0,1fr);gap:10px;align-items:center;min-width:0;border-left:1px solid rgba(111,122,149,.2);padding-left:14px;}
 .xi-compact-status-icon{width:38px;height:38px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#ff4d66;background:rgba(255,70,95,.12);}
+.xi-compact-status-icon.winning{color:#18d486;background:rgba(18,212,134,.12);}
 .xi-compact-status-icon svg{width:24px;height:24px;fill:currentColor;}
-.xi-compact-status span,.xi-compact-exit span,.xi-compact-decision-main span{display:block;color:#9ca5b6;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;}
+.xi-compact-decision-main span{display:block;color:#9ca5b6;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;}
 .xi-compact-status strong{display:block;color:#f1f4fb;font-size:16px;font-weight:850;margin-top:5px;}
 .xi-compact-status b{display:block;color:#ff465f;font-size:23px;font-weight:930;line-height:1;margin-top:4px;}
 .xi-compact-exit{border-left:1px solid rgba(111,122,149,.2);padding-left:18px;min-width:0;}
@@ -132,15 +150,15 @@ st.markdown(
 .xi-compact-exit-score small{color:#aeb6c6;font-size:17px;font-weight:850;}
 .xi-compact-exit strong{display:block;color:#ff5369;font-size:13px;font-weight:900;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:7px;}
 .xi-compact-exit em{display:block;color:#d8deeb;font-style:normal;font-size:12px;font-weight:760;line-height:1.25;margin-top:5px;}
-.xi-compact-decision-row{display:grid;grid-template-columns:minmax(100px,.34fr) minmax(0,1fr) 34px minmax(0,1fr);gap:12px;align-items:center;padding:13px 18px;background:linear-gradient(90deg,rgba(243,180,65,.11),rgba(10,14,30,.28));}
+.xi-compact-decision-row{display:grid;grid-template-columns:minmax(100px,.34fr) minmax(0,1fr) 34px minmax(0,1fr);gap:12px;align-items:center;padding:13px 18px;background:transparent;}
 .xi-compact-decision-main{min-width:0;border-right:1px solid rgba(243,180,65,.22);padding-right:12px;}
 .xi-compact-decision-main b{display:block;color:#f3b441;font-size:34px;font-weight:950;line-height:.95;margin-top:5px;letter-spacing:.02em;}
 .xi-compact-sell-stack{min-width:0;}
 .xi-compact-wait-copy{color:#d8ddea;font-size:13px;font-weight:760;line-height:1.25;margin-bottom:8px;}
-.xi-compact-gate{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;align-items:center;border:1px solid rgba(120,129,155,.34);border-radius:8px;background:rgba(15,20,38,.64);padding:9px 11px;min-width:0;}
+.xi-compact-gate{display:grid;grid-template-columns:36px minmax(0,1fr);gap:10px;align-items:center;border:1px solid rgba(120,129,155,.34);border-radius:0;background:rgba(15,20,38,.64);padding:9px 11px;min-width:0;}
 .xi-compact-gate-icon{width:32px;height:32px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:#ff4d66;background:rgba(255,70,95,.12);}
 .xi-compact-gate-icon svg{width:21px;height:21px;fill:currentColor;}
-.xi-compact-gate b{display:block;color:#ff4d66;font-size:18px;font-weight:900;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.xi-compact-gate b{display:block;color:#ff4d66;font-size:23px;font-weight:900;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .xi-compact-gate span{display:block;color:#f1f4fb;font-size:12px;font-weight:720;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .xi-compact-or{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#c2c8d6;color:#2b3040;font-size:10px;font-weight:900;letter-spacing:.08em;}
 .xi-compact-chevron{display:flex;align-items:center;justify-content:center;color:#8f98aa;}
@@ -150,7 +168,6 @@ st.markdown(
 .xi-asset{display:grid;grid-template-columns:42px minmax(0,1fr);gap:13px;align-items:center;min-width:0;}
 .xi-token{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(165,174,196,.28);color:#f2f5fb;font-size:26px;font-weight:900;background:rgba(13,18,32,.72);}
 .xi-symbol{display:flex;align-items:center;gap:10px;color:#f6f8fd;font-size:28px;font-weight:900;letter-spacing:.03em;line-height:1;}
-.xi-star{color:#697184;font-size:22px;}
 .xi-meta{margin-top:7px;color:#b9c0ce;font-size:14px;font-weight:700;}
 .xi-meta b{color:#18d486;font-weight:840;}
 .xi-valid{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(18,201,129,.34);border-radius:6px;background:rgba(18,201,129,.08);color:#21df94;padding:8px 13px;font-size:12px;font-weight:850;white-space:nowrap;}
@@ -229,22 +246,19 @@ st.markdown(
 .red{color:#ff4d66!important}.green{color:#18d486!important}.amber{color:#f3b441!important}.muted{color:#9aa3b3!important}
 @media(max-width:760px){
   .xi-shell{margin:-18px auto 0;padding:0 0 14px;}
-  .xi-card{border-radius:8px;}
+  .xi-card{border-radius:0;}
   .xi-toggle{height:392px;}
   .xi-compact-top{grid-template-columns:minmax(0,1fr) minmax(78px,.36fr) 18px;gap:9px;padding:12px 12px 10px;}
   .xi-compact-identity{grid-template-columns:34px minmax(0,1fr);gap:9px;}
-  .xi-compact-token{width:34px;height:34px;font-size:21px;}
+  .xi-compact-token{width:34px;height:34px;font-size:11px;}
   .xi-compact-symbol{font-size:21px;}
-  .xi-compact-star{font-size:14px;}
   .xi-compact-meta{font-size:11px;margin-top:5px;}
   .xi-compact-status{grid-column:1 / 2;grid-row:2 / 3;grid-template-columns:30px minmax(0,1fr);gap:8px;border-left:0;padding-left:43px;margin-top:-2px;}
   .xi-compact-status-icon{width:28px;height:28px;}
   .xi-compact-status-icon svg{width:18px;height:18px;}
-  .xi-compact-status span{display:block;font-size:8px;margin-bottom:2px;}
   .xi-compact-status strong{display:inline;color:#f1f4fb;font-size:12px;margin-top:0;margin-right:5px;}
   .xi-compact-status b{display:inline;font-size:16px;margin-top:0;}
   .xi-compact-exit{grid-column:2 / 3;grid-row:1 / 3;border-left:1px solid rgba(111,122,149,.2);padding-left:10px;align-self:center;}
-  .xi-compact-exit span{font-size:9px;}
   .xi-compact-exit-score{margin-top:4px;gap:4px;}
   .xi-compact-exit-score b{font-size:30px;}
   .xi-compact-exit-score small{font-size:13px;}
@@ -259,7 +273,7 @@ st.markdown(
   .xi-compact-sell-stack{grid-column:2 / 3;min-width:0;}
   .xi-compact-gate{grid-template-columns:minmax(0,1fr);gap:0;padding:7px 8px;}
   .xi-compact-gate-icon{display:none;}
-  .xi-compact-gate b{font-size:12px;}
+  .xi-compact-gate b{font-size:16px;}
   .xi-compact-gate span{font-size:10px;}
   .xi-compact-or{display:flex;width:24px;height:24px;font-size:8px;}
   .xi-compact-gate.sell{grid-column:2 / 3;}
@@ -332,18 +346,17 @@ card_html = f"""
       <span class="xi-sr">Toggle exitIQ details</span>
       <div class="xi-compact-top">
         <div class="xi-compact-identity">
-          <div class="xi-compact-token">$</div>
+          <div class="xi-compact-token">{_e(POSITION["base_symbol"])}</div>
           <div class="xi-compact-asset">
-            <div class="xi-compact-symbol">{_e(POSITION["symbol"])} <span class="xi-compact-star">*</span></div>
+            <div class="xi-compact-symbol">{_e(POSITION["symbol"])}</div>
             <div class="xi-compact-meta"><b>{_e(POSITION["side"])}</b> &nbsp;.&nbsp; {_e(POSITION["leverage"])}</div>
           </div>
         </div>
         <div class="xi-compact-status">
-          <div class="xi-compact-status-icon">{_status_icon()}</div>
-          <div><span>Status</span><strong>{_e(POSITION["status"])}</strong>&nbsp;<b>{_e(POSITION["pnl"])}</b></div>
+          <div class="xi-compact-status-icon {_e(str(POSITION["status"]).lower())}">{_position_status_icon(POSITION["status"])}</div>
+          <div><strong>{_e(POSITION["status"])}</strong>&nbsp;<b>{_e(POSITION["pnl"])}</b></div>
         </div>
         <div class="xi-compact-exit">
-          <span>Exit IQ</span>
           <div class="xi-compact-exit-score"><b>{_e(POSITION["exit_iq"])}</b><small>/100</small></div>
           <strong>{_e(POSITION["condition"])}</strong>
           <em>{_e(POSITION["subtitle"])}</em>
