@@ -257,8 +257,7 @@ health_html = "".join(
     for name, value, state in HEALTH
 )
 
-st.markdown(
-    f"""
+card_html = f"""
 <div class="xi-shell">
   <details class="xi-card">
     <summary class="xi-toggle"><span>Toggle exitIQ details</span></summary>
@@ -358,6 +357,6 @@ st.markdown(
     </div>
   </details>
 </div>
-""",
-    unsafe_allow_html=True,
-)
+"""
+
+st.html(card_html)
