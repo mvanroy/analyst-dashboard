@@ -111,7 +111,24 @@ st.markdown(
 .xi-toggle{position:absolute;left:0;right:0;top:0;height:294px;z-index:4;color:transparent;}
 .xi-toggle span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 .xi-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
-.xi-collapsed{position:relative;z-index:1;display:block;}
+.xi-collapsed{position:relative;z-index:1;display:grid;grid-template-columns:minmax(130px,.55fr) auto minmax(0,1.05fr) minmax(0,1.25fr) 22px;gap:12px;align-items:center;padding:14px 16px;min-height:74px;}
+.xi-compact-asset{min-width:0;}
+.xi-compact-symbol{display:flex;align-items:center;gap:8px;color:#f6f8fd;font-size:18px;font-weight:950;line-height:1;letter-spacing:.02em;white-space:nowrap;}
+.xi-compact-star{color:#697184;font-size:16px;}
+.xi-compact-meta{margin-top:6px;color:#9ea7b8;font-size:12px;font-weight:740;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.xi-compact-meta b{color:#18d486;}
+.xi-compact-score{display:flex;align-items:baseline;gap:5px;border:1px solid rgba(255,70,95,.42);border-radius:7px;background:rgba(255,70,95,.1);padding:8px 10px;color:#ff465f;white-space:nowrap;}
+.xi-compact-score b{font-size:28px;font-weight:950;line-height:.9;}
+.xi-compact-score span{color:#aeb6c6;font-size:12px;font-weight:850;}
+.xi-compact-condition{min-width:0;}
+.xi-compact-condition b{display:block;color:#ff5369;font-size:15px;font-weight:900;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.xi-compact-condition span{display:block;color:#aeb7c8;font-size:12px;font-weight:680;line-height:1.25;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.xi-compact-decision{display:flex;align-items:center;gap:9px;min-width:0;border-left:1px solid rgba(111,122,149,.2);padding-left:12px;}
+.xi-compact-decision strong{color:#a879ff;font-size:16px;font-weight:950;letter-spacing:.05em;white-space:nowrap;}
+.xi-compact-decision span{color:#d8deeb;font-size:12px;font-weight:740;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.xi-compact-chevron{display:flex;align-items:center;justify-content:center;color:#8f98aa;}
+.xi-compact-chevron svg{width:18px;height:18px;fill:currentColor;transition:transform .16s ease;}
+.xi-card[open] .xi-compact-chevron svg{transform:rotate(180deg);}
 .xi-top{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:start;padding:20px 22px 14px;border-bottom:1px solid rgba(128,139,164,.14);}
 .xi-asset{display:grid;grid-template-columns:42px minmax(0,1fr);gap:13px;align-items:center;min-width:0;}
 .xi-token{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(165,174,196,.28);color:#f2f5fb;font-size:26px;font-weight:900;background:rgba(13,18,32,.72);}
@@ -151,7 +168,7 @@ st.markdown(
 .xi-gate b{display:block;color:#ff4d66;font-size:22px;font-weight:900;letter-spacing:.02em;line-height:1.05;white-space:nowrap;}
 .xi-gate span{display:block;color:#f1f4fb;font-size:13px;font-weight:720;margin-top:3px;}
 .xi-or{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#c2c8d6;color:#2b3040;font-size:11px;font-weight:900;letter-spacing:.08em;}
-.xi-expanded{padding:0 22px 20px;}
+.xi-expanded{padding:14px 22px 20px;border-top:1px solid rgba(86,100,138,.28);}
 .xi-position{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));border:1px solid rgba(86,100,138,.34);border-radius:8px;background:rgba(10,15,30,.56);overflow:hidden;margin-bottom:14px;}
 .xi-metric{padding:15px 16px;border-right:1px solid rgba(86,100,138,.22);min-width:0;}
 .xi-metric:last-child{border-right:0;}
@@ -197,6 +214,17 @@ st.markdown(
   .xi-shell{margin:-18px auto 0;padding:0 0 14px;}
   .xi-card{border-radius:8px;}
   .xi-toggle{height:392px;}
+  .xi-collapsed{grid-template-columns:minmax(0,1fr) auto 20px;gap:9px;padding:12px 13px;min-height:82px;}
+  .xi-compact-symbol{font-size:17px;}
+  .xi-compact-meta{font-size:11px;margin-top:5px;}
+  .xi-compact-score{padding:7px 9px;}
+  .xi-compact-score b{font-size:24px;}
+  .xi-compact-condition{grid-column:1 / -1;display:flex;align-items:baseline;gap:7px;min-width:0;}
+  .xi-compact-condition b{font-size:13px;max-width:48%;}
+  .xi-compact-condition span{font-size:11px;margin-top:0;min-width:0;}
+  .xi-compact-decision{grid-column:1 / -1;border-left:0;padding-left:0;gap:7px;}
+  .xi-compact-decision strong{font-size:14px;}
+  .xi-compact-decision span{font-size:11px;}
   .xi-top{grid-template-columns:minmax(0,1fr) auto;gap:9px;padding:16px 14px 10px;}
   .xi-symbol{font-size:24px;}
   .xi-valid{grid-column:2;grid-row:1;padding:7px 10px;font-size:10px;}
@@ -263,47 +291,20 @@ card_html = f"""
   <details class="xi-card">
     <summary class="xi-collapsed">
       <span class="xi-sr">Toggle exitIQ details</span>
-      <div class="xi-top">
-        <div class="xi-asset">
-          <div class="xi-token">$</div>
-          <div>
-            <div class="xi-symbol">{_e(POSITION["symbol"])} <span class="xi-star">*</span></div>
-            <div class="xi-meta">{_e(POSITION["venue"])} &nbsp;.&nbsp; <b>{_e(POSITION["side"])}</b> &nbsp;.&nbsp; {_e(POSITION["leverage"])}</div>
-          </div>
-        </div>
-        <div class="xi-valid">o {_e(POSITION["valid"])}</div>
-        <div class="xi-time">{_e(POSITION["timestamp"])}<span>{_e(POSITION["closes"])}</span></div>
+      <div class="xi-compact-asset">
+        <div class="xi-compact-symbol">{_e(POSITION["symbol"])} <span class="xi-compact-star">*</span></div>
+        <div class="xi-compact-meta">{_e(POSITION["venue"])} &nbsp;.&nbsp; <b>{_e(POSITION["side"])}</b> &nbsp;.&nbsp; {_e(POSITION["leverage"])}</div>
       </div>
-
-      <div class="xi-score-row">
-        <div class="xi-score-cell">
-          <div>
-            <span class="xi-label">Exit IQ</span>
-            <div class="xi-score">{_e(POSITION["exit_iq"])} <small>/ 100</small></div>
-          </div>
-        </div>
-        <div class="xi-condition">
-          <b>{_e(POSITION["condition"])}</b>
-          <span>{_e(POSITION["subtitle"])}</span>
-        </div>
-        <div class="xi-status">
-          <div class="xi-status-icon">{_status_icon()}</div>
-          <div><span class="xi-label">Status</span><strong>{_e(POSITION["status"])}</strong><b>{_e(POSITION["pnl"])}</b></div>
-        </div>
-        <div class="xi-chevron"><svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5z"/></svg></div>
+      <div class="xi-compact-score"><b>{_e(POSITION["exit_iq"])}</b><span>/100</span></div>
+      <div class="xi-compact-condition">
+        <b>{_e(POSITION["condition"])}</b>
+        <span>{_e(POSITION["status"])} {_e(POSITION["pnl"])} · {_e(POSITION["subtitle"])}</span>
       </div>
-
-      <div class="xi-decision">
-        <div class="xi-decision-main"><span>Next Decision</span><b>{_e(POSITION["decision"])}</b></div>
-        <div class="xi-gates">
-          <div class="xi-gates-title">{_e(POSITION["decision_note"])}</div>
-          <div class="xi-gate-row">
-            <div class="xi-gate"><div class="xi-gate-icon">{_status_icon("up")}</div><div><b>{_e(POSITION["sell_zone"])}</b><span>{_e(POSITION["sell_action"])}</span></div></div>
-            <div class="xi-or">OR</div>
-            <div class="xi-gate"><div class="xi-gate-icon">{_status_icon("exit")}</div><div><b>{_e(POSITION["exit_level"])}</b><span>{_e(POSITION["exit_action"])}</span></div></div>
-          </div>
-        </div>
+      <div class="xi-compact-decision">
+        <strong>{_e(POSITION["decision"])}</strong>
+        <span>Sell {_e(POSITION["sell_zone"])} or exit {_e(POSITION["exit_level"])} · {_e(POSITION["closes"])}</span>
       </div>
+      <div class="xi-compact-chevron"><svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5z"/></svg></div>
     </summary>
 
     <div class="xi-expanded">
