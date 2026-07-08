@@ -250,25 +250,25 @@ st.markdown(
   .xi-shell{margin:-18px auto 0;padding:0 0 14px;}
   .xi-card{border-radius:0;}
   .xi-toggle{height:392px;}
-  .xi-compact-top{grid-template-columns:minmax(0,1fr) 18px;gap:9px;padding:12px 12px 10px;}
+  .xi-compact-top{grid-template-columns:minmax(0,1fr) max-content 18px;gap:9px;padding:12px 12px 10px;}
   .xi-compact-identity{gap:9px;}
   .xi-compact-token{width:34px;height:34px;font-size:11px;}
   .xi-compact-symbol{font-size:21px;}
   .xi-compact-meta{font-size:12px;display:flex;align-items:center;gap:6px;min-width:0;}
-  .xi-inline-status{display:inline-flex;align-items:center;gap:4px;min-width:0;color:#f1f4fb;}
+  .xi-inline-status{grid-column:2 / 3;grid-row:1 / 2;display:flex;align-items:center;justify-content:flex-end;gap:4px;min-width:0;color:#f1f4fb;align-self:start;margin-top:1px;white-space:nowrap;}
   .xi-inline-status svg{width:15px;height:15px;fill:currentColor;color:#ff4d66;flex:0 0 auto;}
   .xi-inline-status.winning svg{color:#18d486;}
   .xi-inline-status strong{font-size:12px;font-weight:850;color:#f1f4fb;}
   .xi-inline-status b{font-size:13px;font-weight:930;color:#ff465f;}
   .xi-compact-status{display:none;}
-  .xi-compact-exit{grid-column:1 / 2;grid-row:2 / 3;grid-template-columns:auto minmax(0,1fr);gap:8px;border-left:1px solid rgba(111,122,149,.2);padding-left:43px;margin-top:2px;}
+  .xi-compact-exit{grid-column:1 / 3;grid-row:2 / 3;grid-template-columns:auto minmax(0,1fr);gap:8px;border-left:1px solid rgba(111,122,149,.2);padding-left:43px;margin-top:2px;}
   .xi-compact-exit-score{gap:4px;}
   .xi-compact-exit-score b{font-size:24px;}
   .xi-compact-exit-score small{font-size:13px;}
   .xi-compact-exit-copy{min-width:0;}
   .xi-compact-exit strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .xi-compact-exit em{display:block;font-size:10px;margin-left:0;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .xi-compact-chevron{grid-column:2 / 3;grid-row:1 / 3;}
+  .xi-compact-chevron{grid-column:3 / 4;grid-row:1 / 3;}
   .xi-compact-decision-row{grid-template-columns:68px minmax(0,1fr) 24px minmax(0,1fr);gap:6px;padding:9px 10px;}
   .xi-compact-decision-main{border-right:1px solid rgba(243,180,65,.22);padding-right:7px;}
   .xi-compact-decision-main span{font-size:9px;}
@@ -353,9 +353,10 @@ card_html = f"""
           <div class="xi-compact-token">{_e(POSITION["base_symbol"])}</div>
           <div class="xi-compact-asset">
             <div class="xi-compact-symbol">{_e(POSITION["symbol"])}</div>
-            <div class="xi-compact-meta"><b>{_e(POSITION["side"])}</b> &nbsp;.&nbsp; {_e(POSITION["leverage"])} <span class="xi-inline-status {_e(str(POSITION["status"]).lower())}">{_position_status_icon(POSITION["status"])}<strong>{_e(POSITION["status"])}</strong><b>{_e(POSITION["pnl"])}</b></span></div>
+            <div class="xi-compact-meta"><b>{_e(POSITION["side"])}</b> &nbsp;.&nbsp; {_e(POSITION["leverage"])}</div>
           </div>
         </div>
+        <div class="xi-inline-status {_e(str(POSITION["status"]).lower())}">{_position_status_icon(POSITION["status"])}<strong>{_e(POSITION["status"])}</strong><b>{_e(POSITION["pnl"])}</b></div>
         <div class="xi-compact-status">
           <div class="xi-compact-status-icon {_e(str(POSITION["status"]).lower())}">{_position_status_icon(POSITION["status"])}</div>
           <div><strong>{_e(POSITION["status"])}</strong><b>{_e(POSITION["pnl"])}</b></div>
