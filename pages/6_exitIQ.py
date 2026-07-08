@@ -110,7 +110,8 @@ st.markdown(
 .xi-card summary::-webkit-details-marker{display:none;}
 .xi-toggle{position:absolute;left:0;right:0;top:0;height:294px;z-index:4;color:transparent;}
 .xi-toggle span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
-.xi-collapsed{position:relative;z-index:1;}
+.xi-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+.xi-collapsed{position:relative;z-index:1;display:block;}
 .xi-top{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:start;padding:20px 22px 14px;border-bottom:1px solid rgba(128,139,164,.14);}
 .xi-asset{display:grid;grid-template-columns:42px minmax(0,1fr);gap:13px;align-items:center;min-width:0;}
 .xi-token{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(165,174,196,.28);color:#f2f5fb;font-size:26px;font-weight:900;background:rgba(13,18,32,.72);}
@@ -260,8 +261,8 @@ health_html = "".join(
 card_html = f"""
 <div class="xi-shell">
   <details class="xi-card">
-    <summary class="xi-toggle"><span>Toggle exitIQ details</span></summary>
-    <div class="xi-collapsed">
+    <summary class="xi-collapsed">
+      <span class="xi-sr">Toggle exitIQ details</span>
       <div class="xi-top">
         <div class="xi-asset">
           <div class="xi-token">$</div>
@@ -303,7 +304,7 @@ card_html = f"""
           </div>
         </div>
       </div>
-    </div>
+    </summary>
 
     <div class="xi-expanded">
       <div class="xi-position">
