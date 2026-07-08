@@ -214,17 +214,17 @@ st.markdown(
   .xi-shell{margin:-18px auto 0;padding:0 0 14px;}
   .xi-card{border-radius:8px;}
   .xi-toggle{height:392px;}
-  .xi-collapsed{grid-template-columns:minmax(0,1fr) auto 20px;gap:9px;padding:12px 13px;min-height:82px;}
+  .xi-collapsed{grid-template-columns:minmax(0,1fr) auto 20px;gap:6px 8px;padding:10px 12px;min-height:72px;}
   .xi-compact-symbol{font-size:17px;}
   .xi-compact-meta{font-size:11px;margin-top:5px;}
-  .xi-compact-score{padding:7px 9px;}
-  .xi-compact-score b{font-size:24px;}
-  .xi-compact-condition{grid-column:1 / -1;display:flex;align-items:baseline;gap:7px;min-width:0;}
-  .xi-compact-condition b{font-size:13px;max-width:48%;}
-  .xi-compact-condition span{font-size:11px;margin-top:0;min-width:0;}
-  .xi-compact-decision{grid-column:1 / -1;border-left:0;padding-left:0;gap:7px;}
-  .xi-compact-decision strong{font-size:14px;}
-  .xi-compact-decision span{font-size:11px;}
+  .xi-compact-score{padding:6px 8px;}
+  .xi-compact-score b{font-size:22px;}
+  .xi-compact-condition{grid-column:1 / 2;min-width:0;}
+  .xi-compact-condition b{font-size:12px;max-width:none;}
+  .xi-compact-condition span{display:none;}
+  .xi-compact-decision{grid-column:2 / 4;border-left:0;padding-left:0;gap:6px;justify-content:flex-end;min-width:0;}
+  .xi-compact-decision strong{font-size:13px;}
+  .xi-compact-decision span{font-size:10px;max-width:138px;}
   .xi-top{grid-template-columns:minmax(0,1fr) auto;gap:9px;padding:16px 14px 10px;}
   .xi-symbol{font-size:24px;}
   .xi-valid{grid-column:2;grid-row:1;padding:7px 10px;font-size:10px;}
