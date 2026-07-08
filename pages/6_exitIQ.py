@@ -103,11 +103,14 @@ st.markdown(
     + """
 .st-key-brandrow{display:none!important;}
 .xi-shell{max-width:1160px;margin:-42px auto 0;padding:0 10px 18px;}
-.xi-card{border:1px solid rgba(93,104,130,.42);border-radius:8px;background:
+.xi-card{position:relative;border:1px solid rgba(93,104,130,.42);border-radius:8px;background:
   radial-gradient(900px 360px at 8% -10%,rgba(72,96,150,.18),transparent 58%),
   linear-gradient(145deg,rgba(9,15,31,.96),rgba(7,11,23,.92));box-shadow:0 18px 44px rgba(0,0,0,.25);overflow:hidden;}
 .xi-card summary{list-style:none;cursor:pointer;}
 .xi-card summary::-webkit-details-marker{display:none;}
+.xi-toggle{position:absolute;left:0;right:0;top:0;height:294px;z-index:4;color:transparent;}
+.xi-toggle span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
+.xi-collapsed{position:relative;z-index:1;}
 .xi-top{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:14px;align-items:start;padding:20px 22px 14px;border-bottom:1px solid rgba(128,139,164,.14);}
 .xi-asset{display:grid;grid-template-columns:42px minmax(0,1fr);gap:13px;align-items:center;min-width:0;}
 .xi-token{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(165,174,196,.28);color:#f2f5fb;font-size:26px;font-weight:900;background:rgba(13,18,32,.72);}
@@ -192,6 +195,7 @@ st.markdown(
 @media(max-width:760px){
   .xi-shell{margin:-18px auto 0;padding:0 0 14px;}
   .xi-card{border-radius:8px;}
+  .xi-toggle{height:392px;}
   .xi-top{grid-template-columns:minmax(0,1fr) auto;gap:9px;padding:16px 14px 10px;}
   .xi-symbol{font-size:24px;}
   .xi-valid{grid-column:2;grid-row:1;padding:7px 10px;font-size:10px;}
@@ -257,7 +261,8 @@ st.markdown(
     f"""
 <div class="xi-shell">
   <details class="xi-card">
-    <summary>
+    <summary class="xi-toggle"><span>Toggle exitIQ details</span></summary>
+    <div class="xi-collapsed">
       <div class="xi-top">
         <div class="xi-asset">
           <div class="xi-token">$</div>
@@ -299,7 +304,7 @@ st.markdown(
           </div>
         </div>
       </div>
-    </summary>
+    </div>
 
     <div class="xi-expanded">
       <div class="xi-position">
