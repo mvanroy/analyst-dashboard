@@ -360,7 +360,7 @@ card_html = f"""
         </div>
         <div class="xi-compact-exit">
           <div class="xi-compact-exit-score"><b>{_e(POSITION["exit_iq"])}</b><small>/100</small></div>
-          <div class="xi-compact-exit-copy"><strong>{_e(POSITION["condition"])}</strong><em>{_e(POSITION["subtitle"])}</em></div>
+          <div class="xi-compact-exit-copy"><strong>{_e(POSITION["condition"])}</strong> <em>{_e(POSITION["subtitle"])}</em></div>
         </div>
         <div class="xi-compact-chevron"><svg viewBox="0 0 24 24"><path d="m7 10 5 5 5-5z"/></svg></div>
       </div>
