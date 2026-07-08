@@ -137,6 +137,7 @@ st.markdown(
 .xi-compact-symbol{display:flex;align-items:center;gap:8px;color:#f6f8fd;font-size:28px;font-weight:950;line-height:1;letter-spacing:.02em;white-space:nowrap;}
 .xi-compact-meta{color:#9ea7b8;font-size:15px;font-weight:740;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .xi-compact-meta b{color:#18d486;}
+.xi-inline-status{display:none;}
 .xi-compact-status{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:center;min-width:0;}
 .xi-compact-status-icon{width:46px;height:46px;display:flex;align-items:center;justify-content:center;color:#ff4d66;background:transparent;}
 .xi-compact-status-icon.winning{color:#18d486;background:transparent;}
@@ -253,20 +254,21 @@ st.markdown(
   .xi-compact-identity{gap:9px;}
   .xi-compact-token{width:34px;height:34px;font-size:11px;}
   .xi-compact-symbol{font-size:21px;}
-  .xi-compact-meta{font-size:12px;}
-  .xi-compact-status{grid-column:1 / 2;grid-row:2 / 3;grid-template-columns:34px 68px minmax(0,1fr);gap:8px;border-left:0;padding-left:43px;margin-top:0;}
-  .xi-compact-status-icon{width:30px;height:30px;}
-  .xi-compact-status-icon svg{width:26px;height:26px;}
-  .xi-compact-status strong{display:inline;color:#f1f4fb;font-size:12px;margin-top:0;margin-right:5px;}
-  .xi-compact-status b{display:inline;font-size:16px;margin-top:0;}
-  .xi-compact-exit{grid-column:1 / 2;grid-row:3 / 4;grid-template-columns:auto minmax(0,1fr);gap:8px;border-left:1px solid rgba(111,122,149,.2);padding-left:43px;margin-top:2px;}
+  .xi-compact-meta{font-size:12px;display:flex;align-items:center;gap:6px;min-width:0;}
+  .xi-inline-status{display:inline-flex;align-items:center;gap:4px;min-width:0;color:#f1f4fb;}
+  .xi-inline-status svg{width:15px;height:15px;fill:currentColor;color:#ff4d66;flex:0 0 auto;}
+  .xi-inline-status.winning svg{color:#18d486;}
+  .xi-inline-status strong{font-size:12px;font-weight:850;color:#f1f4fb;}
+  .xi-inline-status b{font-size:13px;font-weight:930;color:#ff465f;}
+  .xi-compact-status{display:none;}
+  .xi-compact-exit{grid-column:1 / 2;grid-row:2 / 3;grid-template-columns:auto minmax(0,1fr);gap:8px;border-left:1px solid rgba(111,122,149,.2);padding-left:43px;margin-top:2px;}
   .xi-compact-exit-score{gap:4px;}
   .xi-compact-exit-score b{font-size:24px;}
   .xi-compact-exit-score small{font-size:13px;}
   .xi-compact-exit-copy{min-width:0;}
   .xi-compact-exit strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .xi-compact-exit em{display:block;font-size:10px;margin-left:0;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .xi-compact-chevron{grid-column:2 / 3;grid-row:1 / 4;}
+  .xi-compact-chevron{grid-column:2 / 3;grid-row:1 / 3;}
   .xi-compact-decision-row{grid-template-columns:68px minmax(0,1fr) 24px minmax(0,1fr);gap:6px;padding:9px 10px;}
   .xi-compact-decision-main{border-right:1px solid rgba(243,180,65,.22);padding-right:7px;}
   .xi-compact-decision-main span{font-size:9px;}
@@ -351,7 +353,7 @@ card_html = f"""
           <div class="xi-compact-token">{_e(POSITION["base_symbol"])}</div>
           <div class="xi-compact-asset">
             <div class="xi-compact-symbol">{_e(POSITION["symbol"])}</div>
-            <div class="xi-compact-meta"><b>{_e(POSITION["side"])}</b> &nbsp;.&nbsp; {_e(POSITION["leverage"])}</div>
+            <div class="xi-compact-meta"><b>{_e(POSITION["side"])}</b> &nbsp;.&nbsp; {_e(POSITION["leverage"])} <span class="xi-inline-status {_e(str(POSITION["status"]).lower())}">{_position_status_icon(POSITION["status"])}<strong>{_e(POSITION["status"])}</strong><b>{_e(POSITION["pnl"])}</b></span></div>
           </div>
         </div>
         <div class="xi-compact-status">
