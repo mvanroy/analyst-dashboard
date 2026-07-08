@@ -130,21 +130,21 @@ st.markdown(
 .xi-toggle span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 .xi-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;}
 .xi-collapsed{position:relative;z-index:1;display:block;padding:0;}
-.xi-compact-top{display:grid;grid-template-columns:minmax(360px,.95fr) minmax(0,1.2fr) 24px;gap:18px;align-items:center;padding:16px 18px;border-bottom:1px solid rgba(86,100,138,.26);}
+.xi-compact-top{display:grid;grid-template-columns:minmax(360px,.9fr) minmax(150px,.36fr) minmax(360px,1fr) 24px;gap:18px;align-items:center;padding:16px 18px;border-bottom:1px solid rgba(86,100,138,.26);}
 .xi-compact-asset{min-width:0;}
 .xi-compact-identity{display:flex;align-items:center;gap:13px;min-width:0;}
 .xi-compact-token{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:1px solid rgba(165,174,196,.28);color:#f2f5fb;font-size:14px;font-weight:950;background:rgba(13,18,32,.72);line-height:1;}
 .xi-compact-symbol{display:flex;align-items:center;gap:8px;color:#f6f8fd;font-size:28px;font-weight:950;line-height:1;letter-spacing:.02em;white-space:nowrap;}
 .xi-compact-meta{color:#9ea7b8;font-size:15px;font-weight:740;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .xi-compact-meta b{color:#18d486;}
-.xi-compact-status{display:grid;grid-template-columns:52px minmax(82px,.42fr) minmax(0,1fr);gap:12px;align-items:center;min-width:0;border-left:1px solid rgba(111,122,149,.2);padding-left:18px;}
+.xi-compact-status{display:grid;grid-template-columns:52px minmax(0,1fr);gap:12px;align-items:center;min-width:0;}
 .xi-compact-status-icon{width:46px;height:46px;display:flex;align-items:center;justify-content:center;color:#ff4d66;background:transparent;}
 .xi-compact-status-icon.winning{color:#18d486;background:transparent;}
 .xi-compact-status-icon svg{width:36px;height:36px;fill:currentColor;}
 .xi-compact-decision-main span{display:block;color:#9ca5b6;font-size:10px;font-weight:900;letter-spacing:.1em;text-transform:uppercase;}
 .xi-compact-status strong{display:block;color:#f1f4fb;font-size:16px;font-weight:850;}
 .xi-compact-status b{display:block;color:#ff465f;font-size:23px;font-weight:930;line-height:1;margin-top:5px;}
-.xi-compact-exit{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;min-width:0;}
+.xi-compact-exit{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;align-items:center;min-width:0;border-left:1px solid rgba(111,122,149,.2);padding-left:18px;}
 .xi-compact-exit-score{display:flex;align-items:baseline;gap:6px;color:#ff465f;white-space:nowrap;}
 .xi-compact-exit-score b{font-size:39px;font-weight:950;line-height:.85;}
 .xi-compact-exit-score small{color:#aeb6c6;font-size:17px;font-weight:850;}
@@ -259,14 +259,14 @@ st.markdown(
   .xi-compact-status-icon svg{width:26px;height:26px;}
   .xi-compact-status strong{display:inline;color:#f1f4fb;font-size:12px;margin-top:0;margin-right:5px;}
   .xi-compact-status b{display:inline;font-size:16px;margin-top:0;}
-  .xi-compact-exit{grid-template-columns:auto minmax(0,1fr);gap:8px;}
+  .xi-compact-exit{grid-column:1 / 2;grid-row:3 / 4;grid-template-columns:auto minmax(0,1fr);gap:8px;border-left:1px solid rgba(111,122,149,.2);padding-left:43px;margin-top:2px;}
   .xi-compact-exit-score{gap:4px;}
   .xi-compact-exit-score b{font-size:24px;}
   .xi-compact-exit-score small{font-size:13px;}
   .xi-compact-exit-copy{min-width:0;}
   .xi-compact-exit strong{display:block;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .xi-compact-exit em{display:block;font-size:10px;margin-left:0;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .xi-compact-chevron{grid-column:2 / 3;grid-row:1 / 3;}
+  .xi-compact-chevron{grid-column:2 / 3;grid-row:1 / 4;}
   .xi-compact-decision-row{grid-template-columns:68px minmax(0,1fr) 24px minmax(0,1fr);gap:6px;padding:9px 10px;}
   .xi-compact-decision-main{border-right:1px solid rgba(243,180,65,.22);padding-right:7px;}
   .xi-compact-decision-main span{font-size:9px;}
