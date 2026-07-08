@@ -340,7 +340,7 @@ card_html = f"""
         </div>
         <div class="xi-compact-status">
           <div class="xi-compact-status-icon">{_status_icon()}</div>
-          <div><span>Status</span><strong>{_e(POSITION["status"])}</strong><b>{_e(POSITION["pnl"])}</b></div>
+          <div><span>Status</span><strong>{_e(POSITION["status"])}</strong>&nbsp;<b>{_e(POSITION["pnl"])}</b></div>
         </div>
         <div class="xi-compact-exit">
           <span>Exit IQ</span>
