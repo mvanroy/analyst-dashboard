@@ -359,4 +359,4 @@ card_html = f"""
 </div>
 """
 
-st.html(card_html)
+st.markdown("".join(line.strip() for line in card_html.splitlines()), unsafe_allow_html=True)
