@@ -37,7 +37,7 @@ st.markdown(
 .st-key-tracker_period{margin:0!important;}
 .st-key-tracker_period [data-testid="stElementContainer"]{width:100%!important;}
 .st-key-tracker_period [data-testid="stButtonGroup"]{width:100%!important;}
-.st-key-tracker_period [role="radiogroup"]{width:100%!important;min-width:100%!important;max-width:none!important;height:40px!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:3px!important;padding:3px!important;box-sizing:border-box!important;}
+.st-key-tracker_period [role="radiogroup"]{width:100%!important;min-width:100%!important;max-width:none!important;height:40px!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:3px!important;padding:3px!important;box-sizing:border-box!important;}
 .st-key-tracker_period [role="radiogroup"] button{height:34px!important;min-height:34px!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;}
 .st-key-tracker_period [role="radiogroup"] button p{font-size:.78rem!important;line-height:1!important;margin:0!important;font-weight:720!important;}
 .tk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:-14px 0 10px;}
@@ -106,10 +106,10 @@ st.markdown(
 @media(max-width:700px){
   .tracker-shell{margin-top:-18px!important;}
   .st-key-tracker_filters{margin-top:-62px!important;}
-  .st-key-tracker_filters [data-testid="stHorizontalBlock"]{display:grid!important;grid-template-columns:minmax(0,1fr) 82px!important;grid-template-rows:42px 42px!important;gap:7px 8px!important;align-items:center!important;}
-  .st-key-tracker_filters [data-testid="stColumn"]:first-child{grid-column:1;grid-row:2;width:100%!important;}
-  .st-key-tracker_filters [data-testid="stColumn"]:nth-child(2){grid-column:2;grid-row:1;width:42px!important;min-width:42px!important;justify-self:end;}
-  .st-key-tracker_filters [data-testid="stColumn"]:last-child{grid-column:2;grid-row:2;width:82px!important;min-width:82px!important;}
+  .st-key-tracker_filters [data-testid="stHorizontalBlock"]{display:grid!important;grid-template-columns:minmax(0,1fr) 68px 42px!important;grid-template-rows:42px!important;gap:8px!important;align-items:center!important;}
+  .st-key-tracker_filters [data-testid="stColumn"]:first-child{grid-column:1;grid-row:1;width:100%!important;}
+  .st-key-tracker_filters [data-testid="stColumn"]:nth-child(2){grid-column:3;grid-row:1;width:42px!important;min-width:42px!important;justify-self:end;}
+  .st-key-tracker_filters [data-testid="stColumn"]:last-child{grid-column:2;grid-row:1;width:68px!important;min-width:68px!important;}
   .st-key-tracker_cycle [data-baseweb="select"] span,.st-key-tracker_cycle input{font-size:16px!important;}
   .st-key-tracker_chart_split [data-testid="stHorizontalBlock"]{display:block!important;}
   .st-key-tracker_chart_split [data-testid="stColumn"]{width:100%!important;flex:0 0 100%!important;}
@@ -133,7 +133,6 @@ PERIODS = {
     "7D": 7,
     "30D": 30,
     "90D": 90,
-    "365D": 365,
 }
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
