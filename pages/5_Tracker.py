@@ -36,7 +36,7 @@ st.markdown(
 .st-key-tracker_period{margin:0!important;}
 .st-key-tracker_period [data-testid="stElementContainer"]{width:100%!important;}
 .st-key-tracker_period [data-testid="stButtonGroup"]{width:100%!important;}
-.st-key-tracker_period [role="radiogroup"]{width:100%!important;height:40px!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:3px!important;padding:3px!important;box-sizing:border-box!important;}
+.st-key-tracker_period [role="radiogroup"]{width:100%!important;min-width:100%!important;max-width:none!important;height:40px!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:3px!important;padding:3px!important;box-sizing:border-box!important;}
 .st-key-tracker_period [role="radiogroup"] button{height:34px!important;min-height:34px!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;}
 .st-key-tracker_period [role="radiogroup"] button p{font-size:.78rem!important;line-height:1!important;margin:0!important;font-weight:720!important;}
 .tk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:-14px 0 10px;}
