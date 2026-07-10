@@ -25,12 +25,14 @@ st.markdown(
 .st-key-tracker_filters{margin:-50px 0 2px!important;}
 .st-key-tracker_filters [data-testid="stHorizontalBlock"]{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important;}
 .st-key-tracker_filters [data-testid="stColumn"]:first-child{width:auto!important;flex:1 1 auto!important;min-width:0!important;}
+.st-key-tracker_filters [data-testid="stColumn"]:nth-child(2){width:42px!important;flex:0 0 42px!important;min-width:42px!important;}
 .st-key-tracker_filters [data-testid="stColumn"]:last-child{width:82px!important;flex:0 0 82px!important;min-width:82px!important;}
-.st-key-tracker_cycle [data-baseweb="select"]>div{height:48px!important;min-height:48px!important;border-radius:8px!important;}
+.st-key-tracker_cycle [data-baseweb="select"]>div{height:42px!important;min-height:42px!important;border-radius:8px!important;}
 .st-key-tracker_cycle [data-baseweb="select"] span{font-size:12px!important;font-weight:850!important;}
-.st-key-tracker_journal{display:flex!important;justify-content:flex-end!important;margin:0 0 8px!important;}
-.st-key-tracker_journal [data-testid="stLinkButton"]{width:auto!important;}
-.st-key-tracker_journal a{white-space:nowrap!important;border-radius:8px!important;min-height:36px!important;}
+.st-key-tracker_journal{height:42px!important;margin:0!important;}
+.tracker-journal-icon{width:42px;height:42px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px solid rgba(139,92,246,.42);border-radius:8px;background:#13101e;text-decoration:none!important;transition:border-color .15s ease,background .15s ease;}
+.tracker-journal-icon:hover{border-color:#8b5cf6;background:#1b1628;}
+.tracker-journal-icon img{width:23px;height:23px;display:block;filter:invert(1);}
 .st-key-tracker_period{margin:0!important;}
 .st-key-tracker_period [data-testid="stSegmentedControl"]{width:100%!important;}
 .st-key-tracker_period [data-testid="stSegmentedControl"] > div{width:100%!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:3px!important;padding:3px!important;}
@@ -102,6 +104,11 @@ st.markdown(
 @media(max-width:700px){
   .tracker-shell{margin-top:-18px!important;}
   .st-key-tracker_filters{margin-top:-18px!important;}
+  .st-key-tracker_filters [data-testid="stHorizontalBlock"]{display:grid!important;grid-template-columns:minmax(0,1fr) 82px!important;grid-template-rows:42px 42px!important;gap:7px 8px!important;align-items:center!important;}
+  .st-key-tracker_filters [data-testid="stColumn"]:first-child{grid-column:1;grid-row:2;width:100%!important;}
+  .st-key-tracker_filters [data-testid="stColumn"]:nth-child(2){grid-column:2;grid-row:1;width:42px!important;min-width:42px!important;justify-self:end;}
+  .st-key-tracker_filters [data-testid="stColumn"]:last-child{grid-column:2;grid-row:2;width:82px!important;min-width:82px!important;}
+  .st-key-tracker_cycle [data-baseweb="select"] span,.st-key-tracker_cycle input{font-size:16px!important;}
   .st-key-tracker_chart_split [data-testid="stHorizontalBlock"]{display:block!important;}
   .st-key-tracker_chart_split [data-testid="stColumn"]{width:100%!important;flex:0 0 100%!important;}
   .st-key-tracker_split_card{margin-top:10px;}
@@ -128,6 +135,8 @@ PERIODS = {
 }
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+with open(os.path.join(ROOT_DIR, "assets", "write.svg"), "rb") as _journal_icon_file:
+    JOURNAL_ICON_DATA = base64.b64encode(_journal_icon_file.read()).decode("ascii")
 
 
 def svg_data_uri(filename: str) -> str:
@@ -440,7 +449,7 @@ def load_trades(days: int):
 
 st.markdown("<div class='tracker-shell'>", unsafe_allow_html=True)
 with st.container(key="tracker_filters"):
-    period_col, cycle_col = st.columns([1, 0.24], gap="small")
+    period_col, journal_col, cycle_col = st.columns([1, 0.12, 0.24], gap="small")
     with period_col:
         with st.container(key="tracker_period"):
             period = st.segmented_control("Period", list(PERIODS), default="30D", label_visibility="collapsed")
@@ -452,14 +461,19 @@ with st.container(key="tracker_filters"):
                 index=0,
                 label_visibility="collapsed",
             )
-
-journal_tab_id = "1842282429" if cycle_view == "Cyc 2" else "1304074642"
-journal_url = (
-    "https://docs.google.com/spreadsheets/d/1PhD6GM1onHo3Fwi8jveo8GEnP12FymfmCTU1qpAR_xw/"
-    f"edit?gid={journal_tab_id}#gid={journal_tab_id}"
-)
-with st.container(key="tracker_journal"):
-    st.link_button("Open Journal", journal_url)
+    journal_tab_id = "1842282429" if cycle_view == "Cyc 2" else "1304074642"
+    journal_url = (
+        "https://docs.google.com/spreadsheets/d/1PhD6GM1onHo3Fwi8jveo8GEnP12FymfmCTU1qpAR_xw/"
+        f"edit?gid={journal_tab_id}#gid={journal_tab_id}"
+    )
+    with journal_col:
+        with st.container(key="tracker_journal"):
+            st.markdown(
+                f'<a class="tracker-journal-icon" href="{html.escape(journal_url)}" target="_blank" '
+                'rel="noopener noreferrer" aria-label="Open journal" title="Open journal">'
+                f'<img src="data:image/svg+xml;base64,{JOURNAL_ICON_DATA}" alt=""></a>',
+                unsafe_allow_html=True,
+            )
 
 if not bybit.have_creds():
     st.warning("No Bybit API key configured.")
