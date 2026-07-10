@@ -30,7 +30,7 @@ import httpx
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _CFG = os.getenv("IGBY_JOURNAL_CONFIG") or os.path.join(_ROOT, "journal_config.json")
 _BASE = "https://api.bybit.com"
-_REQUIRED_SCRIPT_VERSION = "2026-07-10-trading-cycles-v1"
+_REQUIRED_SCRIPT_VERSION = "2026-07-10-trading-cycles-v2"
 
 
 def _cfg():

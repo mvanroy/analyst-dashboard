@@ -14,7 +14,7 @@
 
 const SHEET_NAME = 'Trades';
 const TOKEN = '';  // optional shared secret; if set, pushes must include the same token
-const SCRIPT_VERSION = '2026-07-10-trading-cycles-v1';
+const SCRIPT_VERSION = '2026-07-10-trading-cycles-v2';
 
 // [ Header, payloadKey, section, dropdownKey ]
 const SCHEMA = [
@@ -192,7 +192,7 @@ function _features() {
     script_version: SCRIPT_VERSION,
     bybit_journal: true,
     open_positions: true,
-    trade_origin: true,
+    trade_origin: false,
     trading_cycles: true,
     cycle_1_gid: CYCLE_1_GID,
     cycle_2_gid: CYCLE_2_GID,
@@ -244,7 +244,6 @@ var BYBIT_SCHEMA = [
   ['#',                               'row_no',          'entry', null,          'formula'],
   ['Entry Date\n(dd/mm/yyyy)',        'entry_date',      'entry', null,          'data'],
   ['Market (Coin)',                   'coin',            'entry', null,          'data'],
-  ['Trade Origin',                     'trade_origin',    'entry', null,          'manual'],
   ['Market Bias',                     'market_bias',     'entry', null,          'manual'],
   ['Set Up Type',                     'setup_type',      'entry', null,          'manual'],
   ['Entry Rationale',                 'entry_rationale', 'entry', null,          'manual'],
