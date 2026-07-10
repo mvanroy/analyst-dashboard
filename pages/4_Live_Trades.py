@@ -131,6 +131,17 @@ def _cls(value) -> str:
     return "muted"
 
 
+def _mark_change_pct(entry, mark) -> float | None:
+    try:
+        entry_value = float(entry)
+        mark_value = float(mark)
+    except (TypeError, ValueError):
+        return None
+    if not entry_value:
+        return None
+    return (mark_value / entry_value - 1) * 100
+
+
 def _liq_cls(row: dict) -> str:
     liq = row.get("liq")
     mark = row.get("mark")
@@ -875,6 +886,7 @@ def _normalise(rows: list[dict], account: dict) -> list[dict]:
                 "margin_pct_equity": margin / equity * 100 if equity else None,
                 "initial_risk": risk,
                 "r_multiple": upnl / risk if risk and risk > 0 else row.get("live_r"),
+                "mark_change_pct": _mark_change_pct(row.get("entry"), row.get("mark")),
             }
         )
     return out
@@ -1083,6 +1095,7 @@ st.markdown(
 .lt-table th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#9aa3af;font-weight:850;padding:13px 12px;border-bottom:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.28);text-align:left;}
 .lt-table td{padding:13px 12px;border-bottom:1px solid rgba(148,163,184,.10);color:#dfe3e8;font-variant-numeric:tabular-nums;vertical-align:middle;}
 .lt-table td.r{font-size:15px;font-weight:650;}
+.mark-change{display:block;margin-top:4px;font-size:11px;font-weight:750;line-height:1;font-variant-numeric:tabular-nums;}
 .lt-table tr:last-child td{border-bottom:none}.r{text-align:right!important}.center{text-align:center!important;}
 .coin{display:flex;align-items:center;gap:12px;min-width:126px}.rank-badge{width:34px;height:34px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:1px solid rgba(160,168,184,.36);background:#252a3c;color:#f3f5fb;font-size:.52rem;letter-spacing:.02em;font-weight:900;font-variant-numeric:tabular-nums;position:relative;white-space:nowrap;overflow:hidden;flex:0 0 34px}.rank-badge.coin-symbol{background:rgba(21,25,39,.94);border-color:rgba(151,93,255,.42);box-shadow:0 0 12px rgba(151,93,255,.18)}.rank-badge img{width:100%;height:100%;object-fit:cover;display:block}.rank-badge.no-logo{background:linear-gradient(135deg,rgba(151,93,255,.16),rgba(21,25,39,.94));padding:0 3px;box-sizing:border-box}.sym{font-weight:850;color:#f4f7fb;font-size:14px}.lev{display:block;color:#8b94a0;font-size:12px;margin-top:2px}
 .badge{display:inline-flex;align-items:center;justify-content:center;border-radius:5px;padding:3px 10px;font-size:12px;font-weight:850}.badge.long{background:rgba(32,216,132,.12);color:#20D884;border:1px solid rgba(32,216,132,.25)}.badge.short{background:rgba(255,77,94,.12);color:#FF4D5E;border:1px solid rgba(255,77,94,.25)}
@@ -1337,7 +1350,7 @@ else:
                     "Direction": f"<td><span class='badge {side_cls}'>{_esc(direction)}</span></td>",
                     "Size": f"<td class='r'>{_money(row.get('notional'))}<div class='sizebar'>{_progress(notional_pct, 'green')}</div></td>",
                     "Entry": f"<td class='r'>{_price(row.get('entry'))}</td>",
-                    "Mark": f"<td class='r'>{_price(row.get('mark'))}</td>",
+                    "Mark": f"<td class='r'>{_price(row.get('mark'))}<span class='mark-change {_cls(row.get('mark_change_pct'))}'>{_pct(row.get('mark_change_pct'), True)}</span></td>",
                     "Unrealized P&L": f"<td class='r'><span class='{_cls(row.get('upnl'))}'>{_money(row.get('upnl'), True)}</span><br><span class='{_cls(row.get('upnl_pct'))}'>{_pct(row.get('upnl_pct'), True)}</span></td>",
                     "R Multiple": f"<td class='r'><span class='{_cls(row.get('r_multiple'))}'>{_r_label(row.get('r_multiple'))}</span></td>",
                     "Margin Used": f"<td class='r'>{_money(row.get('margin_used'))}<br><span class='muted'>{_pct(row.get('margin_pct_equity'))}</span></td>",
@@ -1363,7 +1376,7 @@ else:
                 f"<div class='mtrade-body'>"
                 f"<div class='mgrid'>"
                 f"<div class='mfield'><span>Unrealized P&L</span><b class='{_cls(row.get('upnl'))}'>{_money(row.get('upnl'), True)} · {_pct(row.get('upnl_pct'), True)}</b></div>"
-                f"<div class='mfield'><span>Entry → Mark</span><b>{_price(row.get('entry'))} → {_price(row.get('mark'))}</b></div>"
+                f"<div class='mfield'><span>Entry → Mark</span><b>{_price(row.get('entry'))} → {_price(row.get('mark'))}</b><small class='mark-change {_cls(row.get('mark_change_pct'))}'>{_pct(row.get('mark_change_pct'), True)}</small></div>"
                 f"<div class='mfield'><span>Margin Used</span><b>{_money(row.get('margin_used'))} · {_pct(row.get('margin_pct_equity'))}</b></div>"
                 f"<div class='mfield'><span>R Multiple</span><b class='{_cls(row.get('r_multiple'))}'>{_r_label(row.get('r_multiple'))}</b></div>"
                 f"<div class='mfield'><span>Liquidation</span><b class='{_liq_cls(row)}'>{_price(row.get('liq'))}</b></div>"
