@@ -460,8 +460,10 @@ if not bybit.have_creds():
     st.stop()
 
 days = PERIODS.get(period or "30D", 30)
+cycle_age_days = max(1, int((pd.Timestamp.now(tz="UTC").timestamp() * 1000 - tracking_cycles.cutoff_ts()) / 86_400_000) + 1)
+fetch_days = 7 if cycle_view == "Cycle 1 Archive" else max(7, min(days, cycle_age_days))
 try:
-    live_trades = load_trades(max(days, 7))
+    live_trades = load_trades(fetch_days)
 except Exception as exc:
     st.error(f"Couldn't reach Bybit: {exc}")
     st.stop()
