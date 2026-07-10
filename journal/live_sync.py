@@ -7,6 +7,9 @@ import time
 
 
 def main():
+    if os.getenv("JOURNAL_SYNC_ENABLED", "true").strip().lower() not in {"1", "true", "yes", "on"}:
+        print("journal sync disabled for this environment", flush=True)
+        return
     interval = max(30, int(os.getenv("JOURNAL_SYNC_INTERVAL_SECONDS", "60")))
     while True:
         result = subprocess.run(
