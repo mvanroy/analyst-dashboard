@@ -26,8 +26,24 @@ _BASE = "https://api.bybit.com"
 
 
 def _cfg():
-    with open(_CFG) as f:
-        return json.load(f)
+    try:
+        with open(_CFG) as f:
+            config = json.load(f)
+    except (OSError, ValueError):
+        config = {}
+    config["bybit_api_key"] = os.getenv("BYBIT_API_KEY") or config.get("bybit_api_key")
+    config["bybit_api_secret"] = os.getenv("BYBIT_API_SECRET") or config.get("bybit_api_secret")
+    config["webhook_url"] = (
+        os.getenv("JOURNAL_WEBHOOK_URL")
+        or os.getenv("WEBHOOK_URL")
+        or config.get("webhook_url")
+    )
+    config["token"] = os.getenv("JOURNAL_TOKEN") or config.get("token", "")
+    if os.getenv("JOURNAL_OPEN_POSITIONS_ENABLED") is not None:
+        config["open_positions_enabled"] = os.getenv("JOURNAL_OPEN_POSITIONS_ENABLED", "").lower() in {
+            "1", "true", "yes", "on"
+        }
+    return config
 
 
 def _signed_get(key, secret, path, params):
