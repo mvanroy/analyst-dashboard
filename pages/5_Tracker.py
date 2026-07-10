@@ -28,7 +28,7 @@ st.markdown(
 .st-key-tracker_filters [data-testid="stColumn"]:nth-child(2){width:42px!important;flex:0 0 42px!important;min-width:42px!important;}
 .st-key-tracker_filters [data-testid="stColumn"]:last-child{width:82px!important;flex:0 0 82px!important;min-width:82px!important;}
 .st-key-tracker_cycle .react-aria-ComboBox>div[role="group"]{height:40px!important;min-height:40px!important;border-radius:8px!important;}
-.st-key-tracker_cycle input{width:100%!important;height:38px!important;padding-right:10px!important;font-size:12px!important;font-weight:850!important;}
+.st-key-tracker_cycle input{width:100%!important;height:38px!important;padding-right:10px!important;font-size:12px!important;font-weight:400!important;}
 .st-key-tracker_cycle button[aria-label="Open"]{display:none!important;}
 .st-key-tracker_journal{height:42px!important;margin:0!important;}
 .tracker-journal-icon{width:42px;height:42px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;border:1px solid rgba(139,92,246,.42);border-radius:8px;background:#13101e;text-decoration:none!important;transition:border-color .15s ease,background .15s ease;}
