@@ -105,7 +105,7 @@ st.markdown(
 .tk-empty{padding:14px 0;color:#8b94a0;font-size:11px;font-weight:700;}
 @media(max-width:700px){
   .tracker-shell{margin-top:-18px!important;}
-  .st-key-tracker_filters{margin-top:-58px!important;}
+  .st-key-tracker_filters{margin-top:-62px!important;}
   .st-key-tracker_filters [data-testid="stHorizontalBlock"]{display:grid!important;grid-template-columns:minmax(0,1fr) 82px!important;grid-template-rows:42px 42px!important;gap:7px 8px!important;align-items:center!important;}
   .st-key-tracker_filters [data-testid="stColumn"]:first-child{grid-column:1;grid-row:2;width:100%!important;}
   .st-key-tracker_filters [data-testid="stColumn"]:nth-child(2){grid-column:2;grid-row:1;width:42px!important;min-width:42px!important;justify-self:end;}
