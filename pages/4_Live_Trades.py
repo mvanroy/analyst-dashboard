@@ -948,6 +948,7 @@ st.markdown(
 .lt-metric.compact-kpi{padding-left:14px;padding-right:14px;}
 .lt-metric.compact-kpi .lt-metric-cap{font-size:10px;}
 .lt-metric.compact-kpi .lt-metric-sub{font-size:11px;line-height:1.2;}
+.mobile-stop-risk{display:none;}
 .lt-metric:last-child{border-right:0;}
 .mobile-btc-status{display:none;}
 .lt-metric .coin-symbol{width:42px;height:42px;flex-basis:42px;}
@@ -1110,6 +1111,11 @@ st.markdown(
 @media(max-width:1250px){.advisor-grid{grid-template-columns:repeat(2,1fr)}.btc-card{grid-column:1 / -1}}
 @media(max-width:760px){.st-key-brandrow{display:none!important}.lt-metrics{margin:-62px 0 12px}.lt-metric-grid,.lt-metric-grid.secondary{grid-template-columns:repeat(2,minmax(0,1fr));border-bottom:0}.lt-metric{min-height:88px;padding:14px 13px;border-right:1px solid rgba(148,163,184,.12);border-bottom:1px solid rgba(148,163,184,.12)}.lt-metric:nth-child(2n){border-right:0}.lt-metric-grid.secondary .lt-metric:nth-last-child(-n+2){border-bottom:0}.lt-metric-cap{font-size:9px;margin-bottom:10px;letter-spacing:.06em}.lt-metric-big{font-size:22px;gap:6px}.lt-metric-big small{font-size:11px;padding:3px 6px}.lt-metric-sub{font-size:11px;margin-top:8px}.lt-btc-value{font-size:22px}.lt-btc-read{font-size:11px;margin-top:8px}.lt-metric-link{font-size:11px;margin-top:10px}.lt-metric-icon{right:12px;top:36px;font-size:20px}.lt-metric .coin-symbol{width:30px;height:30px;flex-basis:30px}.lt-metric-performer{gap:8px}.lt-metric-performer-main{gap:8px}.lt-metric-performer strong{font-size:12px}.lt-metric-performer span{font-size:11px;margin-top:4px}.lt-trend-icon{width:30px;height:30px;flex:0 0 30px}.lt-trend-icon svg{width:24px;height:24px}.advisor-grid{grid-template-columns:1fr}.advisor-head{display:block}.advisor-head span{display:inline-flex;margin-top:8px}.advisor-head p{margin-top:8px}.advisor-main,.advisor-strength,.advisor-sector{grid-template-columns:1fr}.advisor-ring,.sector-donut{margin:0 auto}.advisor-card{min-height:0}.btc-card{grid-column:auto}.btc-top{grid-template-columns:38px minmax(0,1fr) auto!important;gap:9px;margin-bottom:12px}.btc-top b{font-size:12px!important;line-height:1.12!important}.btc-top small{font-size:10px!important}.btc-top em{padding:6px 9px!important;font-size:9px!important}.btc-icon img{width:32px!important;height:32px!important}.btc-structure{grid-template-columns:minmax(0,1fr) auto;align-items:start;padding:14px;gap:12px}.btc-structure-copy h3{font-size:19px!important;line-height:1.14!important;text-transform:none!important;margin:10px 0 7px!important;font-weight:900!important}.btc-structure-copy p{font-size:12px!important;line-height:1.35!important;margin:6px 0!important}.btc-pulse{color:#aab2bd!important;font-weight:760!important}.btc-structure-copy strong{font-size:12px!important;padding:7px 13px!important}.btc-price-box{margin-top:0;text-align:right;min-width:116px}.btc-price-box>span{font-size:9px!important;letter-spacing:.06em!important}.btc-price-box b{font-size:18px!important;margin-top:9px!important}.btc-price-box strong{font-size:11px!important}.btc-price-box .lt-spark{display:none!important}.btc-regime{padding:11px}.btc-regime div:not(.btc-regime-track){padding:0 6px}.btc-regime b{font-size:11px}.btc-regime span{font-size:9px}.btc-lower{grid-template-columns:1fr}.btc-check{grid-template-columns:24px minmax(0,1fr) auto;align-items:center}.btc-check strong{grid-column:auto;text-align:right;margin-top:0;align-self:center}.btc-side-panel{order:2}.btc-why{order:3}.lt-top{display:block}.lt-actions{justify-content:flex-start;margin-top:10px;overflow:auto}.st-key-live_controls{display:none!important}.st-key-live_tab_selector{min-height:42px!important;margin:0 auto -34px!important;padding:0 10px!important}.st-key-live_tab_selector [data-testid="stSegmentedControl"] label{padding:10px 0 8px!important}.lt-tabs{display:block;padding:0 10px 10px}.lt-tabset{overflow:auto}.lt-tools{margin-top:10px;overflow:auto}.desktop-table{display:none}.mobile-cards{display:block;padding:0 10px 10px;margin-top:-18px}.mtrade:first-child{margin-top:0}.mgrid{grid-template-columns:1fr 1fr}}
 @media(max-width:760px){
+  .stop-risk-kpi{display:none;}
+  .mobile-stop-risk{display:block;margin-top:10px;padding-top:9px;border-top:1px solid rgba(148,163,184,.12);}
+  .mobile-stop-risk .lt-metric-cap{display:inline;margin:0 7px 0 0;font-size:8px;}
+  .mobile-stop-risk strong{color:#f6465d;font-size:14px;font-weight:850;font-variant-numeric:tabular-nums;}
+  .mobile-stop-risk small{display:block;color:#9aa3af;font-size:9px;font-weight:700;margin-top:4px;line-height:1.2;}
   .btc-bias-toggle label{height:34px;min-width:58px;padding:0 11px;font-size:.76rem;}
   .btc-structure-copy{align-self:start!important;}
   .btc-price-box{align-self:start!important;padding-top:18px!important;}
@@ -1220,8 +1226,12 @@ summary_html = f"""
       <span class='lt-metric-cap'>Open Positions</span>
       <div class='lt-metric-big'>{len(positions)}</div>
       <span class='lt-metric-icon'>{chart_icon}</span>
+      <div class='mobile-stop-risk'>
+        <span class='lt-metric-cap'>Stop Risk</span><strong>{_money(total_stop_risk)}</strong>
+        <small>{len(stopped_positions)}/{len(positions)} stopped · {unstopped_count} unprotected</small>
+      </div>
     </div>
-    <div class='lt-metric compact-kpi'>
+    <div class='lt-metric compact-kpi stop-risk-kpi'>
       <span class='lt-metric-cap'>Stop Risk</span>
       <div class='lt-metric-big red'>{_money(total_stop_risk)}</div>
       <span class='lt-metric-sub'>{len(stopped_positions)}/{len(positions)} stopped · {unstopped_count} unprotected</span>
