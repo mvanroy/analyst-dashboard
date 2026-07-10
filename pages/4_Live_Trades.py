@@ -948,7 +948,6 @@ st.markdown(
 .lt-metric.compact-kpi{padding-left:14px;padding-right:14px;}
 .lt-metric.compact-kpi .lt-metric-cap{font-size:10px;}
 .lt-metric.compact-kpi .lt-metric-sub{font-size:11px;line-height:1.2;}
-.lt-metric.compact-kpi .lt-metric-icon{display:none;}
 .lt-metric:last-child{border-right:0;}
 .mobile-btc-status{display:none;}
 .lt-metric .coin-symbol{width:42px;height:42px;flex-basis:42px;}
