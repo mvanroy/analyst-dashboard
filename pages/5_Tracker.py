@@ -56,6 +56,13 @@ st.markdown(
 .tk-animal svg,.tk-animal img{width:100%;height:100%;display:block;object-fit:contain;}
 .tk-dir-box.long .tk-animal{right:0;}
 .tk-dir-box.short .tk-animal{right:-1px;}
+.st-key-tracker_chart_split{margin:10px 0;}
+.st-key-tracker_chart_split [data-testid="stHorizontalBlock"]{gap:10px!important;align-items:stretch!important;}
+.st-key-tracker_chart_split [data-testid="column"]{min-width:0!important;}
+.st-key-tracker_split_card,.st-key-tracker_split_card .tk-section{height:210px;}
+.st-key-tracker_split_card .tk-section{box-sizing:border-box;margin:0;display:flex;flex-direction:column;}
+.st-key-tracker_split_card .tk-dir{flex:1;}
+.st-key-tracker_split_card .tk-dir-box{height:100%;box-sizing:border-box;}
 .recent-scroll{max-height:640px;overflow-y:auto;margin-right:-6px;padding-right:6px;}
 .recent-scroll::-webkit-scrollbar{width:7px}.recent-scroll::-webkit-scrollbar-track{background:rgba(139,148,160,.08);border-radius:999px}
 .recent-scroll::-webkit-scrollbar-thumb{background:rgba(139,148,160,.38);border-radius:999px}
@@ -81,8 +88,21 @@ st.markdown(
 .trade-detail-grid b{display:block;color:#f4f7fb;font-size:11px;font-weight:850;margin-top:3px;font-variant-numeric:tabular-nums;}
 .pill{display:inline-flex;align-items:center;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:850;}
 .pill.long{color:#0ecb81;background:rgba(14,203,129,.12)}.pill.short{color:#f6465d;background:rgba(246,70,93,.12)}
-@media(max-width:700px){.tracker-shell{margin-top:-18px!important;}}
-@media(min-width:701px){.tracker-shell{margin-top:18px}.tk-grid{grid-template-columns:repeat(4,1fr)}.recent-scroll{max-height:520px}}
+@media(max-width:700px){
+  .tracker-shell{margin-top:-18px!important;}
+  .st-key-tracker_chart_split [data-testid="stHorizontalBlock"]{display:block!important;}
+  .st-key-tracker_chart_split [data-testid="column"]{width:100%!important;}
+  .st-key-tracker_split_card{margin-top:10px;}
+}
+@media(min-width:701px){
+  .tracker-shell{margin-top:18px}
+  .tk-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
+  .tk-card{min-width:0;padding:10px 8px}
+  .tk-cap{font-size:8px;letter-spacing:.045em;white-space:nowrap}
+  .tk-big{font-size:18px;white-space:nowrap}
+  .tk-sub{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .recent-scroll{max-height:520px}
+}
 </style>""",
     unsafe_allow_html=True,
 )
@@ -448,8 +468,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-components.html(cumulative_chart(df), height=210, scrolling=False)
-
 dir_cards = []
 for direction in ("Long", "Short"):
     sub = df[df.direction == direction]
@@ -462,11 +480,17 @@ for direction in ("Long", "Short"):
         f"<div class='tk-dir-box {side_cls}'><div class='tk-dir-copy'><span>{direction}</span><b class='{'green' if d_net >= 0 else 'red'}'>{money(d_net, True)}</b>"
         f"<small class='tk-sub'>{len(sub)} trades · {pct(d_wr, 0)} WR</small></div><div class='tk-animal'>{animal}</div></div>"
     )
-st.markdown(
-    "<div class='tk-section'><div class='tk-head'><b>Long / Short Split</b><span>Closed</span></div>"
-    f"<div class='tk-dir'>{''.join(dir_cards)}</div></div>",
-    unsafe_allow_html=True,
-)
+with st.container(key="tracker_chart_split"):
+    chart_col, split_col = st.columns(2, gap="small")
+    with chart_col:
+        components.html(cumulative_chart(df), height=210, scrolling=False)
+    with split_col:
+        with st.container(key="tracker_split_card"):
+            st.markdown(
+                "<div class='tk-section'><div class='tk-head'><b>Long / Short Split</b><span>Closed</span></div>"
+                f"<div class='tk-dir'>{''.join(dir_cards)}</div></div>",
+                unsafe_allow_html=True,
+            )
 
 coin_rows = []
 for coin, sub in df.groupby("coin"):

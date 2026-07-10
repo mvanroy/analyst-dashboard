@@ -355,7 +355,6 @@ _NAV = [
     ("pages/4_Live_Trades.py", "Live Trades"),
     ("pages/2_Position_Size_Calculator.py", "Calculator"),
     ("pages/5_Tracker.py", "Tracking"),
-    ("pages/6_exitIQ.py", "exitIQ"),
 ]
 
 
@@ -417,7 +416,6 @@ def _mobile_footer_html(word1, word2):
     watch_active = "active" if "watch list" in current else ""
     trades_active = "active" if "live trades" in current else ""
     tracking_active = "active" if "tracker" in current or "tracking" in current else ""
-    exit_active = "active" if "exit iq" in current or "exitiq" in current else ""
     trade_icon = _inline_icon("target.svg")
     calc_icon = _inline_icon("balance.svg")
     trades_icon = _inline_icon("alert-play.svg")
@@ -428,12 +426,6 @@ def _mobile_footer_html(word1, word2):
         '<path d="M4 11h16v3H4z"/>'
         '<path d="M4 17h16v3H4z"/>'
         '<path d="M7 4v17"/></svg>'
-    )
-    exit_icon = (
-        '<svg viewBox="0 0 24 24" aria-hidden="true">'
-        '<path d="M12 3a9 9 0 1 0 9 9h-2a7 7 0 1 1-7-7V3z"/>'
-        '<path d="M13 4v9H4v-2h5.58L4.7 6.12 6.12 4.7 11 9.58V4z"/>'
-        '</svg>'
     )
     base = "https://app.igbycentral.com"
     def item(active, path, icon, label):
@@ -451,6 +443,5 @@ def _mobile_footer_html(word1, word2):
         + item(trades_active, "/Live_Trades", trades_icon, "Trades")
         + item(calc_active, "/Position_Size_Calculator", calc_icon, "Calc")
         + item(tracking_active, "/Tracker", tracking_icon, "Tracking")
-        + item(exit_active, "/exitIQ", exit_icon, "exitIQ")
         + '</nav>'
     )
