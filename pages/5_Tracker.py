@@ -58,8 +58,8 @@ st.markdown(
 .tk-dir-box.short .tk-animal{right:-1px;}
 .st-key-tracker_chart_split{margin:10px 0;}
 .st-key-tracker_chart_split [data-testid="stHorizontalBlock"]{gap:10px!important;align-items:stretch!important;}
-.st-key-tracker_chart_split [data-testid="column"]{min-width:0!important;}
-.st-key-tracker_split_card,.st-key-tracker_split_card .tk-section{height:210px;}
+.st-key-tracker_chart_split [data-testid="stColumn"]{min-width:0!important;}
+.st-key-tracker_split_card,.st-key-tracker_split_card .tk-section{height:230px;}
 .st-key-tracker_split_card .tk-section{box-sizing:border-box;margin:0;display:flex;flex-direction:column;}
 .st-key-tracker_split_card .tk-dir{flex:1;}
 .st-key-tracker_split_card .tk-dir-box{height:100%;box-sizing:border-box;}
@@ -91,7 +91,7 @@ st.markdown(
 @media(max-width:700px){
   .tracker-shell{margin-top:-18px!important;}
   .st-key-tracker_chart_split [data-testid="stHorizontalBlock"]{display:block!important;}
-  .st-key-tracker_chart_split [data-testid="column"]{width:100%!important;}
+  .st-key-tracker_chart_split [data-testid="stColumn"]{width:100%!important;flex:0 0 100%!important;}
   .st-key-tracker_split_card{margin-top:10px;}
 }
 @media(min-width:701px){
@@ -337,7 +337,7 @@ def cumulative_chart(df: pd.DataFrame) -> str:
 <div class="card">
   <div class="head"><b>Cumulative P&amp;L</b><span>{money(values[-1], True)}</span></div>
   <div class="wrap" id="wrap">
-    <svg id="chart" viewBox="0 0 {width} {height}" preserveAspectRatio="none" aria-label="Interactive cumulative P&L chart">
+    <svg id="chart" viewBox="0 0 {width} {height}" preserveAspectRatio="xMidYMid meet" aria-label="Interactive cumulative P&L chart">
       <line class="grid" x1="{left}" x2="{width - right}" y1="{top}" y2="{top}"/>
       <line class="grid" x1="{left}" x2="{width - right}" y1="{top + plot_h / 2:.1f}" y2="{top + plot_h / 2:.1f}"/>
       <line class="grid" x1="{left}" x2="{width - right}" y1="{height - bottom}" y2="{height - bottom}"/>
@@ -359,6 +359,10 @@ def cumulative_chart(df: pd.DataFrame) -> str:
   const guide = document.getElementById('guide');
   const dot = document.getElementById('dot');
   const tip = document.getElementById('tip');
+  const areaEl = svg.querySelector('.area');
+  const lineEl = svg.querySelector('.line');
+  const axisLabels = svg.querySelectorAll('text');
+  let viewWidth = {width};
   const money = (v) => {{
     const sign = v >= 0 ? '+' : '-';
     return `${{sign}}${{new Intl.NumberFormat('en-US', {{style:'currency', currency:'USD'}}).format(Math.abs(v))}}`;
@@ -372,13 +376,26 @@ def cumulative_chart(df: pd.DataFrame) -> str:
     tip.querySelector('b').textContent = money(p.value);
     tip.querySelector('span').textContent = p.label;
     const rect = svg.getBoundingClientRect();
-    const leftPx = (p.x / {width}) * rect.width;
+    const leftPx = (p.x / viewWidth) * rect.width;
     tip.style.left = `${{Math.max(46, Math.min(rect.width - 46, leftPx))}}px`;
+  }}
+  function layout() {{
+    viewWidth = Math.max(240, Math.round(svg.getBoundingClientRect().width));
+    svg.setAttribute('viewBox', `0 0 ${{viewWidth}} {height}`);
+    points.forEach((p, i) => {{
+      p.x = {left} + i / Math.max(1, points.length - 1) * (viewWidth - {left} - {right});
+    }});
+    const renderedPoints = points.map(p => `${{p.x}},${{p.y}}`).join(' ');
+    lineEl.setAttribute('points', renderedPoints);
+    areaEl.setAttribute('points', `{left},{height - bottom} ${{renderedPoints}} ${{viewWidth - {right}}},{height - bottom}`);
+    svg.querySelectorAll('.grid,.zero').forEach(el => el.setAttribute('x2', viewWidth - {right}));
+    if (axisLabels.length > 1) axisLabels[axisLabels.length - 1].setAttribute('x', viewWidth - {right});
+    show(points.length - 1);
   }}
   function move(ev) {{
     const rect = svg.getBoundingClientRect();
     const clientX = ev.touches ? ev.touches[0].clientX : ev.clientX;
-    const vx = ((clientX - rect.left) / rect.width) * {width};
+    const vx = ((clientX - rect.left) / rect.width) * viewWidth;
     let best = 0;
     let bestDist = Infinity;
     points.forEach((p, i) => {{
@@ -394,7 +411,8 @@ def cumulative_chart(df: pd.DataFrame) -> str:
   wrap.addEventListener('pointerdown', move);
   wrap.addEventListener('touchstart', move, {{passive:true}});
   wrap.addEventListener('touchmove', move, {{passive:true}});
-  show(points.length - 1);
+  layout();
+  new ResizeObserver(layout).observe(svg);
 </script>
 """
 
@@ -483,7 +501,7 @@ for direction in ("Long", "Short"):
 with st.container(key="tracker_chart_split"):
     chart_col, split_col = st.columns(2, gap="small")
     with chart_col:
-        components.html(cumulative_chart(df), height=210, scrolling=False)
+        components.html(cumulative_chart(df), height=230, scrolling=False)
     with split_col:
         with st.container(key="tracker_split_card"):
             st.markdown(
