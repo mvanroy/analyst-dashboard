@@ -24,6 +24,12 @@ LOGO_PATH = os.path.join(_ROOT, "assets", "logo.png")
 ASSETS_DIR = os.path.join(_ROOT, "assets")
 
 
+def build_sha():
+    """Return the deployed Git revision for staging/production verification."""
+    raw = os.environ.get("RAILWAY_GIT_COMMIT_SHA", "local")
+    return "".join(ch for ch in raw if ch.isalnum())[:40] or "local"
+
+
 def logo_data_uri():
     try:
         with open(LOGO_PATH, "rb") as f:
@@ -406,7 +412,7 @@ def render_header(word1, word2, sub="", brand=True):
 
 
 def _mobile_nav_html(word1, word2):
-    return f'<div class="mobile-topbar">{brand_html(word1, word2)}</div>'
+    return f'<div class="mobile-topbar" data-igby-build="{build_sha()}">{brand_html(word1, word2)}</div>'
 
 
 def _mobile_footer_html(word1, word2):
