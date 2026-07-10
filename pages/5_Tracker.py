@@ -23,10 +23,10 @@ st.markdown(
 .st-key-brandrow{display:none!important;}
 .tracker-shell{max-width:720px;margin:0 auto;}
 .st-key-tracker_filters{margin:-50px 0 2px!important;}
-.st-key-tracker_filters [data-testid="stHorizontalBlock"]{display:flex!important;flex-direction:row!important;flex-wrap:nowrap!important;align-items:center!important;gap:8px!important;}
-.st-key-tracker_filters [data-testid="stColumn"]:first-child{width:auto!important;flex:1 1 auto!important;min-width:0!important;}
-.st-key-tracker_filters [data-testid="stColumn"]:nth-child(2){width:42px!important;flex:0 0 42px!important;min-width:42px!important;}
-.st-key-tracker_filters [data-testid="stColumn"]:last-child{width:82px!important;flex:0 0 82px!important;min-width:82px!important;}
+.st-key-tracker_filters [data-testid="stHorizontalBlock"]{width:364px!important;max-width:100%!important;display:grid!important;grid-template-columns:238px 68px 42px!important;grid-template-rows:42px!important;gap:8px!important;align-items:center!important;}
+.st-key-tracker_filters [data-testid="stColumn"]:first-child{grid-column:1;grid-row:1;width:238px!important;min-width:0!important;}
+.st-key-tracker_filters [data-testid="stColumn"]:nth-child(2){grid-column:3;grid-row:1;width:42px!important;min-width:42px!important;}
+.st-key-tracker_filters [data-testid="stColumn"]:last-child{grid-column:2;grid-row:1;width:68px!important;min-width:68px!important;}
 .st-key-tracker_cycle .react-aria-ComboBox>div[role="group"]{height:40px!important;min-height:40px!important;border-radius:8px!important;}
 .st-key-tracker_cycle input{width:100%!important;height:38px!important;padding-right:10px!important;font-size:12px!important;font-weight:300!important;}
 .st-key-tracker_cycle button[aria-label="Open"]{display:none!important;}
@@ -37,7 +37,7 @@ st.markdown(
 .st-key-tracker_period{margin:0!important;}
 .st-key-tracker_period [data-testid="stElementContainer"]{width:100%!important;}
 .st-key-tracker_period [data-testid="stButtonGroup"]{width:100%!important;}
-.st-key-tracker_period [role="radiogroup"]{width:100%!important;min-width:100%!important;max-width:none!important;height:40px!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:3px!important;padding:3px!important;box-sizing:border-box!important;}
+.st-key-tracker_period [role="radiogroup"]{width:100%!important;min-width:100%!important;max-width:none!important;height:40px!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:3px!important;padding:3px!important;box-sizing:border-box!important;}
 .st-key-tracker_period [role="radiogroup"] button{height:34px!important;min-height:34px!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;}
 .st-key-tracker_period [role="radiogroup"] button p{font-size:.78rem!important;line-height:1!important;margin:0!important;font-weight:720!important;}
 .tk-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:-14px 0 10px;}
@@ -106,13 +106,11 @@ st.markdown(
 @media(max-width:700px){
   .tracker-shell{margin-top:-18px!important;}
   .st-key-tracker_filters{margin-top:-62px!important;}
-  .st-key-tracker_filters [data-testid="stHorizontalBlock"]{display:grid!important;grid-template-columns:minmax(0,1fr) 68px 42px!important;grid-template-rows:42px!important;gap:8px!important;align-items:center!important;}
+  .st-key-tracker_filters [data-testid="stHorizontalBlock"]{width:100%!important;grid-template-columns:minmax(0,1fr) 68px 42px!important;}
   .st-key-tracker_filters [data-testid="stColumn"]:first-child{grid-column:1;grid-row:1;width:100%!important;}
   .st-key-tracker_filters [data-testid="stColumn"]:nth-child(2){grid-column:3;grid-row:1;width:42px!important;min-width:42px!important;justify-self:end;}
   .st-key-tracker_filters [data-testid="stColumn"]:last-child{grid-column:2;grid-row:1;width:68px!important;min-width:68px!important;}
   .st-key-tracker_cycle [data-baseweb="select"] span,.st-key-tracker_cycle input{font-size:16px!important;}
-  .st-key-tracker_period [role="radiogroup"]{grid-template-columns:repeat(4,minmax(0,1fr))!important;}
-  .st-key-tracker_period [role="radiogroup"]>button:nth-of-type(5){display:none!important;}
   .st-key-tracker_chart_split [data-testid="stHorizontalBlock"]{display:block!important;}
   .st-key-tracker_chart_split [data-testid="stColumn"]{width:100%!important;flex:0 0 100%!important;}
   .st-key-tracker_split_card{margin-top:10px;}
@@ -135,7 +133,6 @@ PERIODS = {
     "7D": 7,
     "30D": 30,
     "90D": 90,
-    "365D": 365,
 }
 
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
