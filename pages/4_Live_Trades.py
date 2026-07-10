@@ -942,9 +942,13 @@ st.markdown(
 .lt-actions{display:flex;gap:8px;justify-content:flex-end;align-items:center;}
 .lt-pill{border:1px solid rgba(139,148,160,.18);border-radius:8px;background:rgba(15,23,42,.38);padding:9px 12px;color:#dfe3e8;font-size:12px;font-weight:700;}
 .lt-metrics{max-width:1600px;margin:-44px auto 14px;background:linear-gradient(145deg,rgba(12,17,32,.98),rgba(9,13,26,.92));border:1px solid rgba(148,163,184,.16);border-radius:10px;box-shadow:0 16px 42px rgba(0,0,0,.22);overflow:hidden;}
-.lt-metric-grid{display:grid;grid-template-columns:1.05fr .95fr 1fr 1fr 1fr;gap:0;border-bottom:1px solid rgba(148,163,184,.12);}
+.lt-metric-grid{display:grid;grid-template-columns:.525fr .525fr .95fr 1fr 1fr 1fr;gap:0;border-bottom:1px solid rgba(148,163,184,.12);}
 .lt-metric-grid.secondary{grid-template-columns:1fr 1fr 1.15fr 1.15fr 1fr;border-bottom:0;}
 .lt-metric{min-height:112px;padding:18px 22px;border-right:1px solid rgba(148,163,184,.12);position:relative;}
+.lt-metric.compact-kpi{padding-left:14px;padding-right:14px;}
+.lt-metric.compact-kpi .lt-metric-cap{font-size:10px;}
+.lt-metric.compact-kpi .lt-metric-sub{font-size:11px;line-height:1.2;}
+.lt-metric.compact-kpi .lt-metric-icon{display:none;}
 .lt-metric:last-child{border-right:0;}
 .mobile-btc-status{display:none;}
 .lt-metric .coin-symbol{width:42px;height:42px;flex-basis:42px;}
@@ -1095,7 +1099,8 @@ st.markdown(
 .lt-table th{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:#9aa3af;font-weight:850;padding:13px 12px;border-bottom:1px solid rgba(148,163,184,.14);background:rgba(15,23,42,.28);text-align:left;}
 .lt-table td{padding:13px 12px;border-bottom:1px solid rgba(148,163,184,.10);color:#dfe3e8;font-variant-numeric:tabular-nums;vertical-align:middle;}
 .lt-table td.r{font-size:15px;font-weight:650;}
-.mark-change{display:block;margin-top:4px;font-size:11px;font-weight:750;line-height:1;font-variant-numeric:tabular-nums;}
+.mark-change{display:block;margin-top:4px;font-size:14px;font-weight:500;line-height:1;font-variant-numeric:tabular-nums;}
+@media(max-width:760px){.mark-change{font-size:11px;font-weight:750;}}
 .lt-table tr:last-child td{border-bottom:none}.r{text-align:right!important}.center{text-align:center!important;}
 .coin{display:flex;align-items:center;gap:12px;min-width:126px}.rank-badge{width:34px;height:34px;border-radius:999px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:1px solid rgba(160,168,184,.36);background:#252a3c;color:#f3f5fb;font-size:.52rem;letter-spacing:.02em;font-weight:900;font-variant-numeric:tabular-nums;position:relative;white-space:nowrap;overflow:hidden;flex:0 0 34px}.rank-badge.coin-symbol{background:rgba(21,25,39,.94);border-color:rgba(151,93,255,.42);box-shadow:0 0 12px rgba(151,93,255,.18)}.rank-badge img{width:100%;height:100%;object-fit:cover;display:block}.rank-badge.no-logo{background:linear-gradient(135deg,rgba(151,93,255,.16),rgba(21,25,39,.94));padding:0 3px;box-sizing:border-box}.sym{font-weight:850;color:#f4f7fb;font-size:14px}.lev{display:block;color:#8b94a0;font-size:12px;margin-top:2px}
 .badge{display:inline-flex;align-items:center;justify-content:center;border-radius:5px;padding:3px 10px;font-size:12px;font-weight:850}.badge.long{background:rgba(32,216,132,.12);color:#20D884;border:1px solid rgba(32,216,132,.25)}.badge.short{background:rgba(255,77,94,.12);color:#FF4D5E;border:1px solid rgba(255,77,94,.25)}
@@ -1150,6 +1155,9 @@ equity = float(account.get("equity") or 0)
 total_upnl = sum(float(r.get("upnl") or 0) for r in positions)
 total_notional = sum(float(r.get("notional") or 0) for r in positions)
 total_margin = sum(float(r.get("margin_used") or 0) for r in positions)
+stopped_positions = [r for r in positions if r.get("initial_risk") is not None]
+total_stop_risk = sum(float(r.get("initial_risk") or 0) for r in stopped_positions)
+unstopped_count = len(positions) - len(stopped_positions)
 longs = [r for r in positions if r.get("direction") == "Long"]
 shorts = [r for r in positions if r.get("direction") == "Short"]
 long_exposure = sum(float(r.get("notional") or 0) for r in longs)
@@ -1209,10 +1217,15 @@ best_perf_icon = best_trend_icon if best_tone == "green" else worst_trend_icon
 summary_html = f"""
 <div class='lt-metrics'>
   <div class='lt-metric-grid'>
-    <div class='lt-metric'>
+    <div class='lt-metric compact-kpi'>
       <span class='lt-metric-cap'>Open Positions</span>
       <div class='lt-metric-big'>{len(positions)}</div>
       <span class='lt-metric-icon'>{chart_icon}</span>
+    </div>
+    <div class='lt-metric compact-kpi'>
+      <span class='lt-metric-cap'>Stop Risk</span>
+      <div class='lt-metric-big red'>{_money(total_stop_risk)}</div>
+      <span class='lt-metric-sub'>{len(stopped_positions)}/{len(positions)} stopped · {unstopped_count} unprotected</span>
     </div>
     <div class='lt-metric'>
       <span class='lt-metric-cap'>Total Unrealized P&amp;L</span>
