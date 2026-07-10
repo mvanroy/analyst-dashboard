@@ -26,9 +26,14 @@ def archived_trades(live_trades: list[dict] | None = None) -> list[dict]:
     trades = [_normalise_trade(row) for row in archive.get("closed_trades") or []]
     seen = {str(row.get("trade_id") or "") for row in trades}
     legacy = archive.get("legacy_open_positions") or []
+    boundary = cutoff_ts()
     for row in live_trades or []:
         trade_id = str(row.get("trade_id") or "")
-        if trade_id in seen or not _matches_legacy_position(row, legacy):
+        belongs_to_cycle_one = (
+            int(row.get("closed_ts") or 0) < boundary
+            or _matches_legacy_position(row, legacy)
+        )
+        if trade_id in seen or not belongs_to_cycle_one:
             continue
         trades.append(dict(row))
         seen.add(trade_id)

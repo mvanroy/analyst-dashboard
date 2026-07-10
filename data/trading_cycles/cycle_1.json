@@ -4,9 +4,10 @@
     "id": "cycle-1",
     "name": "Cycle 1",
     "status": "archived_pending",
-    "cutoff_at_utc": "2026-07-10T04:48:27.969877+00:00",
-    "cutoff_ts": 1783658907969,
-    "closed_trade_count_at_cutoff": 101,
+    "cutoff_at_utc": "2026-07-10T07:00:00+00:00",
+    "cutoff_ts": 1783666800000,
+    "snapshot_captured_at_utc": "2026-07-10T04:48:27.969877+00:00",
+    "closed_trade_count_at_capture": 101,
     "pending_open_count": 2
   },
   "legacy_open_positions": [

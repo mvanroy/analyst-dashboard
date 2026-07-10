@@ -22,10 +22,14 @@ st.markdown(
     + """
 .st-key-brandrow{display:none!important;}
 .tracker-shell{max-width:720px;margin:0 auto;}
-.st-key-tracker_cycle_controls{margin:-50px 0 8px!important;}
-.st-key-tracker_cycle_controls [data-testid="stHorizontalBlock"]{align-items:center!important;gap:10px!important;}
-.st-key-tracker_cycle_controls [data-testid="stLinkButton"] a{white-space:nowrap!important;border-radius:8px!important;height:42px!important;}
-.st-key-tracker_period{margin:0 0 2px!important;}
+.st-key-tracker_filters{margin:-50px 0 2px!important;}
+.st-key-tracker_filters [data-testid="stHorizontalBlock"]{align-items:center!important;gap:8px!important;}
+.st-key-tracker_cycle [data-baseweb="select"]>div{height:48px!important;min-height:48px!important;border-radius:8px!important;}
+.st-key-tracker_cycle [data-baseweb="select"] span{font-size:12px!important;font-weight:850!important;}
+.st-key-tracker_journal{display:flex!important;justify-content:flex-end!important;margin:0 0 8px!important;}
+.st-key-tracker_journal [data-testid="stLinkButton"]{width:auto!important;}
+.st-key-tracker_journal a{white-space:nowrap!important;border-radius:8px!important;min-height:36px!important;}
+.st-key-tracker_period{margin:0!important;}
 .st-key-tracker_period [data-testid="stSegmentedControl"]{width:100%!important;}
 .st-key-tracker_period [data-testid="stSegmentedControl"] > div{width:100%!important;display:grid!important;grid-template-columns:repeat(5,minmax(0,1fr))!important;gap:3px!important;padding:3px!important;}
 .st-key-tracker_period [data-testid="stSegmentedControl"] label{height:42px!important;min-height:42px!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;}
@@ -92,13 +96,10 @@ st.markdown(
 .trade-detail-grid b{display:block;color:#f4f7fb;font-size:11px;font-weight:850;margin-top:3px;font-variant-numeric:tabular-nums;}
 .pill{display:inline-flex;align-items:center;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:850;}
 .pill.long{color:#0ecb81;background:rgba(14,203,129,.12)}.pill.short{color:#f6465d;background:rgba(246,70,93,.12)}
-.tk-cycle-note{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 10px;padding:10px 12px;border:1px solid rgba(76,141,255,.28);border-radius:8px;background:rgba(76,141,255,.07);color:#cdd6e5;font-size:11px;font-weight:700;}
-.tk-cycle-note b{color:#fff;font-weight:900}.tk-cycle-note span{color:#8b94a0;text-align:right;}
 .tk-empty{padding:14px 0;color:#8b94a0;font-size:11px;font-weight:700;}
 @media(max-width:700px){
   .tracker-shell{margin-top:-18px!important;}
-  .st-key-tracker_cycle_controls{margin-top:-18px!important;}
-  .st-key-tracker_cycle_controls [data-testid="stHorizontalBlock"]{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;}
+  .st-key-tracker_filters{margin-top:-18px!important;}
   .st-key-tracker_chart_split [data-testid="stHorizontalBlock"]{display:block!important;}
   .st-key-tracker_chart_split [data-testid="stColumn"]{width:100%!important;flex:0 0 100%!important;}
   .st-key-tracker_split_card{margin-top:10px;}
@@ -436,24 +437,27 @@ def load_trades(days: int):
 
 
 st.markdown("<div class='tracker-shell'>", unsafe_allow_html=True)
-with st.container(key="tracker_cycle_controls"):
-    cycle_col, journal_col = st.columns([1, 0.34], gap="small")
+with st.container(key="tracker_filters"):
+    period_col, cycle_col = st.columns([1, 0.24], gap="small")
+    with period_col:
+        with st.container(key="tracker_period"):
+            period = st.segmented_control("Period", list(PERIODS), default="30D", label_visibility="collapsed")
     with cycle_col:
-        cycle_view = st.segmented_control(
-            "Trading cycle",
-            ["Cycle 2", "Cycle 1 Archive"],
-            default="Cycle 2",
-            label_visibility="collapsed",
-        )
-    with journal_col:
-        journal_url = bybit.sheet_url()
-        if journal_url:
-            st.link_button("Open Journal", journal_url, use_container_width=True)
-        else:
-            st.button("Open Journal", disabled=True, use_container_width=True)
+        with st.container(key="tracker_cycle"):
+            cycle_view = st.selectbox(
+                "Trading cycle",
+                ["Cyc 2", "Cyc 1"],
+                index=0,
+                label_visibility="collapsed",
+            )
 
-with st.container(key="tracker_period"):
-    period = st.segmented_control("Period", list(PERIODS), default="30D", label_visibility="collapsed")
+journal_tab_id = "1842282429" if cycle_view == "Cyc 2" else "1304074642"
+journal_url = (
+    "https://docs.google.com/spreadsheets/d/1PhD6GM1onHo3Fwi8jveo8GEnP12FymfmCTU1qpAR_xw/"
+    f"edit?gid={journal_tab_id}#gid={journal_tab_id}"
+)
+with st.container(key="tracker_journal"):
+    st.link_button("Open Journal", journal_url)
 
 if not bybit.have_creds():
     st.warning("No Bybit API key configured.")
@@ -461,33 +465,20 @@ if not bybit.have_creds():
 
 days = PERIODS.get(period or "30D", 30)
 cycle_age_days = max(1, int((pd.Timestamp.now(tz="UTC").timestamp() * 1000 - tracking_cycles.cutoff_ts()) / 86_400_000) + 1)
-fetch_days = 7 if cycle_view == "Cycle 1 Archive" else max(7, min(days, cycle_age_days))
+fetch_days = 7 if cycle_view == "Cyc 1" else max(7, min(days, cycle_age_days))
 try:
     live_trades = load_trades(fetch_days)
 except Exception as exc:
     st.error(f"Couldn't reach Bybit: {exc}")
     st.stop()
 
-if cycle_view == "Cycle 1 Archive":
+if cycle_view == "Cyc 1":
     trades = tracking_cycles.archived_trades(live_trades)
-    pending = tracking_cycles.pending_legacy_positions(live_trades)
-    archive_status = "Archived" if not pending else "Archived · Awaiting final trades"
-    st.markdown(
-        f"<div class='tk-cycle-note'><b>Cycle 1 · {archive_status}</b>"
-        f"<span>{len(trades)} closed · {len(pending)} pending</span></div>",
-        unsafe_allow_html=True,
-    )
 else:
     trades = tracking_cycles.current_trades(live_trades)
-    cutoff = pd.to_datetime(tracking_cycles.cutoff_ts(), unit="ms", utc=True).tz_convert("Australia/Melbourne")
     period_cutoff = pd.Timestamp.now(tz="Australia/Melbourne") - pd.Timedelta(days=days)
     effective_cutoff_ms = max(tracking_cycles.cutoff_ts(), int(period_cutoff.timestamp() * 1000))
     trades = [row for row in trades if int(row.get("closed_ts") or 0) >= effective_cutoff_ms]
-    st.markdown(
-        "<div class='tk-cycle-note'><b>Cycle 2 · Active</b>"
-        f"<span>Started {cutoff.strftime('%d %b %Y · %I:%M %p')} Melbourne</span></div>",
-        unsafe_allow_html=True,
-    )
 
 trade_columns = [
     "trade_id", "ts", "date", "opened_ts", "closed_ts", "duration_min", "coin",

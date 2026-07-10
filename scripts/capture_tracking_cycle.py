@@ -32,7 +32,8 @@ def main() -> int:
         raise SystemExit("--cutoff-utc must include a timezone")
     cutoff_ms = int(cutoff.timestamp() * 1000)
 
-    closed = bybit.fetch_closed_trades(365)
+    closed_all = bybit.fetch_closed_trades(365)
+    closed = [row for row in closed_all if int(row.get("closed_ts") or 0) < cutoff_ms]
     open_positions = bybit.fetch_open_positions()
     journal_rows = bybit.journal_rows()
     if len(open_positions) != args.expected_open:
@@ -60,7 +61,8 @@ def main() -> int:
             "status": "archived_pending",
             "cutoff_at_utc": cutoff.astimezone(dt.timezone.utc).isoformat(),
             "cutoff_ts": cutoff_ms,
-            "closed_trade_count_at_cutoff": len(closed),
+            "snapshot_captured_at_utc": dt.datetime.now(dt.timezone.utc).isoformat(),
+            "closed_trade_count_at_capture": len(closed),
             "pending_open_count": len(legacy_open),
         },
         "legacy_open_positions": legacy_open,
