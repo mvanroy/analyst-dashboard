@@ -99,7 +99,7 @@ st.markdown(
   .tk-grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}
   .tk-card{min-width:0;padding:10px 8px}
   .tk-cap{font-size:8px;letter-spacing:.045em;white-space:nowrap}
-  .tk-big{font-size:18px;white-space:nowrap}
+  .tk-big{font-size:22px;white-space:nowrap}
   .tk-sub{font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   .recent-scroll{max-height:520px}
 }
