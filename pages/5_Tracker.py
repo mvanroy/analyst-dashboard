@@ -461,7 +461,7 @@ if not bybit.have_creds():
 
 days = PERIODS.get(period or "30D", 30)
 try:
-    live_trades = load_trades(365)
+    live_trades = load_trades(max(days, 7))
 except Exception as exc:
     st.error(f"Couldn't reach Bybit: {exc}")
     st.stop()
