@@ -200,8 +200,11 @@ def main(argv):
     open_only = "--open-only" in argv
     include_open_arg = "--include-open" in argv
     days = 180
+    recent_hours = None
     if "--days" in argv:
         days = int(argv[argv.index("--days") + 1])
+    if "--recent-hours" in argv:
+        recent_hours = float(argv[argv.index("--recent-hours") + 1])
 
     cfg = _cfg()
     key, secret = cfg.get("bybit_api_key"), cfg.get("bybit_api_secret")
@@ -218,6 +221,9 @@ def main(argv):
     if not open_only:
         trades = fetch_closed(key, secret, days)
         rows = [to_row(t) for t in trades]
+        if recent_hours is not None:
+            cutoff = int((time.time() - recent_hours * 3600) * 1000)
+            rows = [row for row in rows if int(row["closed_ts"]) >= cutoff]
         print(f"Found {len(rows)} closed trades over the last {days} days.")
     if include_open and not closed_only:
         open_positions = fetch_open(key, secret)

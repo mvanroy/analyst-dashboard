@@ -13,7 +13,7 @@ def main():
     interval = max(30, int(os.getenv("JOURNAL_SYNC_INTERVAL_SECONDS", "60")))
     while True:
         result = subprocess.run(
-            [sys.executable, "journal/sync_bybit.py", "--days", "7", "--include-open"],
+            [sys.executable, "journal/sync_bybit.py", "--days", "7", "--recent-hours", "24", "--include-open"],
             check=False,
         )
         if result.returncode:
