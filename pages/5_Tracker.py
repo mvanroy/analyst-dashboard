@@ -314,7 +314,7 @@ def cumulative_chart(df: pd.DataFrame) -> str:
     return f"""
 <style>
   html,body{{margin:0;background:transparent;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}}
-  .card{{box-sizing:border-box;background:#13101e;border:1px solid rgba(139,92,246,.34);border-radius:8px;padding:13px;
+  .card{{box-sizing:border-box;height:230px;background:#13101e;border:1px solid rgba(139,92,246,.34);border-radius:8px;padding:13px;
     box-shadow:0 0 0 1px rgba(124,58,237,.05),0 14px 34px rgba(0,0,0,.18);}}
   .head{{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:10px;}}
   .head b{{color:#f4f7fb;font-size:11px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;}}
