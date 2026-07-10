@@ -317,7 +317,10 @@ def fetch_open_positions():
                 if tp:
                     target_r = abs(tp - entry) / risk
 
-        created = int(p.get("createdTime") or 0)
+        # createdTime is the first-ever position record for this symbol, so it
+        # can predate the current trade. openTime is the active position's
+        # actual opening timestamp; retain createdTime only for older payloads.
+        opened = int(p.get("openTime") or p.get("createdTime") or 0)
         out.append({
             "coin": p.get("symbol"),
             "direction": direction,
@@ -335,8 +338,8 @@ def fetch_open_positions():
             "target_r": round(target_r, 2) if target_r is not None else None,
             "to_tp": round((tp - mark) / mark * 100, 2) if (tp and mark) else None,
             "to_sl": round((sl - mark) / mark * 100, 2) if (sl and mark) else None,
-            "opened": datetime.datetime.fromtimestamp(created / 1000) if created else None,
-            "age_h": round((now - created / 1000) / 3600, 1) if created else None,
+            "opened": datetime.datetime.fromtimestamp(opened / 1000) if opened else None,
+            "age_h": round((now - opened / 1000) / 3600, 1) if opened else None,
         })
     out.sort(key=lambda r: -(r["notional"] or 0))
     return out

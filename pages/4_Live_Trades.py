@@ -1113,8 +1113,8 @@ st.markdown(
 @media(max-width:760px){
   .stop-risk-kpi{display:none;}
   .mobile-stop-risk{display:block;margin-top:10px;padding-top:9px;border-top:1px solid rgba(148,163,184,.12);}
-  .mobile-stop-risk .lt-metric-cap{display:inline;margin:0 7px 0 0;font-size:8px;}
-  .mobile-stop-risk strong{color:#f6465d;font-size:22px;font-weight:850;font-variant-numeric:tabular-nums;}
+  .mobile-stop-risk .lt-metric-cap{margin-bottom:7px;font-size:8px;}
+  .mobile-stop-risk .lt-metric-big{font-size:22px;font-weight:880;line-height:1;}
   .mobile-stop-risk small{display:block;color:#9aa3af;font-size:9px;font-weight:700;margin-top:4px;line-height:1.2;}
   .btc-bias-toggle label{height:34px;min-width:58px;padding:0 11px;font-size:.76rem;}
   .btc-structure-copy{align-self:start!important;}
@@ -1227,7 +1227,7 @@ summary_html = f"""
       <div class='lt-metric-big'>{len(positions)}</div>
       <span class='lt-metric-icon'>{chart_icon}</span>
       <div class='mobile-stop-risk'>
-        <span class='lt-metric-cap'>Stop Risk</span><strong>{_money(total_stop_risk)}</strong>
+        <span class='lt-metric-cap'>Stop Risk</span><div class='lt-metric-big red'>{_money(total_stop_risk)}</div>
         <small>{len(stopped_positions)}/{len(positions)} stopped · {unstopped_count} unprotected</small>
       </div>
     </div>
