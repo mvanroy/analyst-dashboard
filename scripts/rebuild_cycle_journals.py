@@ -21,7 +21,7 @@ ARCHIVE = ROOT / "data" / "trading_cycles" / "cycle_1.json"
 NOTES_BACKUP = ROOT / "data" / "journal_backups" / "bybit_journal_20260710T044827Z.json"
 BACKUP_DIR = ROOT / "data" / "journal_backups"
 CUTOFF_MS = 1783666800000
-SCRIPT_VERSION = "2026-07-10-trading-cycles-v2"
+SCRIPT_VERSION = "2026-07-10-live-cycle-journal-v1"
 MANUAL_FIELDS = (
     "market_bias", "setup_type", "entry_rationale", "strategy",
     "setup_grade", "risk_reward", "screenshot", "cut_reason", "cut_result",

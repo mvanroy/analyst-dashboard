@@ -30,7 +30,7 @@ import httpx
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 _CFG = os.getenv("IGBY_JOURNAL_CONFIG") or os.path.join(_ROOT, "journal_config.json")
 _BASE = "https://api.bybit.com"
-_REQUIRED_SCRIPT_VERSION = "2026-07-10-trading-cycles-v2"
+_REQUIRED_SCRIPT_VERSION = "2026-07-10-live-cycle-journal-v1"
 
 
 def _cfg():
@@ -173,6 +173,8 @@ def open_to_row(p):
     margin = notional / lev if lev else 0
     return {
         "position_id": position_id,
+        "opened_ts": created,
+        "entry_date": datetime.datetime.fromtimestamp(created / 1000).strftime("%Y-%m-%d") if created else "",
         "opened_at": opened_at,
         "coin": p.get("symbol") or "",
         "long_short": direction,
@@ -283,6 +285,19 @@ def main(argv):
         except Exception as e:
             fail += 1
             print("  open positions error:", repr(e))
+        cycle_payload = {"action": "cycle_open_positions", "rows": open_rows}
+        if token:
+            cycle_payload["token"] = token
+        try:
+            resp = httpx.post(url, json=cycle_payload, timeout=20, follow_redirects=True)
+            resp.raise_for_status()
+            b = resp.json()
+            if not b.get("ok"):
+                fail += 1
+                print("  cycle journal open positions rejected:", b)
+        except Exception as e:
+            fail += 1
+            print("  cycle journal open positions error:", repr(e))
     elif include_open and not closed_only:
         payload = {"action": "open_positions", "rows": []}
         if token:

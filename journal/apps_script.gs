@@ -14,7 +14,7 @@
 
 const SHEET_NAME = 'Trades';
 const TOKEN = '';  // optional shared secret; if set, pushes must include the same token
-const SCRIPT_VERSION = '2026-07-10-trading-cycles-v2';
+const SCRIPT_VERSION = '2026-07-10-live-cycle-journal-v1';
 
 // [ Header, payloadKey, section, dropdownKey ]
 const SCHEMA = [
@@ -134,6 +134,7 @@ function doPost(e) {
     if (TOKEN && body.token !== TOKEN) return _json({ ok: false, error: 'bad token' });
     if (body.action === 'bybit') return _appendBybit(body);   // Bybit-pull journal (2nd tab)
     if (body.action === 'open_positions') return _syncOpenPositions(body.rows || []);
+    if (body.action === 'cycle_open_positions') return _syncCycleOpenPositions(body.rows || []);
     if (body.action === 'repair_bybit') return _repairBybitJournalEndpoint();
     if (body.action === 'replace_cycle') return _replaceCycle(body);
     var sh = _ensureSheet();
@@ -194,6 +195,7 @@ function _features() {
     open_positions: true,
     trade_origin: false,
     trading_cycles: true,
+    live_cycle_journal: true,
     cycle_1_gid: CYCLE_1_GID,
     cycle_2_gid: CYCLE_2_GID,
     cycle_2_cutoff_ms: CYCLE_2_CUTOFF_MS,
@@ -237,6 +239,11 @@ function _cycleForTrade(body) {
   if (!isFinite(closed) || closed <= 0) throw new Error('closed_ts is required for cycle routing');
   if (_isLegacyCycle1(body)) return 1;
   return closed >= CYCLE_2_CUTOFF_MS ? 2 : 1;
+}
+
+function _cycleForOpen(body) {
+  if (_isLegacyCycle1(body)) return 1;
+  return Number(body.opened_ts) >= CYCLE_2_CUTOFF_MS ? 2 : 1;
 }
 
 // [ Header, payloadKey, section, dropdownKey, kind ]   kind: data | manual | formula | id
@@ -428,10 +435,18 @@ function _appendBybit(body) {
   if (lastRow >= BYBIT_R1) {
     var existing = sh.getRange(BYBIT_R1, 1, lastRow - BYBIT_R1 + 1, sh.getLastColumn()).getValues();
     var incomingLegacyKey = _legacyBybitKeyFromBody(body);
+    var openRow = 0;
     for (var k = 0; k < existing.length; k++) {
       if (String(existing[k][idCol - 1]) === String(body.trade_id)) return _json({ ok: true, dup: true, cycle: cycle });
       if (_legacyBybitKeyFromRow(existing[k]) === incomingLegacyKey) return _json({ ok: true, dup: true, legacy: true, cycle: cycle });
+      var priorId = String(existing[k][idCol - 1] || '');
+      var priorOpened = Number(priorId.split('|').pop());
+      if (priorId.indexOf('OPEN|') === 0 &&
+          String(existing[k][_bCol('coin') - 1] || '') === String(body.coin || '') &&
+          String(existing[k][_bCol('long_short') - 1] || '') === String(body.long_short || '') &&
+          isFinite(priorOpened) && Math.abs(priorOpened - Number(body.opened_ts)) <= 120000) openRow = BYBIT_R1 + k;
     }
+    if (openRow) return _completeOpenBybitRow(sh, openRow, body, cycle);
   }
   var row = BYBIT_SCHEMA.map(function (s) {
     if (s[4] === 'formula') return '';
@@ -446,6 +461,59 @@ function _appendBybit(body) {
   sh.getRange(r, _bCol('win_loss')).setFormula('=IF(' + netL + r + '="","",IF(' + netL + r + '>0,"W",IF(' + netL + r + '<0,"L","B")))');
   sh.getRange(r, _bCol('cum_pl')).setFormula('=SUM(' + netL + '$' + BYBIT_R1 + ':' + netL + r + ')');
   return _json({ ok: true, row: r, cycle: cycle });
+}
+
+function _completeOpenBybitRow(sh, r, body, cycle) {
+  for (var i = 0; i < BYBIT_SCHEMA.length; i++) {
+    var schema = BYBIT_SCHEMA[i], key = schema[1];
+    if (schema[4] === 'manual' || schema[4] === 'formula') continue;
+    var v = body[key];
+    if (v === undefined || v === null || v === '') continue;
+    if (key === 'entry_date') v = new Date(String(v).slice(0, 10) + 'T00:00:00');
+    sh.getRange(r, i + 1).setValue(v);
+  }
+  var netL = _colLetter(_bCol('pl_net'));
+  sh.getRange(r, _bCol('trade_id')).setValue(String(body.trade_id));
+  sh.getRange(r, _bCol('win_loss')).setFormula('=IF(' + netL + r + '="","",IF(' + netL + r + '>0,"W",IF(' + netL + r + '<0,"L","B")))');
+  sh.getRange(r, _bCol('cum_pl')).setFormula('=SUM(' + netL + '$' + BYBIT_R1 + ':' + netL + r + ')');
+  return _json({ ok: true, row: r, cycle: cycle, completed_open_row: true });
+}
+
+function _syncCycleOpenPositions(rows) {
+  var added = 0, updated = 0;
+  rows.forEach(function (body) {
+    var cycle = _cycleForOpen(body), sh = _cycleSheet(cycle);
+    var openId = 'OPEN|' + String(body.position_id || '');
+    var idCol = _bCol('trade_id'), last = sh.getLastRow(), found = 0;
+    if (last >= BYBIT_R1) {
+      var ids = sh.getRange(BYBIT_R1, idCol, last - BYBIT_R1 + 1, 1).getValues();
+      for (var i = 0; i < ids.length; i++) if (String(ids[i][0]) === openId) { found = BYBIT_R1 + i; break; }
+    }
+    var values = {
+      entry_date: body.entry_date, coin: body.coin, long_short: body.long_short,
+      position_size: body.position_size, entry_price: body.entry_price, trade_id: openId
+    };
+    if (found) {
+      ['entry_date', 'coin', 'long_short', 'position_size', 'entry_price'].forEach(function (key) {
+        var v = values[key];
+        if (key === 'entry_date' && v) v = new Date(String(v).slice(0, 10) + 'T00:00:00');
+        sh.getRange(found, _bCol(key)).setValue(v === undefined || v === null ? '' : v);
+      });
+      updated++;
+    } else {
+      var row = BYBIT_SCHEMA.map(function (s) {
+        if (s[4] === 'formula') return '';
+        var v = values[s[1]];
+        if (s[1] === 'entry_date' && v) return new Date(String(v).slice(0, 10) + 'T00:00:00');
+        return v === undefined || v === null ? '' : v;
+      });
+      sh.appendRow(row);
+      var r = sh.getLastRow();
+      sh.getRange(r, _bCol('row_no')).setValue(r - BYBIT_R1 + 1);
+      added++;
+    }
+  });
+  return _json({ ok: true, live_added: added, live_updated: updated });
 }
 
 /** Replace only the data rows in one cycle tab. Header/template rows and formatting remain intact. */
