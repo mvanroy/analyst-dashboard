@@ -355,11 +355,10 @@ def inject_background():
 
 # Page nav links, in order. Labels are the single source of truth across pages.
 _NAV = [
+    ("pages/7_Boys_Log.py", "Log"),
     ("pages/0_Scanner.py", "Scanner"),
     ("pages/1_Trade_Setup.py", "Trade Setup"),
-    ("pages/2_Watch_List.py", "Watch List"),
     ("pages/4_Live_Trades.py", "Live Trades"),
-    ("pages/2_Position_Size_Calculator.py", "Calculator"),
     ("pages/5_Tracker.py", "Tracking"),
 ]
 
@@ -417,22 +416,14 @@ def _mobile_nav_html(word1, word2):
 
 def _mobile_footer_html(word1, word2):
     current = f"{word1} {word2}".strip().lower()
+    log_active = "active" if "daily log" in current or "boys log" in current else ""
     setup_active = "active" if "trade setup" in current else ""
-    calc_active = "active" if "calculator" in current else ""
-    watch_active = "active" if "watch list" in current else ""
     trades_active = "active" if "live trades" in current else ""
     tracking_active = "active" if "tracker" in current or "tracking" in current else ""
+    log_icon = _inline_icon("baby-check.svg")
     trade_icon = _inline_icon("target.svg")
-    calc_icon = _inline_icon("balance.svg")
     trades_icon = _inline_icon("alert-play.svg")
     tracking_icon = _inline_icon("data-analytics.svg")
-    watch_icon = (
-        '<svg viewBox="0 0 24 24" aria-hidden="true">'
-        '<path d="M4 5h16v3H4z"/>'
-        '<path d="M4 11h16v3H4z"/>'
-        '<path d="M4 17h16v3H4z"/>'
-        '<path d="M7 4v17"/></svg>'
-    )
     base = "https://app.igbycentral.com"
     def item(active, path, icon, label):
         href = f"{base}{path}"
@@ -444,10 +435,9 @@ def _mobile_footer_html(word1, word2):
         )
     return (
         '<nav class="mobile-footer-nav" aria-label="Mobile navigation">'
+        + item(log_active, "/Boys_Log", log_icon, "Log")
         + item(setup_active, "/Trade_Setup", trade_icon, "Setup")
-        + item(watch_active, "/Watch_List", watch_icon, "Watchlist")
         + item(trades_active, "/Live_Trades", trades_icon, "Trades")
-        + item(calc_active, "/Position_Size_Calculator", calc_icon, "Calc")
         + item(tracking_active, "/Tracker", tracking_icon, "Tracking")
         + '</nav>'
     )
