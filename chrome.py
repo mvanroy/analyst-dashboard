@@ -217,8 +217,8 @@ APP_METADATA_HTML = """
   upsertMeta("mobile-web-app-capable", "yes");
   upsertMeta("apple-mobile-web-app-capable", "yes");
   upsertMeta("apple-mobile-web-app-title", "Igby Central");
-  upsertMeta("theme-color", "#0a0711");
-  upsertLink("manifest", "/app/static/manifest.webmanifest?v=3");
+  upsertMeta("theme-color", "__THEME_COLOR__");
+  upsertLink("manifest", "/app/static/manifest.webmanifest?v=4");
   upsertLink("apple-touch-icon", "/app/static/icon-192.png?v=3");
 })();
 </script>
@@ -244,14 +244,9 @@ def _server_is_mobile() -> bool:
 # CSS subset of the Scanner chrome shared by the secondary pages so their header
 # matches exactly (hide default chrome, nav row, brand).
 _HEADER_CSS = """<style>
-  html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"]{background:#0a0711!important;}
+  html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"]{background:__CHROME_BASE__!important;}
   body{overscroll-behavior-y:none;}
-  [data-testid="stAppViewContainer"]{background:
-    radial-gradient(1100px 720px at 8% 12%, rgba(124,58,237,.22), transparent 60%),
-    radial-gradient(1000px 800px at 92% 6%, rgba(168,85,247,.16), transparent 55%),
-    radial-gradient(1200px 900px at 78% 92%, rgba(99,57,213,.20), transparent 60%),
-    radial-gradient(900px 720px at 18% 86%, rgba(147,51,234,.14), transparent 55%),
-    #0a0711!important;background-attachment:fixed!important;}
+  [data-testid="stAppViewContainer"]{background:__CHROME_BACKGROUND__!important;background-attachment:fixed!important;}
   [data-testid="stMain"],[data-testid="stMainBlockContainer"]{background:transparent!important;}
   [data-testid="stToolbar"]{display:none;}
   [data-testid="stHeader"]{display:none;}
@@ -417,14 +412,32 @@ def brand_html(word1, word2, sub=""):
     )
 
 
-def render_header(word1, word2, sub="", brand=True):
+def render_header(word1, word2, sub="", brand=True, startup_background="purple"):
     """Top chrome for a secondary page: nav + clocks row, then the brand block.
     Reproduces app.py's header layout (st.columns([1.5, 2.1]) with the clocks on
     the right) so the brand aligns across pages. Call once at the page top. Pass
     brand=False to render only the nav + clocks (e.g. when the page wants to place
-    the brand alongside an action button itself)."""
-    components.html(APP_METADATA_HTML, height=0, width=0)
-    st.markdown(_HEADER_CSS, unsafe_allow_html=True)
+    the brand alongside an action button itself). Use startup_background="navy"
+    for the Log page so the shared chrome never paints the trading gradient."""
+    if startup_background == "navy":
+        base_color = "#061326"
+        chrome_background = base_color
+    else:
+        base_color = "#0a0711"
+        chrome_background = (
+            "radial-gradient(1100px 720px at 8% 12%, rgba(124,58,237,.22), transparent 60%),"
+            "radial-gradient(1000px 800px at 92% 6%, rgba(168,85,247,.16), transparent 55%),"
+            "radial-gradient(1200px 900px at 78% 92%, rgba(99,57,213,.20), transparent 60%),"
+            "radial-gradient(900px 720px at 18% 86%, rgba(147,51,234,.14), transparent 55%),"
+            "#0a0711"
+        )
+    metadata_html = APP_METADATA_HTML.replace("__THEME_COLOR__", base_color)
+    header_css = (
+        _HEADER_CSS.replace("__CHROME_BASE__", base_color)
+        .replace("__CHROME_BACKGROUND__", chrome_background)
+    )
+    components.html(metadata_html, height=0, width=0)
+    st.markdown(header_css, unsafe_allow_html=True)
     components.html(_MOBILE_DETECTOR_HTML, height=0)
     st.markdown(_mobile_nav_html(word1, word2), unsafe_allow_html=True)
     st.markdown(_mobile_footer_html(word1, word2), unsafe_allow_html=True)

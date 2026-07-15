@@ -29,7 +29,7 @@ if STANDALONE:
     buggins_pwa.install()
 buggins_auth.require_auth()
 if not STANDALONE:
-    chrome.render_header("BUGGINS DAILY", "LOG", "")
+    chrome.render_header("BUGGINS DAILY", "LOG", "", startup_background="navy")
 
 MEL = ZoneInfo("Australia/Melbourne")
 BABIES = [("a", "Baby A"), ("b", "Baby B")]

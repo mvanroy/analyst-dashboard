@@ -5,8 +5,8 @@
   "start_url": "/Boys_Log",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#0a0711",
-  "theme_color": "#0a0711",
+  "background_color": "#061326",
+  "theme_color": "#061326",
   "orientation": "portrait",
   "icons": [
     {
