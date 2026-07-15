@@ -192,6 +192,38 @@ CLOCKS_HTML = """
 </body></html>
 """
 
+APP_METADATA_HTML = """
+<script>
+(() => {
+  const doc = window.parent.document;
+  const upsertMeta = (name, content) => {
+    let node = doc.head.querySelector(`meta[name="${name}"]`);
+    if (!node) {
+      node = doc.createElement("meta");
+      node.setAttribute("name", name);
+      doc.head.appendChild(node);
+    }
+    node.setAttribute("content", content);
+  };
+  const upsertLink = (rel, href) => {
+    let node = doc.head.querySelector(`link[rel="${rel}"]`);
+    if (!node) {
+      node = doc.createElement("link");
+      node.setAttribute("rel", rel);
+      doc.head.appendChild(node);
+    }
+    node.setAttribute("href", href);
+  };
+  upsertMeta("mobile-web-app-capable", "yes");
+  upsertMeta("apple-mobile-web-app-capable", "yes");
+  upsertMeta("apple-mobile-web-app-title", "Igby Central");
+  upsertMeta("theme-color", "#0a0711");
+  upsertLink("manifest", "/app/static/manifest.webmanifest?v=3");
+  upsertLink("apple-touch-icon", "/app/static/icon-192.png?v=3");
+})();
+</script>
+"""
+
 
 def render_clocks():
     sp = sp_futures()
@@ -391,6 +423,7 @@ def render_header(word1, word2, sub="", brand=True):
     the right) so the brand aligns across pages. Call once at the page top. Pass
     brand=False to render only the nav + clocks (e.g. when the page wants to place
     the brand alongside an action button itself)."""
+    components.html(APP_METADATA_HTML, height=0, width=0)
     st.markdown(_HEADER_CSS, unsafe_allow_html=True)
     components.html(_MOBILE_DETECTOR_HTML, height=0)
     st.markdown(_mobile_nav_html(word1, word2), unsafe_allow_html=True)

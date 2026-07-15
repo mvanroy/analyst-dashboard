@@ -1,0 +1,25 @@
+{
+  "name": "Igby Central",
+  "short_name": "Igby",
+  "id": "/",
+  "start_url": "/Boys_Log",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0711",
+  "theme_color": "#0a0711",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "/app/static/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/app/static/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
