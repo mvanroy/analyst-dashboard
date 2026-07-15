@@ -1250,6 +1250,9 @@ body:has(.bl-theme-state.dark) .ba-hero span,body:has(.bl-theme-state.dark) .ba-
 body:has(.bl-theme-state.dark) .ba-compare-row,body:has(.bl-theme-state.dark) .ba-chart{border-color:#29425f!important}
 body:has(.bl-theme-state.dark) .ba-growth-baby,body:has(.bl-theme-state.dark) .ba-milestone{border-color:#29425f!important;background:#10243d!important}
 body:has(.bl-theme-state.dark) .ba-a,body:has(.bl-theme-state.dark) .ba-chart-foot .ba-a b{color:#7eb6ff!important}body:has(.bl-theme-state.dark) .ba-b,body:has(.bl-theme-state.dark) .ba-chart-foot .ba-b b{color:#b9a1ff!important}
+body:has(.bl-theme-state.dark) .ba-legend .ba-a{color:#7eb6ff!important}body:has(.bl-theme-state.dark) .ba-legend .ba-b{color:#b9a1ff!important}
+body:has(.bl-theme-state.dark) .ba-growth-baby.ba-a{border-color:rgba(76,141,255,.56)!important}
+body:has(.bl-theme-state.dark) .ba-growth-baby.ba-b{border-color:rgba(185,161,255,.62)!important}
 body:has(.bl-theme-state.dark) .ba-growth-baby.ba-a .ba-baby-title{color:#7eb6ff!important}
 body:has(.bl-theme-state.dark) .ba-growth-baby.ba-b .ba-baby-title{color:#b9a1ff!important}
 @media(max-width:900px){.st-key-boys_log_theme{min-height:40px!important;margin:-2px auto -18px!important}.st-key-boys_log_theme [role="radiogroup"] label{min-width:78px!important;height:32px!important;padding:0 12px!important}.st-key-boys_log_theme [role="radiogroup"] label p{font-size:11px!important}}
