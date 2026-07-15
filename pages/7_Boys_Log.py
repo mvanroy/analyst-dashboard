@@ -32,7 +32,7 @@ if not STANDALONE:
     chrome.render_header("BUGGINS DAILY", "LOG", "", startup_background="navy")
 
 MEL = ZoneInfo("Australia/Melbourne")
-BABIES = [("a", "Baby A"), ("b", "Baby B")]
+BABIES = [("a", "Zander"), ("b", "Phoenix")]
 KINDS = [
     ("left", "L"),
     ("right", "R"),
@@ -772,25 +772,25 @@ def analytics_dashboard_html(end_day: date) -> str:
 <div class='ba-shell'>
   <section class='ba-hero'>
     <div><span>7-day analytics</span><b class='ba-title'>Twin care overview</b><p>{esc(range_label)}</p></div>
-    <div class='ba-legend'><span class='ba-a'>Baby A</span><span class='ba-b'>Baby B</span></div>
+    <div class='ba-legend'><span class='ba-a'>Zander</span><span class='ba-b'>Phoenix</span></div>
   </section>
   <div class='ba-grid'>
     <section class='ba-card ba-wide'>
       <div class='ba-card-head'><div><span>Comparison</span><b class='ba-card-title'>Twin comparison</b></div><small>7 days</small></div>
-      <div class='ba-compare-head'><span></span><b class='ba-a'>Baby A</b><b class='ba-b'>Baby B</b></div>
+      <div class='ba-compare-head'><span></span><b class='ba-a'>Zander</b><b class='ba-b'>Phoenix</b></div>
       <div class='ba-compare'>{comparison_html}</div>
     </section>
     <section class='ba-card'>
       <div class='ba-card-head'><div><span>Feeding</span><b class='ba-card-title'>7-day daily feed volume</b></div></div>
       <p class='ba-note'>Recorded bottle volume only; breastfeeds are counted separately.</p>
       {feed_chart}
-      <div class='ba-chart-foot'><span class='ba-a'>Baby A: <b>{summaries['a']['bottle_ml']} ml</b></span><span class='ba-b'>Baby B: <b>{summaries['b']['bottle_ml']} ml</b></span></div>
+      <div class='ba-chart-foot'><span class='ba-a'>Zander: <b>{summaries['a']['bottle_ml']} ml</b></span><span class='ba-b'>Phoenix: <b>{summaries['b']['bottle_ml']} ml</b></span></div>
     </section>
     <section class='ba-card'>
       <div class='ba-card-head'><div><span>Rest</span><b class='ba-card-title'>Total sleep</b></div></div>
       <p class='ba-note'>Inferred from inactive periods; untracked past days remain at zero.</p>
       {sleep_chart}
-      <div class='ba-chart-foot'><span class='ba-a'>Baby A: <b>{sleep_text['a']}</b></span><span class='ba-b'>Baby B: <b>{sleep_text['b']}</b></span></div>
+      <div class='ba-chart-foot'><span class='ba-a'>Zander: <b>{sleep_text['a']}</b></span><span class='ba-b'>Phoenix: <b>{sleep_text['b']}</b></span></div>
     </section>
     <section class='ba-card'>
       <div class='ba-card-head'><div><span>Care</span><b class='ba-card-title'>Nappy summary</b></div><small>7 days</small></div>
@@ -1664,8 +1664,8 @@ st.markdown(
     """
 <nav class="bl-mobile-jump-nav" aria-label="Quick page navigation">
   <a href="#bl-top-anchor" aria-label="Back to top">↑ Top</a>
-  <a href="#bl-baby-a">Baby A</a>
-  <a href="#bl-baby-b">Baby B</a>
+  <a href="#bl-baby-a">Zander</a>
+  <a href="#bl-baby-b">Phoenix</a>
 </nav>
 """,
     unsafe_allow_html=True,
