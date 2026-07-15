@@ -218,8 +218,8 @@ APP_METADATA_HTML = """
   upsertMeta("apple-mobile-web-app-capable", "yes");
   upsertMeta("apple-mobile-web-app-title", "Igby Central");
   upsertMeta("theme-color", "__THEME_COLOR__");
-  upsertLink("manifest", "/app/static/manifest.webmanifest?v=4");
-  upsertLink("apple-touch-icon", "/app/static/icon-192.png?v=3");
+  upsertLink("manifest", "/app/static/manifest.webmanifest?v=5");
+  upsertLink("apple-touch-icon", "/app/static/apple-touch-icon.png?v=1");
 })();
 </script>
 """

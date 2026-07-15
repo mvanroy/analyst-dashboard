@@ -36,7 +36,7 @@ def install() -> None:
           upsertMeta("apple-mobile-web-app-status-bar-style", "black-translucent");
           upsertMeta("apple-mobile-web-app-title", "Buggins");
           upsertLink("manifest", "/app/static/buggins-manifest.webmanifest?v=1");
-          upsertLink("apple-touch-icon", "/app/static/apple-touch-icon.png");
+          upsertLink("apple-touch-icon", "/app/static/apple-touch-icon.png?v=1");
         })();
         </script>
         """,
