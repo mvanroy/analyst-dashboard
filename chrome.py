@@ -363,14 +363,18 @@ _MOBILE_DETECTOR_HTML = """
 # Ambient purple gradient behind page content — shared across all pages so the
 # look is consistent. Fixed attachment so it reads as soft ambient lighting.
 _PAGE_BG_CSS = """<style>
-html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"]{background:#0a0711!important;}
-[data-testid="stAppViewContainer"]{background:
+html:has(.st-key-entry_zone_heading),
+body:has(.st-key-entry_zone_heading),
+body:has(.st-key-entry_zone_heading) [data-testid="stAppViewContainer"],
+body:has(.st-key-entry_zone_heading) [data-testid="stApp"]{background:#0a0711!important;}
+body:has(.st-key-entry_zone_heading) [data-testid="stAppViewContainer"]{background:
   radial-gradient(1100px 720px at 8% 12%, rgba(124,58,237,.22), transparent 60%),
   radial-gradient(1000px 800px at 92% 6%, rgba(168,85,247,.16), transparent 55%),
   radial-gradient(1200px 900px at 78% 92%, rgba(99,57,213,.20), transparent 60%),
   radial-gradient(900px 720px at 18% 86%, rgba(147,51,234,.14), transparent 55%),
   #0a0711!important;background-attachment:fixed!important;}
-[data-testid="stMain"],[data-testid="stMainBlockContainer"]{background:transparent!important;}
+body:has(.st-key-entry_zone_heading) [data-testid="stMain"],
+body:has(.st-key-entry_zone_heading) [data-testid="stMainBlockContainer"]{background:transparent!important;}
 </style>"""
 
 
