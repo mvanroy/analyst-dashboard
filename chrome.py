@@ -453,7 +453,7 @@ def _mobile_footer_html(word1, word2):
     setup_active = "active" if "trade setup" in current else ""
     trades_active = "active" if "live trades" in current else ""
     tracking_active = "active" if "tracker" in current or "tracking" in current else ""
-    log_icon = _inline_icon("baby-check.svg")
+    log_icon = _inline_icon("baby-bottle-3.svg")
     trade_icon = _inline_icon("target.svg")
     trades_icon = _inline_icon("alert-play.svg")
     tracking_icon = _inline_icon("data-analytics.svg")
