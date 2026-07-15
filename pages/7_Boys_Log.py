@@ -777,20 +777,20 @@ def analytics_dashboard_html(end_day: date) -> str:
   <div class='ba-grid'>
     <section class='ba-card ba-wide'>
       <div class='ba-card-head'><div><span>Comparison</span><b class='ba-card-title'>Twin comparison</b></div><small>7 days</small></div>
-      <div class='ba-compare-head'><span></span><b>Baby A</b><b>Baby B</b></div>
+      <div class='ba-compare-head'><span></span><b class='ba-a'>Baby A</b><b class='ba-b'>Baby B</b></div>
       <div class='ba-compare'>{comparison_html}</div>
     </section>
     <section class='ba-card'>
       <div class='ba-card-head'><div><span>Feeding</span><b class='ba-card-title'>7-day daily feed volume</b></div></div>
       <p class='ba-note'>Recorded bottle volume only; breastfeeds are counted separately.</p>
       {feed_chart}
-      <div class='ba-chart-foot'><span>Baby A: <b>{summaries['a']['bottle_ml']} ml</b></span><span>Baby B: <b>{summaries['b']['bottle_ml']} ml</b></span></div>
+      <div class='ba-chart-foot'><span class='ba-a'>Baby A: <b>{summaries['a']['bottle_ml']} ml</b></span><span class='ba-b'>Baby B: <b>{summaries['b']['bottle_ml']} ml</b></span></div>
     </section>
     <section class='ba-card'>
       <div class='ba-card-head'><div><span>Rest</span><b class='ba-card-title'>Total sleep</b></div></div>
       <p class='ba-note'>Inferred from inactive periods; untracked past days remain at zero.</p>
       {sleep_chart}
-      <div class='ba-chart-foot'><span>Baby A: <b>{sleep_text['a']}</b></span><span>Baby B: <b>{sleep_text['b']}</b></span></div>
+      <div class='ba-chart-foot'><span class='ba-a'>Baby A: <b>{sleep_text['a']}</b></span><span class='ba-b'>Baby B: <b>{sleep_text['b']}</b></span></div>
     </section>
     <section class='ba-card'>
       <div class='ba-card-head'><div><span>Care</span><b class='ba-card-title'>Nappy summary</b></div><small>7 days</small></div>
@@ -1048,8 +1048,8 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .ba-hero p{margin:0;color:#7184a4;font-size:12px;font-weight:800;}
 .ba-legend{display:flex;align-items:center;gap:14px;white-space:nowrap;}
 .ba-legend span{display:inline-flex;align-items:center;gap:6px;color:#526b91;font-size:11px;letter-spacing:0;text-transform:none;}
-.ba-legend span:before{content:"";width:8px;height:8px;border-radius:50%;background:#75aef5;}
-.ba-legend span.ba-b:before{background:#7fc79b;}
+.ba-legend span:before{content:"";width:8px;height:8px;border-radius:50%;background:#4c8dff;}
+.ba-legend span.ba-b:before{background:#b9a1ff;}
 .ba-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;align-items:start;}
 .ba-card{min-width:0;border:1px solid #dce6f3;border-radius:8px;background:#fff;padding:16px;box-shadow:0 8px 24px rgba(61,95,140,.05);}
 .ba-card.ba-wide{grid-column:1/-1;}
@@ -1062,35 +1062,39 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .ba-compare-row{min-height:42px;border-top:1px solid #edf2f8;padding:7px 10px;}
 .ba-compare-row span{color:#526b91;font-size:11px;font-weight:800;}
 .ba-compare-row b{font-size:14px;text-align:center;font-variant-numeric:tabular-nums;}
-.ba-a{color:#2f72c9!important;}.ba-b{color:#278252!important;}
+.ba-a{color:#397dcc!important;}.ba-b{color:#7655a5!important;}
 .ba-chart{height:170px;display:flex;align-items:stretch;justify-content:space-between;gap:5px;border-bottom:1px solid #dfe8f4;padding:5px 3px 0;}
 .ba-bar-group{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;}
 .ba-bar-pair{width:100%;height:136px;display:flex;align-items:flex-end;justify-content:center;gap:3px;}
-.ba-bar{display:block;width:min(16px,42%);min-height:3px;border-radius:3px 3px 0 0;background:#75aef5;}
-.ba-bar.ba-b{background:#7fc79b;}
+.ba-bar{display:block;width:min(16px,42%);min-height:3px;border-radius:3px 3px 0 0;background:#4c8dff;}
+.ba-bar.ba-b{background:#b9a1ff;}
 .ba-bar-group small{color:#7184a4;font-size:9px;font-weight:800;}
 .ba-chart-foot{display:flex;justify-content:space-between;gap:10px;margin-top:10px;color:#7184a4;font-size:10px;}
 .ba-chart-foot b{color:#173664;font-size:11px;}
+.ba-chart-foot .ba-a,.ba-chart-foot .ba-a b{color:#397dcc!important;}
+.ba-chart-foot .ba-b,.ba-chart-foot .ba-b b{color:#7655a5!important;}
 .ba-nappy{display:grid;gap:14px;}
 .ba-nappy-row{display:grid;grid-template-columns:58px minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:center;}
 .ba-nappy-row>b{font-size:12px;}
 .ba-nappy-row>div{display:grid;grid-template-columns:32px minmax(0,1fr) 20px;gap:6px;align-items:center;}
 .ba-nappy-row span{color:#7184a4;font-size:9px;font-weight:800;}
 .ba-nappy-row i{display:block;height:8px;border-radius:999px;background:#edf3f9;overflow:hidden;}
-.ba-nappy-row em{display:block;height:100%;min-width:2px;background:#75aef5;border-radius:999px;}
-.ba-nappy-row em.ba-b{background:#7fc79b;}
+.ba-nappy-row em{display:block;height:100%;min-width:2px;background:#4c8dff;border-radius:999px;}
+.ba-nappy-row em.ba-b{background:#b9a1ff;}
 .ba-nappy-row strong{font-size:11px;font-variant-numeric:tabular-nums;text-align:right;}
 .ba-rhythm{overflow:hidden;}
 .ba-rhythm-row{display:grid;grid-template-columns:60px minmax(0,1fr);gap:10px;align-items:center;margin:10px 0;}
 .ba-rhythm-row>b{font-size:11px;}
 .ba-rhythm-cells{display:grid;grid-template-columns:repeat(24,minmax(3px,1fr));gap:2px;height:34px;align-items:stretch;}
-.ba-rhythm-cell{display:block;border-radius:2px;background:#4f91e5;}
-.ba-rhythm-cell.ba-b{background:#35a063;}
+.ba-rhythm-cell{display:block;border-radius:2px;background:#4c8dff;}
+.ba-rhythm-cell.ba-b{background:#b9a1ff;}
 .ba-rhythm-labels{margin-left:70px;display:flex;justify-content:space-between;color:#7184a4;font-size:8px;font-weight:800;}
 .ba-growth{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;}
-.ba-growth-baby{border:1px solid #d8e7f7;border-radius:7px;background:#f7fbff;padding:12px;}
-.ba-growth-baby.ba-b{border-color:#cee7d7;background:#f6fcf8;}
+.ba-growth-baby{border:1px solid #a9d8f7;border-radius:7px;background:#f7fbff;padding:12px;}
+.ba-growth-baby.ba-b{border-color:#c7b5ef;background:#faf7ff;}
 .ba-baby-title{display:block!important;margin:0 0 10px!important;font-size:13px!important;color:#173664!important;}
+.ba-growth-baby.ba-a .ba-baby-title{color:#397dcc!important;}
+.ba-growth-baby.ba-b .ba-baby-title{color:#7655a5!important;}
 .ba-growth-baby>div{margin-top:9px;}
 .ba-growth-baby span{display:block;color:#7184a4;font-size:9px;font-weight:850;text-transform:uppercase;}
 .ba-growth-baby b{display:block;color:#173664;font-size:13px;margin-top:3px;}
@@ -1245,7 +1249,9 @@ body:has(.bl-theme-state.dark) .ba-title,body:has(.bl-theme-state.dark) .ba-card
 body:has(.bl-theme-state.dark) .ba-hero span,body:has(.bl-theme-state.dark) .ba-card-head span,body:has(.bl-theme-state.dark) .ba-hero p,body:has(.bl-theme-state.dark) .ba-card-head>small,body:has(.bl-theme-state.dark) .ba-note,body:has(.bl-theme-state.dark) .ba-compare-head,body:has(.bl-theme-state.dark) .ba-compare-row span,body:has(.bl-theme-state.dark) .ba-chart-foot,body:has(.bl-theme-state.dark) .ba-growth-baby span,body:has(.bl-theme-state.dark) .ba-growth-baby small,body:has(.bl-theme-state.dark) .ba-milestone small{color:#9fb0c6!important}
 body:has(.bl-theme-state.dark) .ba-compare-row,body:has(.bl-theme-state.dark) .ba-chart{border-color:#29425f!important}
 body:has(.bl-theme-state.dark) .ba-growth-baby,body:has(.bl-theme-state.dark) .ba-milestone{border-color:#29425f!important;background:#10243d!important}
-body:has(.bl-theme-state.dark) .ba-a{color:#9edcff!important}body:has(.bl-theme-state.dark) .ba-b{color:#b9a1ff!important}
+body:has(.bl-theme-state.dark) .ba-a,body:has(.bl-theme-state.dark) .ba-chart-foot .ba-a b{color:#7eb6ff!important}body:has(.bl-theme-state.dark) .ba-b,body:has(.bl-theme-state.dark) .ba-chart-foot .ba-b b{color:#b9a1ff!important}
+body:has(.bl-theme-state.dark) .ba-growth-baby.ba-a .ba-baby-title{color:#7eb6ff!important}
+body:has(.bl-theme-state.dark) .ba-growth-baby.ba-b .ba-baby-title{color:#b9a1ff!important}
 @media(max-width:900px){.st-key-boys_log_theme{min-height:40px!important;margin:-2px auto -18px!important}.st-key-boys_log_theme [role="radiogroup"] label{min-width:78px!important;height:32px!important;padding:0 12px!important}.st-key-boys_log_theme [role="radiogroup"] label p{font-size:11px!important}}
 @media(max-width:900px){.bl-headicon.pee img,.bl-headicon.poop img{width:41px!important;height:41px!important;min-width:41px!important;max-width:41px!important}}
 @media(max-width:900px){.bl-headicon.sleep img{width:43px!important;height:43px!important;min-width:43px!important;max-width:43px!important}.bl-headicon.other img{width:46px!important;height:46px!important;min-width:46px!important;max-width:46px!important}}
