@@ -549,7 +549,7 @@ def sleep_detail_overlay_html(baby: str, baby_label: str, hour: int, cycles: lis
       </div>`).join("");
     overlay.innerHTML = `
       <style>
-        #bl-sleep-detail-overlay{{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(2,10,23,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}}
+        #bl-sleep-detail-overlay{{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;width:100%;height:100vh;height:100dvh;padding:16px;box-sizing:border-box;background:rgba(2,10,23,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}}
         #bl-sleep-detail-overlay *{{box-sizing:border-box}}
         #bl-sleep-detail-panel{{width:min(100%,390px);padding:20px;border:1px solid #456487;border-radius:18px;background:#10243d;box-shadow:0 24px 80px rgba(0,0,0,.62);color:#f5f7fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
         #bl-sleep-detail-head{{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}}
@@ -562,7 +562,7 @@ def sleep_detail_overlay_html(baby: str, baby_label: str, hour: int, cycles: lis
         #bl-sleep-detail-close{{width:100%;height:46px;margin-top:2px;border:1px solid #456487;border-radius:11px;background:#17304f;color:#e8eef8;font-size:15px;font-weight:800}}
         #bl-sleep-detail-close:active{{background:#214266}}
         @media(max-width:600px){{
-          #bl-sleep-detail-overlay{{align-items:flex-end;padding:12px}}
+          #bl-sleep-detail-overlay{{align-items:center;padding:16px}}
           #bl-sleep-detail-panel{{width:100%;padding:18px;border-radius:18px}}
           .bl-sleep-overlay-row b{{font-size:16px}}
         }}
