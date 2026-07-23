@@ -179,6 +179,33 @@ def active_sleep_start_event(events: list[dict], baby: str, cutoff: datetime) ->
     return matches[-1] if matches else None
 
 
+def cancel_sleep_starts_for_hour(events: list[dict], baby: str, day: date, hour: int) -> int:
+    starts = [
+        event
+        for event in events
+        if event.get("baby") == baby
+        and sleep_event_state(event) == "start"
+        and parse_dt(event.get("event_ts")).date() == day
+        and parse_dt(event.get("event_ts")).hour == hour
+    ]
+    if not starts:
+        return 0
+    start_times = {parse_dt(event.get("event_ts")) for event in starts}
+    linked_ends = [
+        event
+        for event in events
+        if event.get("baby") == baby
+        and sleep_event_state(event) == "end"
+        and event_note_value(event, "sleep_start_ts")
+        and parse_dt(event_note_value(event, "sleep_start_ts")) in start_times
+    ]
+    deleted = 0
+    for event in starts + linked_ends:
+        if baby_log_store.delete_event(event.get("id")):
+            deleted += 1
+    return deleted
+
+
 def end_active_sleep(baby: str, event_ts: datetime, ended_by: str) -> datetime | None:
     _, active_start = sleep_sessions(sleep_history_for(baby, event_ts), baby, event_ts)
     if not active_start or event_ts <= active_start:
@@ -608,6 +635,9 @@ def toggle_sleep_tracking(baby: str, hour: int) -> None:
     )
     active_cutoff = max(event_ts, now)
     history = sleep_history_for(baby, active_cutoff)
+    if cancel_sleep_starts_for_hour(history, baby, selected_day(), hour):
+        st.toast("Sleep start cancelled")
+        return
     active_event = active_sleep_start_event(history, baby, active_cutoff)
     if active_event:
         baby_log_store.delete_event(active_event.get("id"))
