@@ -348,6 +348,10 @@ def open_bottle_picker(baby: str, hour: int) -> None:
     st.session_state.boys_log_bottle_picker = (baby, hour)
 
 
+def close_bottle_picker() -> None:
+    st.session_state.boys_log_bottle_picker = None
+
+
 def log_bottle_picker(baby: str, hour: int) -> None:
     key = f"bl_bottle_picker_{baby}_{hour}"
     selected = st.session_state.get(key)
@@ -1306,19 +1310,23 @@ body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-total b,body:has(.b
 .st-key-boys_log_view_nav .st-key-boys_log_theme [role="radiogroup"],.st-key-boys_log_analytics_nav .st-key-boys_log_theme [role="radiogroup"]{box-shadow:none!important}
 @media(max-width:900px){.st-key-boys_log_view_nav{padding:0 8px!important}.st-key-boys_log_view_nav [data-testid="stHorizontalBlock"],.st-key-boys_log_analytics_nav [data-testid="stHorizontalBlock"]{gap:8px!important}.st-key-boys_log_view_nav .st-key-boys_log_theme [role="radiogroup"] label,.st-key-boys_log_analytics_nav .st-key-boys_log_theme [role="radiogroup"] label{min-width:68px!important;padding:0 9px!important}}
 
-/* Formula amount menu: compact 10 ml grid with full dark-mode treatment. */
-[class*="st-key-bl_bottle_menu_"]{left:50%!important;right:auto!important;width:190px!important;min-width:190px!important;transform:translateX(-50%)!important;padding:5px!important;border-radius:11px!important;overflow:hidden!important}
-[class*="st-key-bl_bottle_menu_"] [data-testid="stHorizontalBlock"]{gap:4px!important;margin-bottom:4px!important}
+/* Formula amount menu: compact grid on desktop, touch-friendly modal on mobile. */
+[class*="st-key-bl_bottle_menu_"]{left:50%!important;right:auto!important;width:300px!important;min-width:300px!important;transform:translateX(-50%)!important;padding:10px!important;border-radius:14px!important;overflow:hidden!important}
+[class*="st-key-bl_bottle_menu_"] [data-testid="stHorizontalBlock"]{gap:7px!important;margin-bottom:7px!important}
 [class*="st-key-bl_bottle_menu_"] [data-testid="stHorizontalBlock"]>[data-testid="stColumn"]{min-width:0!important;width:auto!important;flex:1 1 0!important}
 [class*="st-key-bl_bottle_menu_"] .stButton,[class*="st-key-bl_bottle_menu_"] .stButton>button{width:100%!important;margin:0!important}
-[class*="st-key-bl_bottle_menu_"] .stButton>button{position:relative!important;inset:auto!important;height:30px!important;min-height:30px!important;border-radius:7px!important;font-size:12px!important;line-height:1!important;padding:0 8px!important;color:#174f9d!important;background:#fff!important}
+[class*="st-key-bl_bottle_menu_"] .stButton>button{position:relative!important;inset:auto!important;height:42px!important;min-height:42px!important;border:1px solid #c8daef!important;border-radius:9px!important;font-size:14px!important;line-height:1!important;padding:0 8px!important;color:#174f9d!important;background:#f7fbff!important;white-space:nowrap!important;word-break:keep-all!important;overflow:hidden!important}
+[class*="st-key-bl_bottle_menu_"] .stButton>button p,[class*="st-key-bl_bottle_menu_"] .stButton>button span{font-size:14px!important;line-height:1!important;white-space:nowrap!important;word-break:keep-all!important}
 [class*="st-key-bl_bottle_menu_"] .stButton>button:hover,[class*="st-key-bl_bottle_menu_"] .stButton>button:focus{background:#eef5ff!important;color:#173664!important}
+.bl-bottle-menu-title{margin:1px 0 10px;color:#173664;font-size:15px;font-weight:950;text-align:center;letter-spacing:.01em;white-space:nowrap}
 body:has(.bl-theme-state.dark) [class*="st-key-bl_bottle_menu_"]{background:#10243d!important;border-color:#37506d!important;box-shadow:0 16px 36px rgba(0,0,0,.48)!important}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a [class*="st-key-bl_bottle_menu_"]{border-color:rgba(76,141,255,.62)!important}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_b [class*="st-key-bl_bottle_menu_"]{border-color:rgba(185,161,255,.62)!important}
-body:has(.bl-theme-state.dark) [class*="st-key-bl_bottle_menu_"] .stButton>button{height:30px!important;min-height:30px!important;border:0!important;background:#132a46!important;color:#e8eef8!important;box-shadow:none!important}
+body:has(.bl-theme-state.dark) [class*="st-key-bl_bottle_menu_"] .stButton>button{height:42px!important;min-height:42px!important;border:1px solid #405d7c!important;background:#17304f!important;color:#f5f7fb!important;box-shadow:none!important}
 body:has(.bl-theme-state.dark) [class*="st-key-bl_bottle_menu_"] .stButton>button:hover,body:has(.bl-theme-state.dark) [class*="st-key-bl_bottle_menu_"] .stButton>button:focus{background:#1b3a5e!important;color:#fff!important}
 body:has(.bl-theme-state.dark) [class*="st-key-bl_bottle_clear_"] .stButton>button{background:#0d1d33!important;color:#9fb0c6!important}
+body:has(.bl-theme-state.dark) .bl-bottle-menu-title{color:#f5f7fb!important}
+@media(max-width:900px){.st-key-bl_panel_a:has([class*="st-key-bl_bottle_menu_"]),.st-key-bl_panel_b:has([class*="st-key-bl_bottle_menu_"]){overflow:visible!important}[class*="st-key-bl_bottle_menu_"]{position:fixed!important;left:50%!important;right:auto!important;top:50%!important;width:calc(100vw - 32px)!important;min-width:0!important;max-width:380px!important;transform:translate(-50%,-50%)!important;z-index:999999!important;padding:14px!important;border-radius:16px!important;box-shadow:0 22px 70px rgba(0,0,0,.55)!important}[class*="st-key-bl_bottle_menu_"] [data-testid="stHorizontalBlock"]{gap:8px!important;margin-bottom:8px!important}[class*="st-key-bl_bottle_menu_"] .stButton>button{height:48px!important;min-height:48px!important;font-size:15px!important;border-radius:10px!important}[class*="st-key-bl_bottle_menu_"] .stButton>button p,[class*="st-key-bl_bottle_menu_"] .stButton>button span{font-size:15px!important}.bl-bottle-menu-title{font-size:17px;margin:2px 0 12px}}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-group.sleep_kpi .bl-metric-line b,body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-group.sleep_kpi .bl-metric-line small,body:has(.bl-theme-state.dark) .st-key-bl_panel_b .bl-metric-group.sleep_kpi .bl-metric-line b,body:has(.bl-theme-state.dark) .st-key-bl_panel_b .bl-metric-group.sleep_kpi .bl-metric-line small{color:#f5f7fb!important}
 /* Carry sleep caps through Streamlit's inter-row spacing to the hour divider. */
 .bl-sleep-implied.sleep-start .bl-sleep-fill{top:0!important}
@@ -1537,6 +1545,10 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                             picker_open = st.session_state.get("boys_log_bottle_picker") == (baby_id, hour)
                             if kind == "bottle" and picker_open:
                                 with st.container(key=f"bl_bottle_menu_{baby_id}_{hour}"):
+                                    st.markdown(
+                                        f"<div class='bl-bottle-menu-title'>Formula amount · {esc(hour_label(hour))}</div>",
+                                        unsafe_allow_html=True,
+                                    )
                                     for row_start in range(0, len(BOTTLE_AMOUNTS), 3):
                                         amount_row = BOTTLE_AMOUNTS[row_start : row_start + 3]
                                         amount_cols = st.columns(len(amount_row), gap="small")
@@ -1549,13 +1561,22 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                                     args=(baby_id, hour, amount),
                                                     use_container_width=True,
                                                 )
-                                    st.button(
-                                        "✕ Clear",
-                                        key=f"bl_bottle_clear_{baby_id}_{hour}",
-                                        on_click=choose_bottle_amount,
-                                        args=(baby_id, hour, None),
-                                        use_container_width=True,
-                                    )
+                                    clear_col, cancel_col = st.columns(2, gap="small")
+                                    with clear_col:
+                                        st.button(
+                                            "Clear",
+                                            key=f"bl_bottle_clear_{baby_id}_{hour}",
+                                            on_click=choose_bottle_amount,
+                                            args=(baby_id, hour, None),
+                                            use_container_width=True,
+                                        )
+                                    with cancel_col:
+                                        st.button(
+                                            "Cancel",
+                                            key=f"bl_bottle_cancel_{baby_id}_{hour}",
+                                            on_click=close_bottle_picker,
+                                            use_container_width=True,
+                                        )
                             else:
                                 on_click = open_bottle_picker if kind == "bottle" else toggle_cell_event
                                 st.button(
