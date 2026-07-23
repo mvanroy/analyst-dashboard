@@ -492,17 +492,13 @@ def feed_wheel_picker_html(
 """
 
 
-def sleep_cell_fill(sleep_class: str) -> str:
+def sleep_cell_fill(sleep_class: str, start_time: str = "") -> str:
     if not sleep_class:
         return ""
-    assumed_label = (
-        "<span class='bl-sleep-assumed-label'>Assumed</span>"
-        if "sleep-assumed" in sleep_class and "sleep-start" in sleep_class
-        else ""
-    )
+    start_label = f"<span class='bl-sleep-start-label'>{esc(start_time)}</span>" if start_time else ""
     return (
         f"<span class='bl-sleep-implied {esc(sleep_class)}'>"
-        f"<span class='bl-sleep-fill'></span>{assumed_label}</span>"
+        f"<span class='bl-sleep-fill'></span>{start_label}</span>"
     )
 
 
@@ -892,7 +888,7 @@ def row_time_label(events_for_hour: list[dict], hour: int) -> str:
     return hour_label(hour)
 
 
-def sleep_block_summary(events: list[dict], baby: str, day: date) -> tuple[int, dict[int, str]]:
+def sleep_block_summary(events: list[dict], baby: str, day: date) -> tuple[int, dict[int, tuple[str, str]]]:
     """Summarise confirmed and fallback-assumed sleep overlapping one Melbourne day."""
     day_start = datetime.combine(day, datetime.min.time(), tzinfo=MEL)
     day_end = day_start + timedelta(days=1)
@@ -902,7 +898,7 @@ def sleep_block_summary(events: list[dict], baby: str, day: date) -> tuple[int, 
     cutoff = min(now, day_end)
     sessions = hybrid_sleep_periods(events, baby, cutoff)
 
-    sleep_classes: dict[int, str] = {}
+    sleep_classes: dict[int, tuple[str, str]] = {}
     total_seconds = 0
     for session_start, session_end, assumed in sessions:
         visible_start = max(session_start, day_start)
@@ -922,9 +918,10 @@ def sleep_block_summary(events: list[dict], baby: str, day: date) -> tuple[int, 
                 parts.append("sleep-start")
             if sleep_hour == block_end_hour:
                 parts.append("sleep-end")
-            existing = sleep_classes.get(sleep_hour, "")
-            if "sleep-confirmed" not in existing or not assumed:
-                sleep_classes[sleep_hour] = " ".join(parts)
+            existing_class = sleep_classes.get(sleep_hour, ("", ""))[0]
+            if "sleep-confirmed" not in existing_class or not assumed:
+                shown_start = session_start.strftime("%H:%M") if assumed and sleep_hour == block_start_hour else ""
+                sleep_classes[sleep_hour] = (" ".join(parts), shown_start)
 
     return total_seconds, sleep_classes
 
@@ -1167,7 +1164,7 @@ def analytics_dashboard_html(end_day: date) -> str:
     </section>
     <section class='ba-card'>
       <div class='ba-card-head'><div><span>Rest</span><b class='ba-card-title'>Total sleep</b></div></div>
-      <p class='ba-note'>Confirmed sleep uses Sleep taps; otherwise the latest completed feed or nappy change starts an assumed period.</p>
+      <p class='ba-note'>Sleep taps set a confirmed start; otherwise the latest completed feed or nappy change sets the default start time.</p>
       {sleep_chart}
       <div class='ba-chart-foot'><span class='ba-a'>Zander: <b>{sleep_text['a']}</b></span><span class='ba-b'>Phoenix: <b>{sleep_text['b']}</b></span></div>
     </section>
@@ -1334,8 +1331,7 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-sleep-implied.sleep-start .bl-sleep-fill{top:6px;border-radius:12px 12px 0 0;}
 .bl-sleep-implied.sleep-end .bl-sleep-fill{bottom:6px;border-radius:0 0 12px 12px;}
 .bl-sleep-implied.sleep-start.sleep-end .bl-sleep-fill{top:6px;bottom:6px;border-radius:12px;}
-.bl-sleep-implied.sleep-assumed .bl-sleep-fill{opacity:.48;border-left-style:dashed!important;border-right-style:dashed!important;}
-.bl-sleep-assumed-label{position:absolute;left:50%;top:7px;z-index:7;transform:translateX(-50%);padding:2px 3px;border-radius:4px;background:rgba(255,255,255,.82);color:#655b89;font-size:7px;font-weight:950;line-height:1;letter-spacing:.01em;white-space:nowrap;}
+.bl-sleep-start-label{position:absolute;left:50%;top:7px;z-index:7;transform:translateX(-50%);padding:2px 3px;border-radius:4px;background:rgba(255,255,255,.82);color:#655b89;font-size:8px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .bl-chip{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent!important;border:0!important;border-radius:0;padding:0;}
 .bl-chip.sleep{z-index:6;pointer-events:none;}
 .bl-chip img{width:19px;height:19px;display:block;object-fit:contain;filter:none;}
@@ -1606,7 +1602,7 @@ body:has(.bl-theme-state.dark) .bl-sleep-fill{left:14%!important;right:14%!impor
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start .bl-sleep-fill{border-radius:18px 18px 0 0!important;background:linear-gradient(180deg,#8f82ce,#514786 88%)!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-end .bl-sleep-fill{border-radius:0 0 18px 18px!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start.sleep-end .bl-sleep-fill{border-radius:18px!important}
-body:has(.bl-theme-state.dark) .bl-sleep-assumed-label{background:rgba(16,27,45,.82)!important;color:#e5ddff!important}
+body:has(.bl-theme-state.dark) .bl-sleep-start-label{background:rgba(16,27,45,.82)!important;color:#e5ddff!important}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-sleep-fill{background:#425f8e!important;border-color:rgba(145,181,230,.25)!important;box-shadow:0 0 15px rgba(76,141,255,.10)!important}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-sleep-implied.sleep-start .bl-sleep-fill{background:linear-gradient(180deg,#7897c7,#425f8e 88%)!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start .bl-sleep-fill:before{content:"★";position:absolute;left:20%;top:17px;color:#ffd65a;font-size:11px;line-height:1;text-shadow:25px 18px 0 #ffdc66,11px 36px 0 rgba(255,214,90,.20);filter:drop-shadow(0 0 2px rgba(255,214,90,.36));z-index:2}
@@ -1993,7 +1989,7 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                             if chips:
                                 st.markdown("".join(chips), unsafe_allow_html=True)
                             if kind == "sleep" and sleep_hour_classes.get(hour):
-                                st.markdown(sleep_cell_fill(sleep_hour_classes[hour]), unsafe_allow_html=True)
+                                st.markdown(sleep_cell_fill(*sleep_hour_classes[hour]), unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 
