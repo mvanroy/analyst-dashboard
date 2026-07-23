@@ -483,16 +483,23 @@ def feed_wheel_picker_html(
 """
 
 
-def sleep_cell_fill(segments: list[tuple[str, str, float, float]]) -> str:
+def sleep_cell_fill(segments: list[tuple[str, str, str, str, float, float]]) -> str:
     if not segments:
         return ""
     rendered = []
-    for sleep_class, start_time, start_percent, end_percent in segments:
+    for sleep_class, start_time, end_time, duration_text, start_percent, end_percent in segments:
         start_label = f"<span class='bl-sleep-start-label'>{esc(start_time)}</span>" if start_time else ""
+        end_summary = (
+            "<span class='bl-sleep-end-summary'>"
+            f"<b>{esc(end_time)}</b><small>{esc(duration_text)}</small>"
+            "</span>"
+            if end_time
+            else ""
+        )
         rendered.append(
             f"<span class='bl-sleep-implied {esc(sleep_class)}' "
             f"style='--bl-sleep-start:{start_percent:.2f}%;--bl-sleep-end:{end_percent:.2f}%'>"
-            f"<span class='bl-sleep-fill'></span>{start_label}</span>"
+            f"<span class='bl-sleep-fill'></span>{start_label}{end_summary}</span>"
         )
     return "".join(rendered)
 
@@ -875,7 +882,7 @@ def sleep_block_summary(
     events: list[dict],
     baby: str,
     day: date,
-) -> tuple[int, dict[int, list[tuple[str, str, float, float]]]]:
+) -> tuple[int, dict[int, list[tuple[str, str, str, str, float, float]]]]:
     """Summarise confirmed and fallback-assumed sleep overlapping one Melbourne day."""
     day_start = datetime.combine(day, datetime.min.time(), tzinfo=MEL)
     day_end = day_start + timedelta(days=1)
@@ -895,7 +902,7 @@ def sleep_block_summary(
         else:
             sessions.append((session_start, session_end, assumed))
 
-    sleep_classes: dict[int, list[tuple[str, str, float, float]]] = defaultdict(list)
+    sleep_classes: dict[int, list[tuple[str, str, str, str, float, float]]] = defaultdict(list)
     total_seconds = 0
     for session_start, session_end, assumed in sessions:
         visible_start = max(session_start, day_start)
@@ -922,7 +929,16 @@ def sleep_block_summary(
             if sleep_hour == block_end_hour:
                 parts.append("sleep-end")
             shown_start = session_start.strftime("%H:%M") if sleep_hour == block_start_hour else ""
-            sleep_classes[sleep_hour].append((" ".join(parts), shown_start, start_percent, end_percent))
+            completed = session_end < cutoff
+            shown_end = session_end.strftime("%H:%M") if completed and sleep_hour == block_end_hour else ""
+            shown_duration = (
+                format_sleep_duration(int((session_end - session_start).total_seconds()))[0]
+                if shown_end
+                else ""
+            )
+            sleep_classes[sleep_hour].append(
+                (" ".join(parts), shown_start, shown_end, shown_duration, start_percent, end_percent)
+            )
 
     return total_seconds, sleep_classes
 
@@ -1333,6 +1349,9 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-sleep-implied.sleep-end .bl-sleep-fill{bottom:6px;border-radius:0 0 12px 12px;}
 .bl-sleep-implied.sleep-start.sleep-end .bl-sleep-fill{top:6px;bottom:6px;border-radius:12px;}
 .bl-sleep-start-label{position:absolute;left:50%;top:calc(var(--bl-sleep-start) + 2px);z-index:7;transform:translateX(-50%);padding:2px 3px;border-radius:4px;background:rgba(255,255,255,.88);color:#655b89;font-size:8px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.bl-sleep-end-summary{position:absolute;left:50%;top:calc(var(--bl-sleep-end) - 2px);z-index:7;transform:translate(-50%,-100%);display:flex;flex-direction:column;align-items:center;gap:1px;padding:2px 3px;border-radius:5px;background:rgba(255,255,255,.9);color:#655b89;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.bl-sleep-end-summary b{font-size:8px;font-weight:950;line-height:1;}
+.bl-sleep-end-summary small{font-size:6.5px;font-weight:900;line-height:1;}
 .bl-chip{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent!important;border:0!important;border-radius:0;padding:0;}
 .bl-chip.sleep{z-index:6;pointer-events:none;}
 .bl-chip img{width:19px;height:19px;display:block;object-fit:contain;filter:none;}
@@ -1604,6 +1623,7 @@ body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start .bl-sleep-fill{bord
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-end .bl-sleep-fill{border-radius:0 0 18px 18px!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start.sleep-end .bl-sleep-fill{border-radius:18px!important}
 body:has(.bl-theme-state.dark) .bl-sleep-start-label{background:rgba(16,27,45,.86)!important;color:#e5ddff!important}
+body:has(.bl-theme-state.dark) .bl-sleep-end-summary{background:rgba(16,27,45,.88)!important;color:#e5ddff!important}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-sleep-fill{background:#425f8e!important;border-color:rgba(145,181,230,.25)!important;box-shadow:0 0 15px rgba(76,141,255,.10)!important}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-sleep-implied.sleep-start .bl-sleep-fill{background:linear-gradient(180deg,#7897c7,#425f8e 88%)!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start .bl-sleep-fill:before{content:"★";position:absolute;left:20%;top:17px;color:#ffd65a;font-size:11px;line-height:1;text-shadow:25px 18px 0 #ffdc66,11px 36px 0 rgba(255,214,90,.20);filter:drop-shadow(0 0 2px rgba(255,214,90,.36));z-index:2}
@@ -1845,8 +1865,10 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
         if active_sleep_marker:
             active_hour = parse_dt(active_sleep_marker.get("event_ts")).hour
             sleep_hour_classes[active_hour] = [
-                (sleep_class, "", start_percent, end_percent)
-                for sleep_class, _, start_percent, end_percent in sleep_hour_classes.get(active_hour, [])
+                (sleep_class, "", end_time, duration_text, start_percent, end_percent)
+                for sleep_class, _, end_time, duration_text, start_percent, end_percent in sleep_hour_classes.get(
+                    active_hour, []
+                )
             ]
         sleep_value, sleep_unit = format_sleep_duration(sleep_seconds)
         last = baby_totals["last"].strftime("%H:%M") if baby_totals["last"] else "None yet"
