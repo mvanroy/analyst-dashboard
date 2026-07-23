@@ -165,6 +165,20 @@ def sleep_history_for(baby: str, at_time: datetime) -> list[dict]:
     return baby_log_store.load_events_range(start_day, at_time.date().isoformat())
 
 
+def active_sleep_start_event(events: list[dict], baby: str, cutoff: datetime) -> dict | None:
+    _, active_start = sleep_sessions(events, baby, cutoff)
+    if not active_start:
+        return None
+    matches = [
+        event
+        for event in events
+        if event.get("baby") == baby
+        and sleep_event_state(event) == "start"
+        and parse_dt(event.get("event_ts")) == active_start
+    ]
+    return matches[-1] if matches else None
+
+
 def end_active_sleep(baby: str, event_ts: datetime, ended_by: str) -> datetime | None:
     _, active_start = sleep_sessions(sleep_history_for(baby, event_ts), baby, event_ts)
     if not active_start or event_ts <= active_start:
@@ -592,13 +606,12 @@ def toggle_sleep_tracking(baby: str, hour: int) -> None:
         second=now.second,
         microsecond=0,
     )
-    _, active_start = sleep_sessions(sleep_history_for(baby, event_ts), baby, event_ts)
-    if active_start:
-        if event_ts <= active_start:
-            st.toast("Sleep cannot end before it started")
-            return
-        end_active_sleep(baby, event_ts, "manual")
-        st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
+    active_cutoff = max(event_ts, now)
+    history = sleep_history_for(baby, active_cutoff)
+    active_event = active_sleep_start_event(history, baby, active_cutoff)
+    if active_event:
+        baby_log_store.delete_event(active_event.get("id"))
+        st.toast("Sleep start cancelled")
         return
 
     baby_log_store.add_event(baby, "sleep", note="sleep_state=start", event_ts=event_ts)
@@ -1018,7 +1031,7 @@ def analytics_dashboard_html(end_day: date) -> str:
     </section>
     <section class='ba-card'>
       <div class='ba-card-head'><div><span>Rest</span><b class='ba-card-title'>Total sleep</b></div></div>
-      <p class='ba-note'>Tracked from Sleep start until a feed, nappy change, or manual stop.</p>
+      <p class='ba-note'>Tracked from Sleep start until a feed or nappy change.</p>
       {sleep_chart}
       <div class='ba-chart-foot'><span class='ba-a'>Zander: <b>{sleep_text['a']}</b></span><span class='ba-b'>Phoenix: <b>{sleep_text['b']}</b></span></div>
     </section>
@@ -1824,7 +1837,7 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                             else:
                                 on_click = open_feed_picker if kind in FEED_KINDS else toggle_cell_event
                                 action_help = (
-                                    f"Start or stop sleep at {hour_label(hour)} Melbourne time"
+                                    f"Start or cancel sleep at {hour_label(hour)} Melbourne time"
                                     if kind == "sleep"
                                     else f"Log {KIND_LABELS.get(kind, kind)} at {hour_label(hour)} Melbourne time"
                                 )
