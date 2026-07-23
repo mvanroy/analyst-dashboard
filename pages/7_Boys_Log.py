@@ -331,8 +331,8 @@ def event_label(event: dict) -> str:
 def cell_event_label(event: dict) -> str:
     if event.get("kind") == "bottle" and event.get("amount_ml"):
         duration = event_duration_minutes(event)
-        duration_text = f" · {esc(duration)} min" if duration else ""
-        return f"<b class='bl-chip-amount'>{esc(event.get('amount_ml'))} ml{duration_text}</b>"
+        duration_text = f"<span class='bl-chip-duration'>{esc(duration)} min</span>" if duration else ""
+        return f"<b class='bl-chip-amount'>{esc(event.get('amount_ml'))} ml</b>{duration_text}"
     if event.get("kind") in {"left", "right"} and event.get("amount_ml"):
         return f"<b class='bl-chip-amount'>{esc(event.get('amount_ml'))} min</b>"
     icon = icon_data_uri("check")
@@ -1103,7 +1103,9 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-chip.feed img,.bl-chip.change img{filter:invert(48%) sepia(42%) saturate(746%) hue-rotate(94deg) brightness(89%) contrast(90%);}
 .bl-chip.sleep img{filter:invert(35%) sepia(56%) saturate(821%) hue-rotate(222deg) brightness(88%) contrast(85%);}
 .bl-chip-amount{display:block;color:#174f9d;font-size:14px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.bl-chip-duration{display:block;color:#52709a;font-size:11px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .bl-chip-time{display:block;color:#6e84a8;font-size:12px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.bl-chip:has(.bl-chip-duration){gap:2px;}
 .bl-chip.feed,.bl-chip.change,.bl-chip.sleep,.bl-chip.other{color:inherit;background:transparent!important;border:0!important;}
 [class*="st-key-bl_bottle_picker_"]{position:absolute!important;inset:2px!important;z-index:4;width:calc(100% - 4px)!important;min-width:0!important;height:34px!important;margin:0!important;}
 [class*="st-key-bl_bottle_picker_"] label{display:none!important;}
@@ -1429,8 +1431,10 @@ body:has(.bl-theme-state.dark) .st-key-bl_panel_b .st-key-bl_daily_log_b [data-t
 /* Dark-mode completion marks and timestamps: brighter and easier to scan. */
 body:has(.bl-theme-state.dark) .bl-chip img{width:21px!important;height:21px!important;filter:grayscale(1) brightness(0) invert(1)!important;opacity:1!important}
 body:has(.bl-theme-state.dark) .bl-chip-amount{color:#fff!important}
+body:has(.bl-theme-state.dark) .bl-chip-duration{color:#c7d3e5!important}
 body:has(.bl-theme-state.dark) .bl-chip-time{font-size:13px!important;color:#e8eef8!important}
 @media(max-width:900px){body:has(.bl-theme-state.dark) .bl-chip img{width:17px!important;height:17px!important}body:has(.bl-theme-state.dark) .bl-chip-time{font-size:11px!important}}
+@media(max-width:900px){.bl-chip-duration{font-size:9px!important}.bl-chip:has(.bl-chip-duration){gap:2px!important}.bl-chip:has(.bl-chip-duration) .bl-chip-time{font-size:9px!important}}
 
 /* KPI values are white in dark mode; keep a readable navy equivalent in light mode. */
 .st-key-bl_panel_a .bl-metric-total b,.st-key-bl_panel_a .bl-metric-line b,.st-key-bl_panel_b .bl-metric-total b,.st-key-bl_panel_b .bl-metric-line b{color:#112f62!important}
