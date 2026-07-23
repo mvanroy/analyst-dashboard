@@ -122,7 +122,7 @@ def sleep_event_state(event: dict) -> str:
     if event.get("kind") != "sleep":
         return ""
     state = event_note_value(event, "sleep_state")
-    return state if state in {"start", "end"} else ""
+    return state if state in {"start", "end", "awake"} else ""
 
 
 def sleep_sessions(
@@ -145,10 +145,15 @@ def sleep_sessions(
     active_start: datetime | None = None
     for event in marked:
         event_time = parse_dt(event.get("event_ts"))
-        if sleep_event_state(event) == "start":
+        state = sleep_event_state(event)
+        if state == "start":
             if active_start and event_time > active_start:
                 sessions.append((active_start, event_time))
             active_start = event_time
+            continue
+
+        if state == "awake":
+            active_start = None
             continue
 
         stored_start = event_note_value(event, "sleep_start_ts")
@@ -179,7 +184,7 @@ def active_sleep_start_event(events: list[dict], baby: str, cutoff: datetime) ->
     return matches[-1] if matches else None
 
 
-def cancel_sleep_starts_for_hour(events: list[dict], baby: str, day: date, hour: int) -> int:
+def cancel_sleep_starts_for_hour(events: list[dict], baby: str, day: date, hour: int) -> datetime | None:
     starts = [
         event
         for event in events
@@ -189,7 +194,7 @@ def cancel_sleep_starts_for_hour(events: list[dict], baby: str, day: date, hour:
         and parse_dt(event.get("event_ts")).hour == hour
     ]
     if not starts:
-        return 0
+        return None
     start_times = {parse_dt(event.get("event_ts")) for event in starts}
     linked_ends = [
         event
@@ -199,11 +204,84 @@ def cancel_sleep_starts_for_hour(events: list[dict], baby: str, day: date, hour:
         and event_note_value(event, "sleep_start_ts")
         and parse_dt(event_note_value(event, "sleep_start_ts")) in start_times
     ]
-    deleted = 0
     for event in starts + linked_ends:
-        if baby_log_store.delete_event(event.get("id")):
-            deleted += 1
-    return deleted
+        baby_log_store.delete_event(event.get("id"))
+    return min(start_times)
+
+
+def care_event_end(event: dict) -> datetime:
+    event_time = parse_dt(event.get("event_ts"))
+    duration = 0
+    if event.get("kind") == "bottle":
+        duration = event_duration_minutes(event) or 0
+    elif event.get("kind") in {"left", "right"}:
+        try:
+            duration = int(event.get("amount_ml") or 0)
+        except (TypeError, ValueError):
+            duration = 0
+    return event_time + timedelta(minutes=max(0, duration))
+
+
+def hybrid_sleep_periods(
+    events: list[dict],
+    baby: str,
+    cutoff: datetime,
+) -> list[tuple[datetime, datetime, bool]]:
+    """Return (start, end, assumed) periods using explicit sleep first, then care gaps."""
+    relevant = [
+        event
+        for event in events
+        if event.get("baby") == baby
+        and (
+            event.get("kind") in SLEEP_INTERRUPT_KINDS
+            or sleep_event_state(event) in {"start", "end", "awake"}
+        )
+        and parse_dt(event.get("event_ts")) <= cutoff
+    ]
+    priority = {"end": 0, "care": 1, "start": 2, "awake": 3}
+
+    def event_priority(event: dict) -> int:
+        state = sleep_event_state(event)
+        return priority.get(state or "care", 1)
+
+    relevant.sort(key=lambda event: (parse_dt(event.get("event_ts")), event_priority(event)))
+    periods: list[tuple[datetime, datetime, bool]] = []
+    mode = "awake"
+    period_start: datetime | None = None
+
+    for event in relevant:
+        event_time = parse_dt(event.get("event_ts"))
+        state = sleep_event_state(event)
+        if event.get("kind") in SLEEP_INTERRUPT_KINDS:
+            if mode in {"assumed", "explicit"} and period_start and event_time > period_start:
+                periods.append((period_start, event_time, mode == "assumed"))
+            period_start = care_event_end(event)
+            mode = "assumed"
+            continue
+
+        if state == "start":
+            # A confirmed start replaces any assumption since the previous care event.
+            period_start = event_time
+            mode = "explicit"
+            continue
+
+        if state == "awake":
+            # Cancelling a start means awake until the next care event or confirmed start.
+            period_start = None
+            mode = "awake"
+            continue
+
+        if state == "end":
+            stored_start = event_note_value(event, "sleep_start_ts")
+            explicit_start = parse_dt(stored_start) if stored_start else period_start
+            if explicit_start and event_time > explicit_start:
+                periods.append((explicit_start, event_time, False))
+            period_start = None
+            mode = "awake"
+
+    if mode in {"assumed", "explicit"} and period_start and cutoff > period_start:
+        periods.append((period_start, cutoff, mode == "assumed"))
+    return periods
 
 
 def end_active_sleep(baby: str, event_ts: datetime, ended_by: str) -> datetime | None:
@@ -417,7 +495,15 @@ def feed_wheel_picker_html(
 def sleep_cell_fill(sleep_class: str) -> str:
     if not sleep_class:
         return ""
-    return f"<span class='bl-sleep-implied {esc(sleep_class)}'><span class='bl-sleep-fill'></span></span>"
+    assumed_label = (
+        "<span class='bl-sleep-assumed-label'>Assumed</span>"
+        if "sleep-assumed" in sleep_class and "sleep-start" in sleep_class
+        else ""
+    )
+    return (
+        f"<span class='bl-sleep-implied {esc(sleep_class)}'>"
+        f"<span class='bl-sleep-fill'></span>{assumed_label}</span>"
+    )
 
 
 def event_label(event: dict) -> str:
@@ -635,12 +721,25 @@ def toggle_sleep_tracking(baby: str, hour: int) -> None:
     )
     active_cutoff = max(event_ts, now)
     history = sleep_history_for(baby, active_cutoff)
-    if cancel_sleep_starts_for_hour(history, baby, selected_day(), hour):
+    cancelled_start = cancel_sleep_starts_for_hour(history, baby, selected_day(), hour)
+    if cancelled_start:
+        baby_log_store.add_event(
+            baby,
+            "sleep",
+            note="sleep_state=awake;reason=cancelled",
+            event_ts=cancelled_start,
+        )
         st.toast("Sleep start cancelled")
         return
     active_event = active_sleep_start_event(history, baby, active_cutoff)
     if active_event:
         baby_log_store.delete_event(active_event.get("id"))
+        baby_log_store.add_event(
+            baby,
+            "sleep",
+            note="sleep_state=awake;reason=cancelled",
+            event_ts=parse_dt(active_event.get("event_ts")),
+        )
         st.toast("Sleep start cancelled")
         return
 
@@ -794,20 +893,18 @@ def row_time_label(events_for_hour: list[dict], hour: int) -> str:
 
 
 def sleep_block_summary(events: list[dict], baby: str, day: date) -> tuple[int, dict[int, str]]:
-    """Summarise explicitly tracked sleep overlapping one Melbourne day."""
+    """Summarise confirmed and fallback-assumed sleep overlapping one Melbourne day."""
     day_start = datetime.combine(day, datetime.min.time(), tzinfo=MEL)
     day_end = day_start + timedelta(days=1)
     now = datetime.now(MEL)
     if day > now.date():
         return 0, {}
     cutoff = min(now, day_end)
-    sessions, active_start = sleep_sessions(events, baby, cutoff)
-    if active_start and active_start < cutoff:
-        sessions.append((active_start, cutoff))
+    sessions = hybrid_sleep_periods(events, baby, cutoff)
 
     sleep_classes: dict[int, str] = {}
     total_seconds = 0
-    for session_start, session_end in sessions:
+    for session_start, session_end, assumed in sessions:
         visible_start = max(session_start, day_start)
         visible_end = min(session_end, cutoff)
         if visible_end <= visible_start:
@@ -816,12 +913,18 @@ def sleep_block_summary(events: list[dict], baby: str, day: date) -> tuple[int, 
         block_start_hour = visible_start.hour
         block_end_hour = min(23, (visible_end - timedelta(microseconds=1)).hour)
         for sleep_hour in range(block_start_hour, block_end_hour + 1):
-            parts = ["sleep-implied", f"sleep-stars-{sleep_hour % 4}"]
+            parts = [
+                "sleep-implied",
+                "sleep-assumed" if assumed else "sleep-confirmed",
+                f"sleep-stars-{sleep_hour % 4}",
+            ]
             if sleep_hour == block_start_hour:
                 parts.append("sleep-start")
             if sleep_hour == block_end_hour:
                 parts.append("sleep-end")
-            sleep_classes[sleep_hour] = " ".join(parts)
+            existing = sleep_classes.get(sleep_hour, "")
+            if "sleep-confirmed" not in existing or not assumed:
+                sleep_classes[sleep_hour] = " ".join(parts)
 
     return total_seconds, sleep_classes
 
@@ -889,7 +992,10 @@ def analytics_data(end_day: date) -> dict:
             }
             daily[baby].append(entry)
             for event in day_events:
-                if event.get("kind") in FEED_KINDS | CHANGE_KINDS | {"sleep", "other", "bath"}:
+                if (
+                    event.get("kind") in FEED_KINDS | CHANGE_KINDS | {"sleep", "other", "bath"}
+                    and sleep_event_state(event) != "awake"
+                ):
                     hour_counts[baby][parse_dt(event.get("event_ts")).hour] += 1
 
     summaries = {}
@@ -1061,7 +1167,7 @@ def analytics_dashboard_html(end_day: date) -> str:
     </section>
     <section class='ba-card'>
       <div class='ba-card-head'><div><span>Rest</span><b class='ba-card-title'>Total sleep</b></div></div>
-      <p class='ba-note'>Tracked from Sleep start until a feed or nappy change.</p>
+      <p class='ba-note'>Confirmed sleep uses Sleep taps; otherwise the latest completed feed or nappy change starts an assumed period.</p>
       {sleep_chart}
       <div class='ba-chart-foot'><span class='ba-a'>Zander: <b>{sleep_text['a']}</b></span><span class='ba-b'>Phoenix: <b>{sleep_text['b']}</b></span></div>
     </section>
@@ -1228,6 +1334,8 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-sleep-implied.sleep-start .bl-sleep-fill{top:6px;border-radius:12px 12px 0 0;}
 .bl-sleep-implied.sleep-end .bl-sleep-fill{bottom:6px;border-radius:0 0 12px 12px;}
 .bl-sleep-implied.sleep-start.sleep-end .bl-sleep-fill{top:6px;bottom:6px;border-radius:12px;}
+.bl-sleep-implied.sleep-assumed .bl-sleep-fill{opacity:.48;border-left-style:dashed!important;border-right-style:dashed!important;}
+.bl-sleep-assumed-label{position:absolute;left:50%;top:7px;z-index:7;transform:translateX(-50%);padding:2px 3px;border-radius:4px;background:rgba(255,255,255,.82);color:#655b89;font-size:7px;font-weight:950;line-height:1;letter-spacing:.01em;white-space:nowrap;}
 .bl-chip{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent!important;border:0!important;border-radius:0;padding:0;}
 .bl-chip.sleep{z-index:6;pointer-events:none;}
 .bl-chip img{width:19px;height:19px;display:block;object-fit:contain;filter:none;}
@@ -1498,6 +1606,7 @@ body:has(.bl-theme-state.dark) .bl-sleep-fill{left:14%!important;right:14%!impor
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start .bl-sleep-fill{border-radius:18px 18px 0 0!important;background:linear-gradient(180deg,#8f82ce,#514786 88%)!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-end .bl-sleep-fill{border-radius:0 0 18px 18px!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start.sleep-end .bl-sleep-fill{border-radius:18px!important}
+body:has(.bl-theme-state.dark) .bl-sleep-assumed-label{background:rgba(16,27,45,.82)!important;color:#e5ddff!important}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-sleep-fill{background:#425f8e!important;border-color:rgba(145,181,230,.25)!important;box-shadow:0 0 15px rgba(76,141,255,.10)!important}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-sleep-implied.sleep-start .bl-sleep-fill{background:linear-gradient(180deg,#7897c7,#425f8e 88%)!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start .bl-sleep-fill:before{content:"★";position:absolute;left:20%;top:17px;color:#ffd65a;font-size:11px;line-height:1;text-shadow:25px 18px 0 #ffdc66,11px 36px 0 rgba(255,214,90,.20);filter:drop-shadow(0 0 2px rgba(255,214,90,.36));z-index:2}
@@ -1713,6 +1822,8 @@ storage_warning_shown = bool(baby_log_store.storage_warning())
 events_by_baby_hour_kind: dict[tuple[str, int, str], list[dict]] = defaultdict(list)
 events_by_baby_hour: dict[tuple[str, int], list[dict]] = defaultdict(list)
 for event in events:
+    if sleep_event_state(event) == "awake":
+        continue
     dt = parse_dt(event.get("event_ts"))
     events_by_baby_hour_kind[(event.get("baby"), dt.hour, event.get("kind"))].append(event)
     events_by_baby_hour[(event.get("baby"), dt.hour)].append(event)
