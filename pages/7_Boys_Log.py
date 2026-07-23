@@ -482,14 +482,19 @@ def feed_wheel_picker_html(
 """
 
 
-def sleep_cell_fill(sleep_class: str, start_time: str = "") -> str:
-    if not sleep_class:
+def sleep_cell_fill(segments: list[tuple[str, str, str, float, float]]) -> str:
+    if not segments:
         return ""
-    start_label = f"<span class='bl-sleep-start-label'>{esc(start_time)}</span>" if start_time else ""
-    return (
-        f"<span class='bl-sleep-implied {esc(sleep_class)}'>"
-        f"<span class='bl-sleep-fill'></span>{start_label}</span>"
-    )
+    rendered = []
+    for sleep_class, start_time, end_time, start_percent, end_percent in segments:
+        start_label = f"<span class='bl-sleep-start-label'>{esc(start_time)}</span>" if start_time else ""
+        end_label = f"<span class='bl-sleep-end-label'>{esc(end_time)}</span>" if end_time else ""
+        rendered.append(
+            f"<span class='bl-sleep-implied {esc(sleep_class)}' "
+            f"style='--bl-sleep-start:{start_percent:.2f}%;--bl-sleep-end:{end_percent:.2f}%'>"
+            f"<span class='bl-sleep-fill'></span>{start_label}{end_label}</span>"
+        )
+    return "".join(rendered)
 
 
 def event_label(event: dict) -> str:
@@ -866,7 +871,11 @@ def row_time_label(events_for_hour: list[dict], hour: int) -> str:
     return hour_label(hour)
 
 
-def sleep_block_summary(events: list[dict], baby: str, day: date) -> tuple[int, dict[int, tuple[str, str]]]:
+def sleep_block_summary(
+    events: list[dict],
+    baby: str,
+    day: date,
+) -> tuple[int, dict[int, list[tuple[str, str, str, float, float]]]]:
     """Summarise confirmed and fallback-assumed sleep overlapping one Melbourne day."""
     day_start = datetime.combine(day, datetime.min.time(), tzinfo=MEL)
     day_end = day_start + timedelta(days=1)
@@ -876,7 +885,7 @@ def sleep_block_summary(events: list[dict], baby: str, day: date) -> tuple[int, 
     cutoff = min(now, day_end)
     sessions = hybrid_sleep_periods(events, baby, cutoff)
 
-    sleep_classes: dict[int, tuple[str, str]] = {}
+    sleep_classes: dict[int, list[tuple[str, str, str, float, float]]] = defaultdict(list)
     total_seconds = 0
     for session_start, session_end, assumed in sessions:
         visible_start = max(session_start, day_start)
@@ -887,6 +896,12 @@ def sleep_block_summary(events: list[dict], baby: str, day: date) -> tuple[int, 
         block_start_hour = visible_start.hour
         block_end_hour = min(23, (visible_end - timedelta(microseconds=1)).hour)
         for sleep_hour in range(block_start_hour, block_end_hour + 1):
+            hour_start = day_start + timedelta(hours=sleep_hour)
+            hour_end = hour_start + timedelta(hours=1)
+            segment_start = max(visible_start, hour_start)
+            segment_end = min(visible_end, hour_end)
+            start_percent = (segment_start - hour_start).total_seconds() / 36
+            end_percent = (segment_end - hour_start).total_seconds() / 36
             parts = [
                 "sleep-implied",
                 "sleep-assumed" if assumed else "sleep-confirmed",
@@ -896,10 +911,15 @@ def sleep_block_summary(events: list[dict], baby: str, day: date) -> tuple[int, 
                 parts.append("sleep-start")
             if sleep_hour == block_end_hour:
                 parts.append("sleep-end")
-            existing_class = sleep_classes.get(sleep_hour, ("", ""))[0]
-            if "sleep-confirmed" not in existing_class or not assumed:
-                shown_start = session_start.strftime("%H:%M") if assumed and sleep_hour == block_start_hour else ""
-                sleep_classes[sleep_hour] = (" ".join(parts), shown_start)
+            shown_start = session_start.strftime("%H:%M") if assumed and sleep_hour == block_start_hour else ""
+            shown_end = (
+                session_end.strftime("%H:%M")
+                if assumed and session_end < cutoff and sleep_hour == block_end_hour
+                else ""
+            )
+            sleep_classes[sleep_hour].append(
+                (" ".join(parts), shown_start, shown_end, start_percent, end_percent)
+            )
 
     return total_seconds, sleep_classes
 
@@ -1309,7 +1329,9 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-sleep-implied.sleep-start .bl-sleep-fill{top:6px;border-radius:12px 12px 0 0;}
 .bl-sleep-implied.sleep-end .bl-sleep-fill{bottom:6px;border-radius:0 0 12px 12px;}
 .bl-sleep-implied.sleep-start.sleep-end .bl-sleep-fill{top:6px;bottom:6px;border-radius:12px;}
-.bl-sleep-start-label{position:absolute;left:50%;top:7px;z-index:7;transform:translateX(-50%);padding:2px 3px;border-radius:4px;background:rgba(255,255,255,.82);color:#655b89;font-size:8px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.bl-sleep-start-label,.bl-sleep-end-label{position:absolute;left:50%;z-index:7;padding:2px 3px;border-radius:4px;background:rgba(255,255,255,.88);color:#655b89;font-size:8px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.bl-sleep-start-label{top:calc(var(--bl-sleep-start) + 2px);transform:translateX(-50%);}
+.bl-sleep-end-label{top:var(--bl-sleep-end);transform:translate(-50%,-100%);}
 .bl-chip{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent!important;border:0!important;border-radius:0;padding:0;}
 .bl-chip.sleep{z-index:6;pointer-events:none;}
 .bl-chip img{width:19px;height:19px;display:block;object-fit:contain;filter:none;}
@@ -1580,7 +1602,7 @@ body:has(.bl-theme-state.dark) .bl-sleep-fill{left:14%!important;right:14%!impor
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start .bl-sleep-fill{border-radius:18px 18px 0 0!important;background:linear-gradient(180deg,#8f82ce,#514786 88%)!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-end .bl-sleep-fill{border-radius:0 0 18px 18px!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start.sleep-end .bl-sleep-fill{border-radius:18px!important}
-body:has(.bl-theme-state.dark) .bl-sleep-start-label{background:rgba(16,27,45,.82)!important;color:#e5ddff!important}
+body:has(.bl-theme-state.dark) .bl-sleep-start-label,body:has(.bl-theme-state.dark) .bl-sleep-end-label{background:rgba(16,27,45,.86)!important;color:#e5ddff!important}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-sleep-fill{background:#425f8e!important;border-color:rgba(145,181,230,.25)!important;box-shadow:0 0 15px rgba(76,141,255,.10)!important}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-sleep-implied.sleep-start .bl-sleep-fill{background:linear-gradient(180deg,#7897c7,#425f8e 88%)!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start .bl-sleep-fill:before{content:"★";position:absolute;left:20%;top:17px;color:#ffd65a;font-size:11px;line-height:1;text-shadow:25px 18px 0 #ffdc66,11px 36px 0 rgba(255,214,90,.20);filter:drop-shadow(0 0 2px rgba(255,214,90,.36));z-index:2}
@@ -1674,11 +1696,9 @@ body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-total b,body:has(.b
 [class*="st-key-bl_feed_wheel_actions_"]{display:none!important}
 [class*="st-key-bl_feed_wheel_host_"] iframe{width:1px!important;height:1px!important;min-height:0!important;border:0!important}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-group.sleep_kpi .bl-metric-line b,body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-group.sleep_kpi .bl-metric-line small,body:has(.bl-theme-state.dark) .st-key-bl_panel_b .bl-metric-group.sleep_kpi .bl-metric-line b,body:has(.bl-theme-state.dark) .st-key-bl_panel_b .bl-metric-group.sleep_kpi .bl-metric-line small{color:#f5f7fb!important}
-/* Carry sleep caps through Streamlit's inter-row spacing to the hour divider. */
-.bl-sleep-implied.sleep-start .bl-sleep-fill{top:0!important}
-.bl-sleep-implied.sleep-end .bl-sleep-fill{bottom:-27px!important}
-.bl-sleep-implied.sleep-start.sleep-end .bl-sleep-fill{top:0!important;bottom:-27px!important}
-@media(max-width:900px){.bl-sleep-implied.sleep-start .bl-sleep-fill{top:0!important}.bl-sleep-implied.sleep-end .bl-sleep-fill{bottom:-24px!important}.bl-sleep-implied.sleep-start.sleep-end .bl-sleep-fill{top:0!important;bottom:-24px!important}}
+/* Start and end caps follow the recorded minute within each hourly cell. */
+.bl-sleep-implied.sleep-start .bl-sleep-fill{top:var(--bl-sleep-start)!important}
+.bl-sleep-implied.sleep-end .bl-sleep-fill{bottom:calc(100% - var(--bl-sleep-end))!important}
 /* Each time icon owns only the dotted trail beneath it, through to the divider. */
 .bl-time:before{display:none!important}
 .bl-time:after{top:calc(50% + 14px)!important;bottom:-27px!important;height:auto!important}
@@ -1967,7 +1987,7 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                             if chips:
                                 st.markdown("".join(chips), unsafe_allow_html=True)
                             if kind == "sleep" and sleep_hour_classes.get(hour):
-                                st.markdown(sleep_cell_fill(*sleep_hour_classes[hour]), unsafe_allow_html=True)
+                                st.markdown(sleep_cell_fill(sleep_hour_classes[hour]), unsafe_allow_html=True)
 
         st.markdown("</div>", unsafe_allow_html=True)
 
