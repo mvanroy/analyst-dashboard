@@ -48,6 +48,8 @@ BOTTLE_AMOUNTS = tuple(range(10, 121, 10))
 BREASTFEED_MINUTES = (15, 20, 25, 30, 35, 40, 45)
 FEED_KINDS = {"left", "right", "bottle"}
 CHANGE_KINDS = {"pee", "poop"}
+SLEEP_INTERRUPT_KINDS = FEED_KINDS | CHANGE_KINDS
+SLEEP_LOOKBACK_DAYS = 14
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ICON_ASSET_VERSION = "2026-07-watercolor-v4-title"
 ICON_FILES = {
@@ -106,6 +108,78 @@ def event_duration_minutes(event: dict) -> int | None:
             except (TypeError, ValueError):
                 return None
     return None
+
+
+def event_note_value(event: dict, key: str) -> str:
+    for part in str(event.get("note") or "").split(";"):
+        name, separator, value = part.strip().partition("=")
+        if separator and name == key:
+            return value.strip()
+    return ""
+
+
+def sleep_event_state(event: dict) -> str:
+    if event.get("kind") != "sleep":
+        return ""
+    state = event_note_value(event, "sleep_state")
+    return state if state in {"start", "end"} else ""
+
+
+def sleep_sessions(
+    events: list[dict],
+    baby: str,
+    cutoff: datetime,
+) -> tuple[list[tuple[datetime, datetime]], datetime | None]:
+    """Return explicit completed sessions and the current active start."""
+    marked = sorted(
+        (
+            event
+            for event in events
+            if event.get("baby") == baby
+            and sleep_event_state(event)
+            and parse_dt(event.get("event_ts")) <= cutoff
+        ),
+        key=lambda event: parse_dt(event.get("event_ts")),
+    )
+    sessions: list[tuple[datetime, datetime]] = []
+    active_start: datetime | None = None
+    for event in marked:
+        event_time = parse_dt(event.get("event_ts"))
+        if sleep_event_state(event) == "start":
+            if active_start and event_time > active_start:
+                sessions.append((active_start, event_time))
+            active_start = event_time
+            continue
+
+        stored_start = event_note_value(event, "sleep_start_ts")
+        end_start = parse_dt(stored_start) if stored_start else active_start
+        if end_start and event_time > end_start:
+            sessions.append((end_start, event_time))
+        if active_start is None or active_start <= event_time:
+            active_start = None
+    return sessions, active_start
+
+
+def sleep_history_for(baby: str, at_time: datetime) -> list[dict]:
+    start_day = (at_time.date() - timedelta(days=SLEEP_LOOKBACK_DAYS)).isoformat()
+    return baby_log_store.load_events_range(start_day, at_time.date().isoformat())
+
+
+def end_active_sleep(baby: str, event_ts: datetime, ended_by: str) -> datetime | None:
+    _, active_start = sleep_sessions(sleep_history_for(baby, event_ts), baby, event_ts)
+    if not active_start or event_ts <= active_start:
+        return None
+    duration_seconds = int((event_ts - active_start).total_seconds())
+    note = ";".join(
+        (
+            "sleep_state=end",
+            f"sleep_start_ts={active_start.isoformat(timespec='seconds')}",
+            f"duration_seconds={duration_seconds}",
+            f"ended_by={ended_by}",
+        )
+    )
+    baby_log_store.add_event(baby, "sleep", note=note, event_ts=event_ts)
+    return active_start
 
 
 @st.cache_data(show_spinner=False)
@@ -335,6 +409,15 @@ def cell_event_label(event: dict) -> str:
         return f"<b class='bl-chip-amount'>{esc(event.get('amount_ml'))} ml</b>{duration_text}"
     if event.get("kind") in {"left", "right"} and event.get("amount_ml"):
         return f"<b class='bl-chip-amount'>{esc(event.get('amount_ml'))} min</b>"
+    if sleep_event_state(event) == "start":
+        return "<b class='bl-chip-sleep-state'>Started</b>"
+    if sleep_event_state(event) == "end":
+        duration_seconds = event_note_value(event, "duration_seconds")
+        try:
+            duration_text = format_sleep_duration(int(duration_seconds))[0]
+        except (TypeError, ValueError):
+            duration_text = "Ended"
+        return f"<b class='bl-chip-sleep-state'>{esc(duration_text)}</b>"
     icon = icon_data_uri("check")
     if not icon:
         return "✓"
@@ -470,6 +553,10 @@ def log_event(baby: str, kind: str, amount_ml: int | None = None, note: str = ""
 
 
 def toggle_cell_event(baby: str, kind: str, hour: int, amount_ml: int | None = None) -> None:
+    if kind == "sleep":
+        toggle_sleep_tracking(baby, hour)
+        return
+
     day = selected_day().isoformat()
     existing = [
         event
@@ -491,7 +578,31 @@ def toggle_cell_event(baby: str, kind: str, hour: int, amount_ml: int | None = N
         microsecond=0,
     )
     baby_log_store.add_event(baby, kind, amount_ml=amount_ml, event_ts=event_ts)
+    sleep_interrupted = kind in SLEEP_INTERRUPT_KINDS and end_active_sleep(baby, event_ts, kind)
     st.toast(f"Logged {KIND_LABELS.get(kind, kind)} at {event_ts.strftime('%H:%M')}")
+    if sleep_interrupted:
+        st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
+
+
+def toggle_sleep_tracking(baby: str, hour: int) -> None:
+    now = datetime.now(MEL)
+    event_ts = datetime.combine(selected_day(), datetime.min.time(), tzinfo=MEL).replace(
+        hour=hour,
+        minute=now.minute,
+        second=now.second,
+        microsecond=0,
+    )
+    _, active_start = sleep_sessions(sleep_history_for(baby, event_ts), baby, event_ts)
+    if active_start:
+        if event_ts <= active_start:
+            st.toast("Sleep cannot end before it started")
+            return
+        end_active_sleep(baby, event_ts, "manual")
+        st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
+        return
+
+    baby_log_store.add_event(baby, "sleep", note="sleep_state=start", event_ts=event_ts)
+    st.toast(f"Sleep started at {event_ts.strftime('%H:%M')}")
 
 
 def open_feed_picker(baby: str, kind: str, hour: int) -> None:
@@ -524,9 +635,12 @@ def choose_feed_value(
     )
     note = f"duration_minutes={duration_minutes}" if kind == "bottle" and duration_minutes else ""
     baby_log_store.add_event(baby, kind, amount_ml=value, note=note, event_ts=event_ts)
+    sleep_interrupted = end_active_sleep(baby, event_ts, kind)
     unit = "ml" if kind == "bottle" else "minutes"
     duration_text = f" · {duration_minutes} minutes" if kind == "bottle" and duration_minutes else ""
     st.toast(f"Logged {value} {unit}{duration_text} at {event_ts.strftime('%H:%M')}")
+    if sleep_interrupted:
+        st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
 
 
 def log_bath_time(baby: str) -> None:
@@ -637,52 +751,27 @@ def row_time_label(events_for_hour: list[dict], hour: int) -> str:
 
 
 def sleep_block_summary(events: list[dict], baby: str, day: date) -> tuple[int, dict[int, str]]:
-    """Treat gaps without recorded care activity as inferred sleep."""
-    baby_events = sorted(
-        [event for event in events if event.get("baby") == baby],
-        key=lambda event: parse_dt(event.get("event_ts")),
-    )
+    """Summarise explicitly tracked sleep overlapping one Melbourne day."""
     day_start = datetime.combine(day, datetime.min.time(), tzinfo=MEL)
     day_end = day_start + timedelta(days=1)
     now = datetime.now(MEL)
-    if day == now.date():
-        cutoff = min(now, day_end)
-    elif day < now.date():
-        cutoff = day_end
-    else:
+    if day > now.date():
         return 0, {}
+    cutoff = min(now, day_end)
+    sessions, active_start = sleep_sessions(events, baby, cutoff)
+    if active_start and active_start < cutoff:
+        sessions.append((active_start, cutoff))
 
-    event_times = [parse_dt(event.get("event_ts")) for event in baby_events]
-    active_hours = {event_time.hour for event_time in event_times if day_start <= event_time < day_end}
     sleep_classes: dict[int, str] = {}
     total_seconds = 0
-    hour = 0
-
-    while hour < 24:
-        hour_start = day_start + timedelta(hours=hour)
-        if hour in active_hours or hour_start >= cutoff:
-            hour += 1
+    for session_start, session_end in sessions:
+        visible_start = max(session_start, day_start)
+        visible_end = min(session_end, cutoff)
+        if visible_end <= visible_start:
             continue
-
-        block_start_hour = hour
-        while hour < 24:
-            next_hour_start = day_start + timedelta(hours=hour)
-            if hour in active_hours or next_hour_start >= cutoff:
-                break
-            hour += 1
-        block_end_hour = hour - 1
-        block_start = day_start + timedelta(hours=block_start_hour)
-        block_end = min(day_start + timedelta(hours=block_end_hour + 1), cutoff)
-
-        previous_events = [event_time for event_time in event_times if event_time < block_start]
-        next_events = [event_time for event_time in event_times if event_time > block_end]
-        sleep_start = max(previous_events) if previous_events else block_start
-        sleep_end = min(next_events) if next_events else block_end
-        sleep_start = max(sleep_start, day_start)
-        sleep_end = min(sleep_end, cutoff)
-        if sleep_end > sleep_start:
-            total_seconds += int((sleep_end - sleep_start).total_seconds())
-
+        total_seconds += int((visible_end - visible_start).total_seconds())
+        block_start_hour = visible_start.hour
+        block_end_hour = min(23, (visible_end - timedelta(microseconds=1)).hour)
         for sleep_hour in range(block_start_hour, block_end_hour + 1):
             parts = ["sleep-implied", f"sleep-stars-{sleep_hour % 4}"]
             if sleep_hour == block_start_hour:
@@ -727,8 +816,9 @@ def format_measurement(value: float | None, unit: str) -> str:
 def analytics_data(end_day: date) -> dict:
     days = [end_day - timedelta(days=offset) for offset in range(6, -1, -1)]
     start_day = days[0].isoformat()
+    sleep_context_start = (days[0] - timedelta(days=SLEEP_LOOKBACK_DAYS)).isoformat()
     end_day_text = days[-1].isoformat()
-    events = baby_log_store.load_events_range(start_day, end_day_text)
+    events = baby_log_store.load_events_range(sleep_context_start, end_day_text)
     care_records = baby_log_store.load_care_details_range(start_day, end_day_text)
     daily: dict[str, list[dict]] = {baby: [] for baby, _ in BABIES}
     hour_counts: dict[str, list[int]] = {baby: [0] * 24 for baby, _ in BABIES}
@@ -740,10 +830,7 @@ def analytics_data(end_day: date) -> dict:
                 for event in events
                 if event.get("baby") == baby and event.get("day") == day_value.isoformat()
             ]
-            if day_value < datetime.now(MEL).date() and not day_events:
-                sleep_seconds = 0
-            else:
-                sleep_seconds, _ = sleep_block_summary(day_events, baby, day_value)
+            sleep_seconds, _ = sleep_block_summary(events, baby, day_value)
             entry = {
                 "day": day_value,
                 "feeds": sum(1 for event in day_events if event.get("kind") in FEED_KINDS),
@@ -931,7 +1018,7 @@ def analytics_dashboard_html(end_day: date) -> str:
     </section>
     <section class='ba-card'>
       <div class='ba-card-head'><div><span>Rest</span><b class='ba-card-title'>Total sleep</b></div></div>
-      <p class='ba-note'>Inferred from inactive periods; untracked past days remain at zero.</p>
+      <p class='ba-note'>Tracked from Sleep start until a feed, nappy change, or manual stop.</p>
       {sleep_chart}
       <div class='ba-chart-foot'><span class='ba-a'>Zander: <b>{sleep_text['a']}</b></span><span class='ba-b'>Phoenix: <b>{sleep_text['b']}</b></span></div>
     </section>
@@ -1099,11 +1186,13 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-sleep-implied.sleep-end .bl-sleep-fill{bottom:6px;border-radius:0 0 12px 12px;}
 .bl-sleep-implied.sleep-start.sleep-end .bl-sleep-fill{top:6px;bottom:6px;border-radius:12px;}
 .bl-chip{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent!important;border:0!important;border-radius:0;padding:0;}
+.bl-chip.sleep{z-index:6;pointer-events:none;}
 .bl-chip img{width:19px;height:19px;display:block;object-fit:contain;filter:none;}
 .bl-chip.feed img,.bl-chip.change img{filter:invert(48%) sepia(42%) saturate(746%) hue-rotate(94deg) brightness(89%) contrast(90%);}
 .bl-chip.sleep img{filter:invert(35%) sepia(56%) saturate(821%) hue-rotate(222deg) brightness(88%) contrast(85%);}
 .bl-chip-amount{display:block;color:#174f9d;font-size:14px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .bl-chip-duration{display:block;color:#52709a;font-size:11px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.bl-chip-sleep-state{display:block;color:#4a3f78;font-size:11px;font-weight:950;line-height:1;white-space:nowrap;}
 .bl-chip-time{display:block;color:#6e84a8;font-size:12px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .bl-chip:has(.bl-chip-duration){gap:2px;}
 .bl-chip.feed,.bl-chip.change,.bl-chip.sleep,.bl-chip.other{color:inherit;background:transparent!important;border:0!important;}
@@ -1432,6 +1521,7 @@ body:has(.bl-theme-state.dark) .st-key-bl_panel_b .st-key-bl_daily_log_b [data-t
 body:has(.bl-theme-state.dark) .bl-chip img{width:21px!important;height:21px!important;filter:grayscale(1) brightness(0) invert(1)!important;opacity:1!important}
 body:has(.bl-theme-state.dark) .bl-chip-amount{color:#fff!important}
 body:has(.bl-theme-state.dark) .bl-chip-duration{color:#c7d3e5!important}
+body:has(.bl-theme-state.dark) .bl-chip-sleep-state{color:#fff!important}
 body:has(.bl-theme-state.dark) .bl-chip-time{font-size:13px!important;color:#e8eef8!important}
 @media(max-width:900px){body:has(.bl-theme-state.dark) .bl-chip img{width:17px!important;height:17px!important}body:has(.bl-theme-state.dark) .bl-chip-time{font-size:11px!important}}
 @media(max-width:900px){.bl-chip-duration{font-size:9px!important}.bl-chip:has(.bl-chip-duration){gap:2px!important}.bl-chip:has(.bl-chip-duration) .bl-chip-time{font-size:9px!important}}
@@ -1567,6 +1657,10 @@ if analytics_view:
 
 try:
     events = baby_log_store.load_events(day.isoformat())
+    sleep_context_events = baby_log_store.load_events_range(
+        (day - timedelta(days=SLEEP_LOOKBACK_DAYS)).isoformat(),
+        day.isoformat(),
+    )
 except baby_log_store.StorageError as exc:
     st.error(str(exc))
     st.stop()
@@ -1593,7 +1687,7 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
         is_open = st.session_state.get(f"bl_panel_open_{baby_id}", False)
         panel_state = "open" if is_open else "collapsed"
         baby_totals = totals(events, baby_id)
-        sleep_seconds, sleep_hour_classes = sleep_block_summary(events, baby_id, day)
+        sleep_seconds, sleep_hour_classes = sleep_block_summary(sleep_context_events, baby_id, day)
         sleep_value, sleep_unit = format_sleep_duration(sleep_seconds)
         last = baby_totals["last"].strftime("%H:%M") if baby_totals["last"] else "None yet"
         feed_unit = "Feed" if baby_totals["feeds"] == 1 else "Feeds"
@@ -1729,10 +1823,15 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                     )
                             else:
                                 on_click = open_feed_picker if kind in FEED_KINDS else toggle_cell_event
+                                action_help = (
+                                    f"Start or stop sleep at {hour_label(hour)} Melbourne time"
+                                    if kind == "sleep"
+                                    else f"Log {KIND_LABELS.get(kind, kind)} at {hour_label(hour)} Melbourne time"
+                                )
                                 st.button(
                                     " ",
                                     key=f"blcell_{baby_id}_{hour}_{kind}",
-                                    help=f"Log {KIND_LABELS.get(kind, kind)} at {hour_label(hour)} Melbourne time",
+                                    help=action_help,
                                     on_click=on_click,
                                     args=(baby_id, kind, hour),
                                     use_container_width=True,
