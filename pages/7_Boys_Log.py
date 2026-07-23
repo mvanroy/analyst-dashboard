@@ -503,6 +503,117 @@ def feed_wheel_picker_html(
 """
 
 
+def sleep_detail_overlay_html(baby: str, baby_label: str, hour: int, cycles: list[dict]) -> str:
+    config = json.dumps(
+        {
+            "key": f"{baby}_{hour}",
+            "baby": baby_label,
+            "hour": hour,
+            "cycles": [
+                {
+                    "start": cycle.get("start"),
+                    "end": cycle.get("end"),
+                    "duration": cycle.get("duration"),
+                }
+                for cycle in cycles
+            ],
+        }
+    )
+    return f"""
+<script>
+(() => {{
+  const config = {config};
+  const parentWindow = window.parent;
+  const doc = parentWindow.document;
+  const selector = `[class*="st-key-blcell_${{config.key}}_sleep"] button`;
+  const registry = parentWindow.__blSleepDetailHandlers || (parentWindow.__blSleepDetailHandlers = {{}});
+
+  const closeOverlay = () => doc.getElementById("bl-sleep-detail-overlay")?.remove();
+  const escapeHtml = (value) => String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+  const showOverlay = () => {{
+    closeOverlay();
+    doc.getElementById("bl-feed-wheel-overlay")?.remove();
+    const overlay = doc.createElement("div");
+    overlay.id = "bl-sleep-detail-overlay";
+    const rows = config.cycles.map((cycle) => `
+      <div class="bl-sleep-overlay-row">
+        <div><span>Start</span><b>${{escapeHtml(cycle.start)}}</b></div>
+        <div><span>End</span><b>${{escapeHtml(cycle.end)}}</b></div>
+        <div><span>Duration</span><b>${{escapeHtml(cycle.duration)}}</b></div>
+      </div>`).join("");
+    overlay.innerHTML = `
+      <style>
+        #bl-sleep-detail-overlay{{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(2,10,23,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}}
+        #bl-sleep-detail-overlay *{{box-sizing:border-box}}
+        #bl-sleep-detail-panel{{width:min(100%,390px);padding:20px;border:1px solid #456487;border-radius:18px;background:#10243d;box-shadow:0 24px 80px rgba(0,0,0,.62);color:#f5f7fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
+        #bl-sleep-detail-head{{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}}
+        #bl-sleep-detail-title{{color:#b9c8dc;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}}
+        #bl-sleep-detail-baby{{font-size:20px;font-weight:850}}
+        .bl-sleep-overlay-row{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:16px 0;border-top:1px solid rgba(102,135,173,.38);text-align:center}}
+        .bl-sleep-overlay-row>div{{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}}
+        .bl-sleep-overlay-row span{{color:#b9c8dc;font-size:11px;font-weight:750;letter-spacing:.06em;text-transform:uppercase}}
+        .bl-sleep-overlay-row b{{color:#fff;font-size:17px;font-weight:850;font-variant-numeric:tabular-nums;white-space:nowrap}}
+        #bl-sleep-detail-close{{width:100%;height:46px;margin-top:2px;border:1px solid #456487;border-radius:11px;background:#17304f;color:#e8eef8;font-size:15px;font-weight:800}}
+        #bl-sleep-detail-close:active{{background:#214266}}
+        @media(max-width:600px){{
+          #bl-sleep-detail-overlay{{align-items:flex-end;padding:12px}}
+          #bl-sleep-detail-panel{{width:100%;padding:18px;border-radius:18px}}
+          .bl-sleep-overlay-row b{{font-size:16px}}
+        }}
+      </style>
+      <div id="bl-sleep-detail-panel" role="dialog" aria-modal="true" aria-labelledby="bl-sleep-detail-title">
+        <div id="bl-sleep-detail-head">
+          <span id="bl-sleep-detail-title">Sleep details</span>
+          <b id="bl-sleep-detail-baby">${{escapeHtml(config.baby)}}</b>
+        </div>
+        <div id="bl-sleep-detail-rows">${{rows}}</div>
+        <button type="button" id="bl-sleep-detail-close">Close</button>
+      </div>`;
+    doc.body.appendChild(overlay);
+    const panel = overlay.querySelector("#bl-sleep-detail-panel");
+    panel.addEventListener("click", (event) => event.stopPropagation());
+    overlay.addEventListener("click", closeOverlay);
+    overlay.querySelector("#bl-sleep-detail-close").addEventListener("click", closeOverlay);
+    overlay.querySelector("#bl-sleep-detail-close").focus();
+  }};
+
+  const install = (attempt = 0) => {{
+    const buttons = [...doc.querySelectorAll(selector)];
+    if (!buttons.length && attempt < 20) {{
+      parentWindow.setTimeout(() => install(attempt + 1), 50);
+      return;
+    }}
+    const previous = registry[config.key] || [];
+    previous.forEach((entry) => entry.button.removeEventListener("click", entry.handler, true));
+    registry[config.key] = buttons.map((button) => {{
+      const handler = (event) => {{
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        showOverlay();
+      }};
+      button.addEventListener("click", handler, true);
+      return {{button, handler}};
+    }});
+  }};
+
+  if (!parentWindow.__blSleepDetailEscapeInstalled) {{
+    doc.addEventListener("keydown", (event) => {{
+      if (event.key === "Escape") doc.getElementById("bl-sleep-detail-overlay")?.remove();
+    }});
+    parentWindow.__blSleepDetailEscapeInstalled = true;
+  }}
+  install();
+}})();
+</script>
+"""
+
+
 def sleep_cell_fill(segments: list[tuple[str, str, str, str, float, float, float]]) -> str:
     if not segments:
         return ""
@@ -674,7 +785,6 @@ def selected_day() -> date:
 def set_day(value: date) -> None:
     st.session_state.boys_log_day = value
     st.session_state.bl_date_picker = value
-    st.session_state.boys_log_sleep_detail = None
 
 
 def shift_day(days: int) -> None:
@@ -758,44 +868,6 @@ def open_feed_picker(baby: str, kind: str, hour: int) -> None:
 
 def close_feed_picker() -> None:
     st.session_state.boys_log_feed_picker = None
-
-
-def open_sleep_detail(baby: str, cycles: list[dict]) -> None:
-    st.session_state.boys_log_sleep_detail = {
-        "baby": baby,
-        "baby_label": dict(BABIES).get(baby, baby),
-        "cycles": cycles,
-    }
-
-
-def close_sleep_detail() -> None:
-    st.session_state.boys_log_sleep_detail = None
-
-
-def render_sleep_detail_panel() -> None:
-    detail = st.session_state.get("boys_log_sleep_detail")
-    if not detail:
-        return
-    rows = []
-    for cycle in detail.get("cycles") or []:
-        rows.append(
-            "<div class='bl-sleep-detail-row'>"
-            f"<div><span>Start</span><b>{esc(cycle.get('start'))}</b></div>"
-            f"<div><span>End</span><b>{esc(cycle.get('end'))}</b></div>"
-            f"<div><span>Duration</span><b>{esc(cycle.get('duration'))}</b></div>"
-            "</div>"
-        )
-    if not rows:
-        return
-    with st.container(key="bl_sleep_detail_panel"):
-        st.markdown(
-            "<div class='bl-sleep-detail-head'>"
-            f"<div><span>Sleep details</span><b>{esc(detail.get('baby_label'))}</b></div>"
-            "</div>"
-            + "".join(rows),
-            unsafe_allow_html=True,
-        )
-        st.button("Close", key="bl_sleep_detail_close", on_click=close_sleep_detail, use_container_width=True)
 
 
 def choose_feed_value(
@@ -1026,8 +1098,8 @@ def completed_sleep_cycles(events: list[dict], baby: str, day: date) -> list[dic
             {
                 "start_iso": session_start.isoformat(timespec="seconds"),
                 "end_iso": session_end.isoformat(timespec="seconds"),
-                "start": session_start.strftime("%H:%M"),
-                "end": session_end.strftime("%H:%M"),
+                "start": session_start.strftime("%I:%M %p").lstrip("0"),
+                "end": session_end.strftime("%I:%M %p").lstrip("0"),
                 "duration": format_sleep_duration(duration_seconds)[0],
                 "duration_seconds": duration_seconds,
                 "assumed": assumed,
@@ -1457,17 +1529,6 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-sleep-implied.sleep-start-late .bl-sleep-start-label{top:calc(var(--bl-sleep-start) - 5px);transform:translate(-50%,-100%);}
 .bl-sleep-implied.sleep-end-early .bl-sleep-end-label{top:calc(var(--bl-sleep-end) + 5px);transform:translateX(-50%);}
 .bl-sleep-duration-label{position:absolute;left:50%;top:var(--bl-sleep-duration);z-index:7;transform:translate(-50%,-50%);padding:0;border:0;background:transparent;color:#fff;font-size:11px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;box-shadow:none;text-shadow:0 1px 3px rgba(2,10,22,.9);}
-.st-key-bl_sleep_detail_panel{position:fixed!important;left:50%!important;bottom:24px!important;z-index:10000!important;transform:translateX(-50%)!important;width:min(420px,calc(100% - 24px))!important;padding:16px!important;border:1px solid rgba(151,190,235,.34)!important;border-radius:18px!important;background:#07192d!important;box-shadow:0 18px 50px rgba(2,10,22,.55)!important;color:#f7fbff!important;}
-.st-key-bl_sleep_detail_panel [data-testid="stVerticalBlock"]{gap:10px!important;}
-.bl-sleep-detail-head>div{display:flex;align-items:baseline;justify-content:space-between;gap:12px;}
-.bl-sleep-detail-head span{color:#9fb4d3;font-size:12px;font-weight:900;text-transform:uppercase;letter-spacing:.08em;}
-.bl-sleep-detail-head b{color:#f7fbff;font-size:18px;font-weight:950;}
-.bl-sleep-detail-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px 0;border-top:1px solid rgba(151,190,235,.18);}
-.bl-sleep-detail-row>div{display:flex;flex-direction:column;align-items:center;gap:5px;}
-.bl-sleep-detail-row span{color:#9fb4d3;font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.06em;}
-.bl-sleep-detail-row b{color:#f7fbff;font-size:16px;font-weight:950;font-variant-numeric:tabular-nums;white-space:nowrap;}
-.st-key-bl_sleep_detail_panel .stButton>button{min-height:38px!important;border:1px solid rgba(151,190,235,.34)!important;border-radius:10px!important;background:#0b2746!important;color:#f7fbff!important;font-weight:900!important;}
-@media(max-width:900px){.st-key-bl_sleep_detail_panel{bottom:168px!important;}}
 .bl-chip{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent!important;border:0!important;border-radius:0;padding:0;}
 .bl-chip.sleep{z-index:6;pointer-events:none;}
 .bl-chip img{width:19px;height:19px;display:block;object-fit:contain;filter:none;}
@@ -1960,7 +2021,6 @@ for event in events:
     events_by_baby_hour[(event.get("baby"), dt.hour)].append(event)
 
 initialise_baby_panels()
-render_sleep_detail_panel()
 cols = st.columns(2)
 for idx, (baby_id, baby_label) in enumerate(BABIES):
     with cols[idx]:
@@ -2145,9 +2205,6 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                 if kind in FEED_KINDS:
                                     on_click = open_feed_picker
                                     action_args = (baby_id, kind, hour)
-                                elif show_sleep_detail:
-                                    on_click = open_sleep_detail
-                                    action_args = (baby_id, hour_sleep_cycles)
                                 else:
                                     on_click = toggle_cell_event
                                     action_args = (baby_id, kind, hour)
@@ -2168,6 +2225,17 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                     args=action_args,
                                     use_container_width=True,
                                 )
+                                if show_sleep_detail:
+                                    components.html(
+                                        sleep_detail_overlay_html(
+                                            baby_id,
+                                            baby_label,
+                                            hour,
+                                            hour_sleep_cycles,
+                                        ),
+                                        height=1,
+                                        width=1,
+                                    )
                             if chips:
                                 st.markdown("".join(chips), unsafe_allow_html=True)
                             if kind == "sleep" and sleep_hour_classes.get(hour):
