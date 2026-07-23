@@ -48,6 +48,7 @@ BOTTLE_AMOUNTS = tuple(range(10, 121, 10))
 BREASTFEED_MINUTES = (15, 20, 25, 30, 35, 40, 45)
 LEGACY_FEED_MINUTES = 15
 NAPPY_CHANGE_MINUTES = 10
+MIN_SLEEP_LABEL_MINUTES = 15
 FEED_KINDS = {"left", "right", "bottle"}
 CHANGE_KINDS = {"pee", "poop"}
 SLEEP_INTERRUPT_KINDS = FEED_KINDS | CHANGE_KINDS
@@ -928,7 +929,12 @@ def sleep_block_summary(
                 parts.append("sleep-start")
             if sleep_hour == block_end_hour:
                 parts.append("sleep-end")
-            shown_start = session_start.strftime("%H:%M") if sleep_hour == block_start_hour else ""
+            session_minutes = (session_end - session_start).total_seconds() / 60
+            shown_start = (
+                session_start.strftime("%H:%M")
+                if sleep_hour == block_start_hour and session_minutes >= MIN_SLEEP_LABEL_MINUTES
+                else ""
+            )
             sleep_classes[sleep_hour].append((" ".join(parts), shown_start, start_percent, end_percent))
 
     return total_seconds, sleep_classes
