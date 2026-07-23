@@ -136,7 +136,7 @@ def sleep_sessions(
             event
             for event in events
             if event.get("baby") == baby
-            and sleep_event_state(event)
+            and sleep_event_state(event) in {"start", "end"}
             and parse_dt(event.get("event_ts")) <= cutoff
         ),
         key=lambda event: parse_dt(event.get("event_ts")),
@@ -150,10 +150,6 @@ def sleep_sessions(
             if active_start and event_time > active_start:
                 sessions.append((active_start, event_time))
             active_start = event_time
-            continue
-
-        if state == "awake":
-            active_start = None
             continue
 
         stored_start = event_note_value(event, "sleep_start_ts")
@@ -234,11 +230,11 @@ def hybrid_sleep_periods(
         if event.get("baby") == baby
         and (
             event.get("kind") in SLEEP_INTERRUPT_KINDS
-            or sleep_event_state(event) in {"start", "end", "awake"}
+            or sleep_event_state(event) in {"start", "end"}
         )
         and parse_dt(event.get("event_ts")) <= cutoff
     ]
-    priority = {"end": 0, "care": 1, "start": 2, "awake": 3}
+    priority = {"end": 0, "care": 1, "start": 2}
 
     def event_priority(event: dict) -> int:
         state = sleep_event_state(event)
@@ -246,7 +242,7 @@ def hybrid_sleep_periods(
 
     relevant.sort(key=lambda event: (parse_dt(event.get("event_ts")), event_priority(event)))
     periods: list[tuple[datetime, datetime, bool]] = []
-    mode = "awake"
+    mode = "idle"
     period_start: datetime | None = None
 
     for event in relevant:
@@ -265,19 +261,13 @@ def hybrid_sleep_periods(
             mode = "explicit"
             continue
 
-        if state == "awake":
-            # Cancelling a start means awake until the next care event or confirmed start.
-            period_start = None
-            mode = "awake"
-            continue
-
         if state == "end":
             stored_start = event_note_value(event, "sleep_start_ts")
             explicit_start = parse_dt(stored_start) if stored_start else period_start
             if explicit_start and event_time > explicit_start:
                 periods.append((explicit_start, event_time, False))
             period_start = None
-            mode = "awake"
+            mode = "idle"
 
     if mode in {"assumed", "explicit"} and period_start and cutoff > period_start:
         periods.append((period_start, cutoff, mode == "assumed"))
@@ -719,23 +709,11 @@ def toggle_sleep_tracking(baby: str, hour: int) -> None:
     history = sleep_history_for(baby, active_cutoff)
     cancelled_start = cancel_sleep_starts_for_hour(history, baby, selected_day(), hour)
     if cancelled_start:
-        baby_log_store.add_event(
-            baby,
-            "sleep",
-            note="sleep_state=awake;reason=cancelled",
-            event_ts=cancelled_start,
-        )
         st.toast("Sleep start cancelled")
         return
     active_event = active_sleep_start_event(history, baby, active_cutoff)
     if active_event:
         baby_log_store.delete_event(active_event.get("id"))
-        baby_log_store.add_event(
-            baby,
-            "sleep",
-            note="sleep_state=awake;reason=cancelled",
-            event_ts=parse_dt(active_event.get("event_ts")),
-        )
         st.toast("Sleep start cancelled")
         return
 
