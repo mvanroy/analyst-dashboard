@@ -928,8 +928,12 @@ def sleep_block_summary(
             ]
             if sleep_hour == block_start_hour:
                 parts.append("sleep-start")
+                if start_percent >= 75:
+                    parts.append("sleep-start-late")
             if sleep_hour == block_end_hour:
                 parts.append("sleep-end")
+                if end_percent <= 25:
+                    parts.append("sleep-end-early")
             shown_start = session_start.strftime("%H:%M") if sleep_hour == block_start_hour else ""
             completed = session_end < cutoff
             shown_end = session_end.strftime("%H:%M") if completed and sleep_hour == block_end_hour else ""
@@ -1366,6 +1370,8 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-sleep-start-label,.bl-sleep-end-label{position:absolute;left:50%;z-index:8;transform:translateX(-50%);padding:2px 3px;border-radius:4px;background:rgba(255,255,255,.9);color:#6e84a8;font-size:11px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .bl-sleep-start-label{top:calc(var(--bl-sleep-start) + 8px);}
 .bl-sleep-end-label{top:calc(var(--bl-sleep-end) - 8px);transform:translate(-50%,-100%);}
+.bl-sleep-implied.sleep-start-late .bl-sleep-start-label{top:calc(var(--bl-sleep-start) - 5px);transform:translate(-50%,-100%);}
+.bl-sleep-implied.sleep-end-early .bl-sleep-end-label{top:calc(var(--bl-sleep-end) + 5px);transform:translateX(-50%);}
 .bl-sleep-duration-label{position:absolute;left:50%;top:var(--bl-sleep-duration);z-index:7;transform:translate(-50%,-50%);padding:3px 5px;border-radius:6px;background:rgba(255,255,255,.9);color:#4a3f78;font-size:10px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .bl-chip{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:transparent!important;border:0!important;border-radius:0;padding:0;}
 .bl-chip.sleep{z-index:6;pointer-events:none;}
