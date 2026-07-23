@@ -46,9 +46,6 @@ KINDS = [
 KIND_LABELS = dict(KINDS)
 BOTTLE_AMOUNTS = tuple(range(10, 121, 10))
 BREASTFEED_MINUTES = (15, 20, 25, 30, 35, 40, 45)
-LEGACY_FEED_MINUTES = 15
-NAPPY_CHANGE_MINUTES = 10
-MIN_SLEEP_LABEL_MINUTES = 15
 FEED_KINDS = {"left", "right", "bottle"}
 CHANGE_KINDS = {"pee", "poop"}
 SLEEP_INTERRUPT_KINDS = FEED_KINDS | CHANGE_KINDS
@@ -208,19 +205,18 @@ def cancel_sleep_starts_for_hour(events: list[dict], baby: str, day: date, hour:
     return min(start_times)
 
 
-def care_event_end(event: dict) -> datetime:
+def care_event_interval(event: dict) -> tuple[datetime, datetime]:
+    """Treat the recorded timestamp as care completion; durations extend backward."""
     event_time = parse_dt(event.get("event_ts"))
     duration = 0
     if event.get("kind") == "bottle":
-        duration = event_duration_minutes(event) or LEGACY_FEED_MINUTES
+        duration = event_duration_minutes(event) or 0
     elif event.get("kind") in {"left", "right"}:
         try:
-            duration = int(event.get("amount_ml") or LEGACY_FEED_MINUTES)
+            duration = int(event.get("amount_ml") or 0)
         except (TypeError, ValueError):
-            duration = LEGACY_FEED_MINUTES
-    elif event.get("kind") in CHANGE_KINDS:
-        duration = NAPPY_CHANGE_MINUTES
-    return event_time + timedelta(minutes=max(0, duration))
+            duration = 0
+    return event_time - timedelta(minutes=max(0, duration)), event_time
 
 
 def hybrid_sleep_periods(
@@ -228,58 +224,54 @@ def hybrid_sleep_periods(
     baby: str,
     cutoff: datetime,
 ) -> list[tuple[datetime, datetime, bool]]:
-    """Return (start, end, assumed) periods using explicit sleep first, then care gaps."""
-    relevant = [
+    """Return sleep periods using row-wide care blocks and backward feed durations."""
+    care_events = [
         event
         for event in events
         if event.get("baby") == baby
-        and (
-            event.get("kind") in SLEEP_INTERRUPT_KINDS
-            or sleep_event_state(event) in {"start", "end"}
-        )
+        and event.get("kind") in SLEEP_INTERRUPT_KINDS
         and parse_dt(event.get("event_ts")) <= cutoff
     ]
-    priority = {"end": 0, "care": 1, "start": 2}
-
-    def event_priority(event: dict) -> int:
-        state = sleep_event_state(event)
-        return priority.get(state or "care", 1)
-
-    relevant.sort(key=lambda event: (parse_dt(event.get("event_ts")), event_priority(event)))
-    periods: list[tuple[datetime, datetime, bool]] = []
-    mode = "idle"
-    period_start: datetime | None = None
-
-    for event in relevant:
+    hourly: dict[tuple[date, int], list[tuple[datetime, datetime]]] = defaultdict(list)
+    for event in care_events:
         event_time = parse_dt(event.get("event_ts"))
-        state = sleep_event_state(event)
-        if event.get("kind") in SLEEP_INTERRUPT_KINDS:
-            if mode in {"assumed", "explicit"} and period_start and event_time > period_start:
-                periods.append((period_start, event_time, mode == "assumed"))
-            care_end = care_event_end(event)
-            if mode == "assumed" and period_start and event_time <= period_start:
-                period_start = max(period_start, care_end)
-            else:
-                period_start = care_end
-            mode = "assumed"
+        hourly[(event_time.date(), event_time.hour)].append(care_event_interval(event))
+
+    care_blocks = sorted(
+        (min(start for start, _ in intervals), max(end for _, end in intervals))
+        for intervals in hourly.values()
+    )
+    merged_blocks: list[tuple[datetime, datetime]] = []
+    for block_start, block_end in care_blocks:
+        if merged_blocks and block_start <= merged_blocks[-1][1]:
+            merged_blocks[-1] = (merged_blocks[-1][0], max(merged_blocks[-1][1], block_end))
+        else:
+            merged_blocks.append((block_start, block_end))
+
+    explicit_starts = sorted(
+        parse_dt(event.get("event_ts"))
+        for event in events
+        if event.get("baby") == baby
+        and sleep_event_state(event) == "start"
+        and parse_dt(event.get("event_ts")) <= cutoff
+    )
+    periods: list[tuple[datetime, datetime, bool]] = []
+    if not merged_blocks:
+        if explicit_starts and explicit_starts[-1] < cutoff:
+            periods.append((explicit_starts[-1], cutoff, False))
+        return periods
+
+    first_care_start = merged_blocks[0][0]
+    starts_before_first = [start for start in explicit_starts if start < first_care_start]
+    if starts_before_first:
+        periods.append((starts_before_first[-1], first_care_start, False))
+
+    for index, (_, care_end) in enumerate(merged_blocks):
+        default_start = care_end + timedelta(minutes=1)
+        next_care_start = merged_blocks[index + 1][0] if index + 1 < len(merged_blocks) else cutoff
+        if default_start >= next_care_start:
             continue
-
-        if state == "start":
-            # A confirmed start replaces any assumption since the previous care event.
-            period_start = event_time
-            mode = "explicit"
-            continue
-
-        if state == "end":
-            stored_start = event_note_value(event, "sleep_start_ts")
-            explicit_start = parse_dt(stored_start) if stored_start else period_start
-            if explicit_start and event_time > explicit_start:
-                periods.append((explicit_start, event_time, False))
-            period_start = None
-            mode = "idle"
-
-    if mode in {"assumed", "explicit"} and period_start and cutoff > period_start:
-        periods.append((period_start, cutoff, mode == "assumed"))
+        periods.append((default_start, next_care_start, True))
     return periods
 
 
@@ -929,12 +921,7 @@ def sleep_block_summary(
                 parts.append("sleep-start")
             if sleep_hour == block_end_hour:
                 parts.append("sleep-end")
-            session_minutes = (session_end - session_start).total_seconds() / 60
-            shown_start = (
-                session_start.strftime("%H:%M")
-                if sleep_hour == block_start_hour and session_minutes >= MIN_SLEEP_LABEL_MINUTES
-                else ""
-            )
+            shown_start = session_start.strftime("%H:%M") if sleep_hour == block_start_hour else ""
             sleep_classes[sleep_hour].append((" ".join(parts), shown_start, start_percent, end_percent))
 
     return total_seconds, sleep_classes
@@ -1850,6 +1837,17 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
         panel_state = "open" if is_open else "collapsed"
         baby_totals = totals(events, baby_id)
         sleep_seconds, sleep_hour_classes = sleep_block_summary(sleep_context_events, baby_id, day)
+        active_sleep_marker = (
+            active_sleep_start_event(sleep_context_events, baby_id, datetime.now(MEL))
+            if day == datetime.now(MEL).date()
+            else None
+        )
+        if active_sleep_marker:
+            active_hour = parse_dt(active_sleep_marker.get("event_ts")).hour
+            sleep_hour_classes[active_hour] = [
+                (sleep_class, "", start_percent, end_percent)
+                for sleep_class, _, start_percent, end_percent in sleep_hour_classes.get(active_hour, [])
+            ]
         sleep_value, sleep_unit = format_sleep_duration(sleep_seconds)
         last = baby_totals["last"].strftime("%H:%M") if baby_totals["last"] else "None yet"
         feed_unit = "Feed" if baby_totals["feeds"] == 1 else "Feeds"
@@ -1921,8 +1919,11 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                     )
                 for cell_col, (kind, _) in zip(row_cols[1:], KINDS):
                     chips = []
+                    cell_events = events_by_baby_hour_kind.get((baby_id, hour, kind), [])
                     visible_cell_events = (
-                        [] if kind == "sleep" else events_by_baby_hour_kind.get((baby_id, hour, kind), [])
+                        [event for event in cell_events if active_sleep_marker and event.get("id") == active_sleep_marker.get("id")]
+                        if kind == "sleep"
+                        else cell_events
                     )
                     for event in visible_cell_events:
                         chips.append(
