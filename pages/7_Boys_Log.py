@@ -43,7 +43,7 @@ KINDS = [
     ("other", "Other"),
 ]
 KIND_LABELS = dict(KINDS)
-BOTTLE_AMOUNTS = (30, 60, 90, 120)
+BOTTLE_AMOUNTS = tuple(range(10, 121, 10))
 FEED_KINDS = {"left", "right", "bottle"}
 CHANGE_KINDS = {"pee", "poop"}
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -1306,8 +1306,10 @@ body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-total b,body:has(.b
 .st-key-boys_log_view_nav .st-key-boys_log_theme [role="radiogroup"],.st-key-boys_log_analytics_nav .st-key-boys_log_theme [role="radiogroup"]{box-shadow:none!important}
 @media(max-width:900px){.st-key-boys_log_view_nav{padding:0 8px!important}.st-key-boys_log_view_nav [data-testid="stHorizontalBlock"],.st-key-boys_log_analytics_nav [data-testid="stHorizontalBlock"]{gap:8px!important}.st-key-boys_log_view_nav .st-key-boys_log_theme [role="radiogroup"] label,.st-key-boys_log_analytics_nav .st-key-boys_log_theme [role="radiogroup"] label{min-width:68px!important;padding:0 9px!important}}
 
-/* Formula amount menu: readable popup sizing and full dark-mode treatment. */
-[class*="st-key-bl_bottle_menu_"]{left:50%!important;right:auto!important;width:100px!important;min-width:100px!important;transform:translateX(-50%)!important;padding:5px!important;border-radius:11px!important;overflow:hidden!important}
+/* Formula amount menu: compact 10 ml grid with full dark-mode treatment. */
+[class*="st-key-bl_bottle_menu_"]{left:50%!important;right:auto!important;width:190px!important;min-width:190px!important;transform:translateX(-50%)!important;padding:5px!important;border-radius:11px!important;overflow:hidden!important}
+[class*="st-key-bl_bottle_menu_"] [data-testid="stHorizontalBlock"]{gap:4px!important;margin-bottom:4px!important}
+[class*="st-key-bl_bottle_menu_"] [data-testid="stHorizontalBlock"]>[data-testid="stColumn"]{min-width:0!important;width:auto!important;flex:1 1 0!important}
 [class*="st-key-bl_bottle_menu_"] .stButton,[class*="st-key-bl_bottle_menu_"] .stButton>button{width:100%!important;margin:0!important}
 [class*="st-key-bl_bottle_menu_"] .stButton>button{position:relative!important;inset:auto!important;height:30px!important;min-height:30px!important;border-radius:7px!important;font-size:12px!important;line-height:1!important;padding:0 8px!important;color:#174f9d!important;background:#fff!important}
 [class*="st-key-bl_bottle_menu_"] .stButton>button:hover,[class*="st-key-bl_bottle_menu_"] .stButton>button:focus{background:#eef5ff!important;color:#173664!important}
@@ -1535,6 +1537,18 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                             picker_open = st.session_state.get("boys_log_bottle_picker") == (baby_id, hour)
                             if kind == "bottle" and picker_open:
                                 with st.container(key=f"bl_bottle_menu_{baby_id}_{hour}"):
+                                    for row_start in range(0, len(BOTTLE_AMOUNTS), 3):
+                                        amount_row = BOTTLE_AMOUNTS[row_start : row_start + 3]
+                                        amount_cols = st.columns(len(amount_row), gap="small")
+                                        for amount_col, amount in zip(amount_cols, amount_row):
+                                            with amount_col:
+                                                st.button(
+                                                    f"{amount} ml",
+                                                    key=f"bl_bottle_amount_{baby_id}_{hour}_{amount}",
+                                                    on_click=choose_bottle_amount,
+                                                    args=(baby_id, hour, amount),
+                                                    use_container_width=True,
+                                                )
                                     st.button(
                                         "✕ Clear",
                                         key=f"bl_bottle_clear_{baby_id}_{hour}",
@@ -1542,14 +1556,6 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                         args=(baby_id, hour, None),
                                         use_container_width=True,
                                     )
-                                    for amount in BOTTLE_AMOUNTS:
-                                        st.button(
-                                            f"{amount} ml",
-                                            key=f"bl_bottle_amount_{baby_id}_{hour}_{amount}",
-                                            on_click=choose_bottle_amount,
-                                            args=(baby_id, hour, amount),
-                                            use_container_width=True,
-                                        )
                             else:
                                 on_click = open_bottle_picker if kind == "bottle" else toggle_cell_event
                                 st.button(
