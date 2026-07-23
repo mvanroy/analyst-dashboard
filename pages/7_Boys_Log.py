@@ -45,6 +45,7 @@ KINDS = [
 ]
 KIND_LABELS = dict(KINDS)
 BOTTLE_AMOUNTS = tuple(range(10, 121, 10))
+BREASTFEED_MINUTES = (15, 20, 25, 30, 35, 40, 45)
 FEED_KINDS = {"left", "right", "bottle"}
 CHANGE_KINDS = {"pee", "poop"}
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -158,14 +159,21 @@ def time_cell_label(hour: int, has_events: bool) -> str:
     return f"<div class='bl-time{time_cls}'>{marker}<span>{esc(row_time_label([], hour))}</span></div>"
 
 
-def bottle_wheel_picker_html(baby: str, hour: int, current_amount: int | None) -> str:
+def feed_wheel_picker_html(baby: str, kind: str, hour: int, current_value: int | None) -> str:
+    is_bottle = kind == "bottle"
+    values = BOTTLE_AMOUNTS if is_bottle else BREASTFEED_MINUTES
+    side = "Left" if kind == "left" else "Right"
     config = json.dumps(
         {
             "baby": baby,
+            "kind": kind,
             "hour": hour,
-            "title": f"Formula amount · {hour_label(hour)}",
-            "amounts": list(BOTTLE_AMOUNTS),
-            "current": current_amount,
+            "title": f"{'Formula amount' if is_bottle else f'{side} feed duration'} · {hour_label(hour)}",
+            "help": "Tap the amount field and roll to the correct value." if is_bottle else "Tap the duration field and roll to the correct time.",
+            "field_label": "Formula amount" if is_bottle else f"{side} feed duration",
+            "unit": "ml" if is_bottle else "minutes",
+            "values": list(values),
+            "current": current_value,
         }
     )
     return f"""
@@ -173,42 +181,45 @@ def bottle_wheel_picker_html(baby: str, hour: int, current_amount: int | None) -
 (() => {{
   const config = {config};
   const doc = window.parent.document;
-  doc.getElementById("bl-bottle-wheel-overlay")?.remove();
+  doc.getElementById("bl-feed-wheel-overlay")?.remove();
 
   const overlay = doc.createElement("div");
-  overlay.id = "bl-bottle-wheel-overlay";
+  overlay.id = "bl-feed-wheel-overlay";
   overlay.innerHTML = `
     <style>
-      #bl-bottle-wheel-overlay{{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(2,10,23,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}}
-      #bl-bottle-wheel-overlay *{{box-sizing:border-box}}
-      #bl-bottle-wheel-panel{{width:min(100%,380px);padding:20px;border:1px solid #456487;border-radius:18px;background:#10243d;box-shadow:0 24px 80px rgba(0,0,0,.62);color:#f5f7fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
-      #bl-bottle-wheel-title{{margin:0 0 7px;font-size:20px;font-weight:850;text-align:center}}
-      #bl-bottle-wheel-help{{margin:0 0 16px;color:#b9c8dc;font-size:13px;font-weight:650;line-height:1.35;text-align:center}}
-      #bl-bottle-wheel-select{{display:block;width:100%;height:58px;padding:0 14px;border:1px solid #6687ad;border-radius:12px;background:#f7fbff;color:#173664;font-size:18px;font-weight:800;text-align:center;text-align-last:center}}
-      #bl-bottle-wheel-actions{{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}}
-      #bl-bottle-wheel-actions button{{height:46px;border:1px solid #456487;border-radius:11px;background:#17304f;color:#e8eef8;font-size:15px;font-weight:800}}
-      #bl-bottle-wheel-actions button:active{{background:#214266}}
+      #bl-feed-wheel-overlay{{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(2,10,23,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}}
+      #bl-feed-wheel-overlay *{{box-sizing:border-box}}
+      #bl-feed-wheel-panel{{width:min(100%,380px);padding:20px;border:1px solid #456487;border-radius:18px;background:#10243d;box-shadow:0 24px 80px rgba(0,0,0,.62);color:#f5f7fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
+      #bl-feed-wheel-title{{margin:0 0 7px;font-size:20px;font-weight:850;text-align:center}}
+      #bl-feed-wheel-help{{margin:0 0 16px;color:#b9c8dc;font-size:13px;font-weight:650;line-height:1.35;text-align:center}}
+      #bl-feed-wheel-select{{display:block;width:100%;height:58px;padding:0 14px;border:1px solid #6687ad;border-radius:12px;background:#f7fbff;color:#173664;font-size:18px;font-weight:800;text-align:center;text-align-last:center}}
+      #bl-feed-wheel-actions{{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}}
+      #bl-feed-wheel-actions button{{height:46px;border:1px solid #456487;border-radius:11px;background:#17304f;color:#e8eef8;font-size:15px;font-weight:800}}
+      #bl-feed-wheel-actions button:active{{background:#214266}}
     </style>
-    <div id="bl-bottle-wheel-panel" role="dialog" aria-modal="true" aria-labelledby="bl-bottle-wheel-title">
-      <div id="bl-bottle-wheel-title"></div>
-      <p id="bl-bottle-wheel-help">Tap the amount field and roll to the correct value.</p>
-      <select id="bl-bottle-wheel-select" aria-label="Formula amount">
-        <option value="">Select amount</option>
+    <div id="bl-feed-wheel-panel" role="dialog" aria-modal="true" aria-labelledby="bl-feed-wheel-title">
+      <div id="bl-feed-wheel-title"></div>
+      <p id="bl-feed-wheel-help"></p>
+      <select id="bl-feed-wheel-select">
+        <option value="">Select</option>
       </select>
-      <div id="bl-bottle-wheel-actions">
+      <div id="bl-feed-wheel-actions">
         <button type="button" data-action="clear">Clear</button>
         <button type="button" data-action="cancel">Cancel</button>
       </div>
     </div>`;
 
   doc.body.appendChild(overlay);
-  const panel = overlay.querySelector("#bl-bottle-wheel-panel");
-  const select = overlay.querySelector("#bl-bottle-wheel-select");
-  overlay.querySelector("#bl-bottle-wheel-title").textContent = config.title;
-  config.amounts.forEach((amount) => {{
+  const panel = overlay.querySelector("#bl-feed-wheel-panel");
+  const select = overlay.querySelector("#bl-feed-wheel-select");
+  overlay.querySelector("#bl-feed-wheel-title").textContent = config.title;
+  overlay.querySelector("#bl-feed-wheel-help").textContent = config.help;
+  select.setAttribute("aria-label", config.field_label);
+  select.options[0].textContent = `Select ${{config.unit}}`;
+  config.values.forEach((amount) => {{
     const option = doc.createElement("option");
     option.value = String(amount);
-    option.textContent = `${{amount}} ml`;
+    option.textContent = `${{amount}} ${{config.unit}}`;
     option.selected = Number(config.current) === amount;
     select.appendChild(option);
   }});
@@ -220,17 +231,17 @@ def bottle_wheel_picker_html(baby: str, hour: int, current_amount: int | None) -
   }};
   select.addEventListener("change", () => {{
     if (!select.value) return;
-    trigger(`[class*="st-key-bl_bottle_amount_${{config.baby}}_${{config.hour}}_${{select.value}}"] button`);
+    trigger(`[class*="st-key-bl_feed_value_${{config.baby}}_${{config.kind}}_${{config.hour}}_${{select.value}}"] button`);
   }});
   overlay.querySelector('[data-action="clear"]').addEventListener("click", () =>
-    trigger(`[class*="st-key-bl_bottle_clear_${{config.baby}}_${{config.hour}}"] button`)
+    trigger(`[class*="st-key-bl_feed_clear_${{config.baby}}_${{config.kind}}_${{config.hour}}"] button`)
   );
   overlay.querySelector('[data-action="cancel"]').addEventListener("click", () =>
-    trigger(`[class*="st-key-bl_bottle_cancel_${{config.baby}}_${{config.hour}}"] button`)
+    trigger(`[class*="st-key-bl_feed_cancel_${{config.baby}}_${{config.kind}}_${{config.hour}}"] button`)
   );
   panel.addEventListener("click", (event) => event.stopPropagation());
   overlay.addEventListener("click", () =>
-    trigger(`[class*="st-key-bl_bottle_cancel_${{config.baby}}_${{config.hour}}"] button`)
+    trigger(`[class*="st-key-bl_feed_cancel_${{config.baby}}_${{config.kind}}_${{config.hour}}"] button`)
   );
 }})();
 </script>
@@ -248,9 +259,11 @@ def event_label(event: dict) -> str:
     if event.get("kind") == "bath":
         return "Bath time"
     if event.get("kind") == "left":
-        return "Breast fed, left side"
+        duration = f", {event['amount_ml']} minutes" if event.get("amount_ml") else ""
+        return f"Breast fed, left side{duration}"
     if event.get("kind") == "right":
-        return "Breast fed, right side"
+        duration = f", {event['amount_ml']} minutes" if event.get("amount_ml") else ""
+        return f"Breast fed, right side{duration}"
     if event.get("kind") == "bottle" and event.get("amount_ml"):
         return f"Bottle fed, {event['amount_ml']} ml"
     if event.get("kind") == "bottle":
@@ -265,6 +278,8 @@ def event_label(event: dict) -> str:
 def cell_event_label(event: dict) -> str:
     if event.get("kind") == "bottle" and event.get("amount_ml"):
         return f"<b class='bl-chip-amount'>{esc(event.get('amount_ml'))} ml</b>"
+    if event.get("kind") in {"left", "right"} and event.get("amount_ml"):
+        return f"<b class='bl-chip-amount'>{esc(event.get('amount_ml'))} min</b>"
     icon = icon_data_uri("check")
     if not icon:
         return "✓"
@@ -424,40 +439,20 @@ def toggle_cell_event(baby: str, kind: str, hour: int, amount_ml: int | None = N
     st.toast(f"Logged {KIND_LABELS.get(kind, kind)} at {event_ts.strftime('%H:%M')}")
 
 
-def open_bottle_picker(baby: str, hour: int) -> None:
-    st.session_state.boys_log_bottle_picker = (baby, hour)
+def open_feed_picker(baby: str, kind: str, hour: int) -> None:
+    st.session_state.boys_log_feed_picker = (baby, kind, hour)
 
 
-def close_bottle_picker() -> None:
-    st.session_state.boys_log_bottle_picker = None
+def close_feed_picker() -> None:
+    st.session_state.boys_log_feed_picker = None
 
 
-def log_bottle_picker(baby: str, hour: int) -> None:
-    key = f"bl_bottle_picker_{baby}_{hour}"
-    selected = st.session_state.get(key)
-    if not selected:
-        return
-    amount = int(str(selected).split()[0])
+def choose_feed_value(baby: str, kind: str, hour: int, value: int | None) -> None:
     day = selected_day().isoformat()
-    baby_log_store.delete_events_for_hour(day, baby, "bottle", hour)
-    now = datetime.now(MEL)
-    event_ts = datetime.combine(selected_day(), datetime.min.time(), tzinfo=MEL).replace(
-        hour=hour,
-        minute=now.minute,
-        second=now.second,
-        microsecond=0,
-    )
-    baby_log_store.add_event(baby, "bottle", amount_ml=amount, event_ts=event_ts)
-    st.session_state.boys_log_bottle_picker = None
-    st.toast(f"Logged {amount} ml at {event_ts.strftime('%H:%M')}")
-
-
-def choose_bottle_amount(baby: str, hour: int, amount: int | None) -> None:
-    day = selected_day().isoformat()
-    baby_log_store.delete_events_for_hour(day, baby, "bottle", hour)
-    st.session_state.boys_log_bottle_picker = None
-    if amount is None:
-        st.toast(f"Cleared Bottle at {hour_label(hour)}")
+    baby_log_store.delete_events_for_hour(day, baby, kind, hour)
+    st.session_state.boys_log_feed_picker = None
+    if value is None:
+        st.toast(f"Cleared {KIND_LABELS.get(kind, kind)} at {hour_label(hour)}")
         return
     now = datetime.now(MEL)
     event_ts = datetime.combine(selected_day(), datetime.min.time(), tzinfo=MEL).replace(
@@ -466,8 +461,9 @@ def choose_bottle_amount(baby: str, hour: int, amount: int | None) -> None:
         second=now.second,
         microsecond=0,
     )
-    baby_log_store.add_event(baby, "bottle", amount_ml=amount, event_ts=event_ts)
-    st.toast(f"Logged {amount} ml at {event_ts.strftime('%H:%M')}")
+    baby_log_store.add_event(baby, kind, amount_ml=value, event_ts=event_ts)
+    unit = "ml" if kind == "bottle" else "minutes"
+    st.toast(f"Logged {value} {unit} at {event_ts.strftime('%H:%M')}")
 
 
 def log_bath_time(baby: str) -> None:
@@ -1032,7 +1028,7 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 [class*="st-key-blslot_"] [class*="st-key-blcell_"] div,[class*="st-key-blslot_"] [class*="st-key-blcell_"] span,[class*="st-key-blslot_"] [class*="st-key-blcell_"] .stButton{width:100%!important;height:100%!important;margin:0!important;}
 [class*="st-key-blslot_"] [class*="st-key-blcell_"] button{position:absolute!important;inset:0!important;width:100%!important;height:100%!important;min-height:100%!important;border-radius:0!important;padding:0!important;background:transparent!important;border:0!important;color:transparent!important;font-size:0!important;line-height:1!important;box-shadow:none!important;outline:0!important;}
 [class*="st-key-blslot_"] [class*="st-key-blcell_"] button:hover,[class*="st-key-blslot_"] [class*="st-key-blcell_"] button:focus,[class*="st-key-blslot_"] [class*="st-key-blcell_"] button:active{background:rgba(59,130,246,.045)!important;border:0!important;box-shadow:none!important;outline:0!important;transform:none!important;}
-[class*="st-key-blslot_"]:not(:has(.bl-chip)):not(:has(.bl-sleep-implied)):not(:has([class*="st-key-bl_bottle_picker_"])):not(:has([class*="st-key-bl_bottle_menu_"])):not(:has([class*="st-key-bl_bottle_wheel_host_"])):after{content:"-";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8aa0c0;font-size:18px;font-weight:850;z-index:1;pointer-events:none;}
+[class*="st-key-blslot_"]:not(:has(.bl-chip)):not(:has(.bl-sleep-implied)):not(:has([class*="st-key-bl_bottle_picker_"])):not(:has([class*="st-key-bl_bottle_menu_"])):not(:has([class*="st-key-bl_feed_wheel_host_"])):after{content:"-";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#8aa0c0;font-size:18px;font-weight:850;z-index:1;pointer-events:none;}
 [class*="st-key-blslot_"] [data-testid="stElementContainer"]:has(.bl-sleep-implied),[class*="st-key-blslot_"] [data-testid="stMarkdown"]:has(.bl-sleep-implied),[class*="st-key-blslot_"] [data-testid="stMarkdownContainer"]:has(.bl-sleep-implied){position:absolute!important;inset:0!important;width:100%!important;height:100%!important;margin:0!important;z-index:5!important;pointer-events:none!important;}
 .bl-sleep-implied{position:absolute;inset:0;z-index:5;display:block;pointer-events:none;}
 .bl-sleep-fill{position:absolute;left:6px;right:6px;top:-27px;bottom:-27px;border-radius:0;background:radial-gradient(circle at 28% 34%,#ffd977 0 2px,transparent 3px),radial-gradient(circle at 68% 58%,#ffe59b 0 1.8px,transparent 3px),radial-gradient(circle at 48% 74%,#fff1a8 0 1.6px,transparent 3px),linear-gradient(180deg,rgba(239,232,252,.72),rgba(220,209,246,.88),rgba(239,232,252,.72));box-shadow:none;}
@@ -1300,7 +1296,7 @@ body:has(.bl-theme-state.dark) .bl-time,body:has(.bl-theme-state.dark) .bl-time.
 body:has(.bl-theme-state.dark) .bl-time-marker{background:#172f4d!important}
 body:has(.bl-theme-state.dark) .bl-time-head img,body:has(.bl-theme-state.dark) .bl-time-marker img,body:has(.bl-theme-state.dark) .bl-shared-feed-icon img{filter:grayscale(1) brightness(0) invert(1)!important;opacity:.94!important}
 body:has(.bl-theme-state.dark) .bl-time:before,body:has(.bl-theme-state.dark) .bl-time:after{background:repeating-linear-gradient(to bottom,rgba(207,222,241,.58) 0 2px,transparent 2px 6px)!important}
-body:has(.bl-theme-state.dark) [class*="st-key-blslot_"]:not(:has(.bl-chip)):not(:has(.bl-sleep-implied)):not(:has([class*="st-key-bl_bottle_picker_"])):not(:has([class*="st-key-bl_bottle_menu_"])):not(:has([class*="st-key-bl_bottle_wheel_host_"])):after{color:#69809d!important}
+body:has(.bl-theme-state.dark) [class*="st-key-blslot_"]:not(:has(.bl-chip)):not(:has(.bl-sleep-implied)):not(:has([class*="st-key-bl_bottle_picker_"])):not(:has([class*="st-key-bl_bottle_menu_"])):not(:has([class*="st-key-bl_feed_wheel_host_"])):after{color:#69809d!important}
 body:has(.bl-theme-state.dark) .bl-sleep-fill{left:14%!important;right:14%!important;background:#514786!important;border-left:1px solid rgba(194,180,255,.18)!important;border-right:1px solid rgba(194,180,255,.18)!important;box-shadow:0 0 15px rgba(116,92,190,.12)!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-start .bl-sleep-fill{border-radius:18px 18px 0 0!important;background:linear-gradient(180deg,#8f82ce,#514786 88%)!important}
 body:has(.bl-theme-state.dark) .bl-sleep-implied.sleep-end .bl-sleep-fill{border-radius:0 0 18px 18px!important}
@@ -1391,9 +1387,9 @@ body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-total b,body:has(.b
 @media(max-width:900px){.st-key-boys_log_view_nav{padding:0 8px!important}.st-key-boys_log_view_nav [data-testid="stHorizontalBlock"],.st-key-boys_log_analytics_nav [data-testid="stHorizontalBlock"]{gap:8px!important}.st-key-boys_log_view_nav .st-key-boys_log_theme [role="radiogroup"] label,.st-key-boys_log_analytics_nav .st-key-boys_log_theme [role="radiogroup"] label{min-width:68px!important;padding:0 9px!important}}
 
 /* Hidden Streamlit callbacks for the native mobile amount wheel. */
-[class*="st-key-bl_bottle_wheel_host_"]{position:absolute!important;inset:0!important;width:1px!important;height:1px!important;min-height:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important}
-[class*="st-key-bl_bottle_wheel_actions_"]{display:none!important}
-[class*="st-key-bl_bottle_wheel_host_"] iframe{width:1px!important;height:1px!important;min-height:0!important;border:0!important}
+[class*="st-key-bl_feed_wheel_host_"]{position:absolute!important;inset:0!important;width:1px!important;height:1px!important;min-height:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important}
+[class*="st-key-bl_feed_wheel_actions_"]{display:none!important}
+[class*="st-key-bl_feed_wheel_host_"] iframe{width:1px!important;height:1px!important;min-height:0!important;border:0!important}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-group.sleep_kpi .bl-metric-line b,body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-group.sleep_kpi .bl-metric-line small,body:has(.bl-theme-state.dark) .st-key-bl_panel_b .bl-metric-group.sleep_kpi .bl-metric-line b,body:has(.bl-theme-state.dark) .st-key-bl_panel_b .bl-metric-group.sleep_kpi .bl-metric-line small{color:#f5f7fb!important}
 /* Carry sleep caps through Streamlit's inter-row spacing to the hour divider. */
 .bl-sleep-implied.sleep-start .bl-sleep-fill{top:0!important}
@@ -1609,48 +1605,50 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                         )
                     with cell_col:
                         with st.container(key=f"blslot_{baby_id}_{hour}_{kind}"):
-                            picker_open = st.session_state.get("boys_log_bottle_picker") == (baby_id, hour)
-                            if kind == "bottle" and picker_open:
-                                bottle_events = events_by_baby_hour_kind.get((baby_id, hour, "bottle"), [])
-                                current_amount = None
-                                if bottle_events and bottle_events[-1].get("amount_ml") is not None:
+                            picker_open = st.session_state.get("boys_log_feed_picker") == (baby_id, kind, hour)
+                            if kind in FEED_KINDS and picker_open:
+                                feed_events = events_by_baby_hour_kind.get((baby_id, hour, kind), [])
+                                current_value = None
+                                if feed_events and feed_events[-1].get("amount_ml") is not None:
                                     try:
-                                        current_amount = int(bottle_events[-1].get("amount_ml"))
+                                        current_value = int(feed_events[-1].get("amount_ml"))
                                     except (TypeError, ValueError):
-                                        current_amount = None
-                                with st.container(key=f"bl_bottle_wheel_host_{baby_id}_{hour}"):
-                                    with st.container(key=f"bl_bottle_wheel_actions_{baby_id}_{hour}"):
-                                        for amount in BOTTLE_AMOUNTS:
+                                        current_value = None
+                                feed_values = BOTTLE_AMOUNTS if kind == "bottle" else BREASTFEED_MINUTES
+                                unit = "ml" if kind == "bottle" else "minutes"
+                                with st.container(key=f"bl_feed_wheel_host_{baby_id}_{kind}_{hour}"):
+                                    with st.container(key=f"bl_feed_wheel_actions_{baby_id}_{kind}_{hour}"):
+                                        for value in feed_values:
                                             st.button(
-                                                f"{amount} ml",
-                                                key=f"bl_bottle_amount_{baby_id}_{hour}_{amount}",
-                                                on_click=choose_bottle_amount,
-                                                args=(baby_id, hour, amount),
+                                                f"{value} {unit}",
+                                                key=f"bl_feed_value_{baby_id}_{kind}_{hour}_{value}",
+                                                on_click=choose_feed_value,
+                                                args=(baby_id, kind, hour, value),
                                             )
                                         st.button(
                                             "Clear",
-                                            key=f"bl_bottle_clear_{baby_id}_{hour}",
-                                            on_click=choose_bottle_amount,
-                                            args=(baby_id, hour, None),
+                                            key=f"bl_feed_clear_{baby_id}_{kind}_{hour}",
+                                            on_click=choose_feed_value,
+                                            args=(baby_id, kind, hour, None),
                                         )
                                         st.button(
                                             "Cancel",
-                                            key=f"bl_bottle_cancel_{baby_id}_{hour}",
-                                            on_click=close_bottle_picker,
+                                            key=f"bl_feed_cancel_{baby_id}_{kind}_{hour}",
+                                            on_click=close_feed_picker,
                                         )
                                     components.html(
-                                        bottle_wheel_picker_html(baby_id, hour, current_amount),
+                                        feed_wheel_picker_html(baby_id, kind, hour, current_value),
                                         height=1,
                                         width=1,
                                     )
                             else:
-                                on_click = open_bottle_picker if kind == "bottle" else toggle_cell_event
+                                on_click = open_feed_picker if kind in FEED_KINDS else toggle_cell_event
                                 st.button(
                                     " ",
                                     key=f"blcell_{baby_id}_{hour}_{kind}",
                                     help=f"Log {KIND_LABELS.get(kind, kind)} at {hour_label(hour)} Melbourne time",
                                     on_click=on_click,
-                                    args=(baby_id, hour) if kind == "bottle" else (baby_id, kind, hour),
+                                    args=(baby_id, kind, hour),
                                     use_container_width=True,
                                 )
                             if chips:
