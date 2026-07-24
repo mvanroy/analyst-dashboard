@@ -1670,6 +1670,9 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-metric-line span{display:block;color:#63779c;font-size:9px;font-weight:850;letter-spacing:0;text-transform:none;margin-bottom:2px;white-space:nowrap;}
 .bl-metric-line b{display:block;color:#112f62;font-size:20px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;margin:0;white-space:nowrap;}
 .bl-metric-line small{display:block;color:#63779c;font-size:9px;font-weight:850;line-height:1;margin:2px 0 0;white-space:nowrap;}
+.bl-metric.feed_kpi .bl-metric-line{display:grid;grid-template-rows:13px 22px;align-items:center;}
+.bl-metric.feed_kpi .bl-metric-line span{font-size:8px;line-height:1;margin:0;overflow:visible;text-overflow:clip;}
+.bl-metric.feed_kpi .bl-metric-line b{align-self:center;}
 .bl-metric-group.sleep_kpi .bl-metric-lines{grid-template-columns:1fr;}
 .bl-metric-group.sleep_kpi .bl-metric-line{border-left:0;display:flex;flex-wrap:wrap;align-items:baseline;justify-content:center;gap:4px;}
 .bl-metric-group.sleep_kpi .bl-metric-line span{display:block;width:100%;margin:0 0 3px;flex-basis:100%;}
@@ -2294,8 +2297,8 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                     "feed_kpi",
                     "Feeds",
                     [
-                        ("Feeds", str(baby_totals["feeds"]), ""),
-                        ("Total mL", str(baby_totals["bottle"]), ""),
+                        ("Feed count", str(baby_totals["feeds"]), ""),
+                        ("mL", str(baby_totals["bottle"]), ""),
                     ],
                 ),
                 metric_group_card(
