@@ -58,6 +58,7 @@ CHANGE_KINDS = {"pee", "poop"}
 SLEEP_INTERRUPT_KINDS = FEED_KINDS | CHANGE_KINDS
 SLEEP_LOOKBACK_DAYS = 14
 ANALYTICS_START_DAY = date(2026, 7, 24)
+ANALYTICS_RANGES = ("1D", "1W", "1M", "ALL")
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ICON_ASSET_VERSION = "2026-07-watercolor-v4-title"
 ICON_FILES = {
@@ -1371,8 +1372,22 @@ def format_measurement(value: float | None, unit: str) -> str:
     return f"{shown} {unit}"
 
 
-def analytics_data(end_day: date) -> dict:
-    window_start = max(ANALYTICS_START_DAY, end_day - timedelta(days=6))
+def analytics_window_start(end_day: date, period: str) -> date:
+    lookback_days = {
+        "1D": 0,
+        "1W": 6,
+        "1M": 29,
+    }
+    if period == "ALL":
+        return ANALYTICS_START_DAY
+    return max(
+        ANALYTICS_START_DAY,
+        end_day - timedelta(days=lookback_days.get(period, lookback_days["1W"])),
+    )
+
+
+def analytics_data(end_day: date, period: str = "1W") -> dict:
+    window_start = analytics_window_start(end_day, period)
     days = [
         window_start + timedelta(days=offset)
         for offset in range((end_day - window_start).days + 1)
@@ -1489,7 +1504,7 @@ def rhythm_row(hour_counts: list[int], baby: str, label: str) -> str:
     )
 
 
-def analytics_dashboard_html(end_day: date) -> str:
+def analytics_dashboard_html(end_day: date, period: str = "1W") -> str:
     if end_day < ANALYTICS_START_DAY:
         return f"""
 <div class='ba-shell'>
@@ -1499,7 +1514,7 @@ def analytics_dashboard_html(end_day: date) -> str:
   </section>
 </div>
 """
-    data = analytics_data(end_day)
+    data = analytics_data(end_day, period)
     summaries = data["summaries"]
     sleep_text = {
         baby: format_sleep_duration(summaries[baby]["sleep_seconds"])[0]
@@ -1875,6 +1890,15 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .st-key-boys_log_analytics_nav [data-testid="stElementContainer"]{width:auto!important;}
 .st-key-bl_view_toggle button{width:auto!important;min-width:112px!important;height:38px!important;min-height:38px!important;border:1px solid #cbdcf2!important;border-radius:999px!important;background:#fff!important;color:#173664!important;font-size:12px!important;font-weight:900!important;box-shadow:none!important;padding:0 16px!important;}
 .st-key-bl_view_toggle button:hover,.st-key-bl_view_toggle button:focus,.st-key-bl_view_toggle button:active{border-color:#9fc0e9!important;background:#f4f8ff!important;box-shadow:none!important;outline:0!important;transform:none!important;}
+.st-key-boys_log_analytics_range{max-width:1500px;margin:0 auto 10px;padding:0 10px;}
+.st-key-boys_log_analytics_range [data-testid="stElementContainer"],.st-key-boys_log_analytics_range [data-testid="stButtonGroup"]{width:100%!important;}
+.st-key-boys_log_analytics_range [role="radiogroup"]{width:min(464px,100%)!important;min-width:0!important;max-width:464px!important;height:54px!important;margin:0 auto!important;display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:4px!important;padding:0!important;box-sizing:border-box!important;background:transparent!important;}
+.st-key-boys_log_analytics_range [role="radiogroup"] button{height:54px!important;min-height:54px!important;padding:0!important;display:flex!important;align-items:center!important;justify-content:center!important;border:1px solid #29425f!important;border-radius:0!important;background:#081827!important;color:#e8eef8!important;box-shadow:none!important;outline:0!important;}
+.st-key-boys_log_analytics_range [role="radiogroup"] button:first-child{border-radius:16px 0 0 16px!important;}
+.st-key-boys_log_analytics_range [role="radiogroup"] button:last-child{border-radius:0 16px 16px 0!important;}
+.st-key-boys_log_analytics_range [role="radiogroup"] button p{margin:0!important;color:inherit!important;font-size:15px!important;font-weight:950!important;line-height:1!important;letter-spacing:.01em!important;}
+.st-key-boys_log_analytics_range [role="radiogroup"] button[aria-checked="true"]{border-color:#4c8dff!important;background:#211d4f!important;color:#4c8dff!important;box-shadow:inset 0 0 0 1px #4c8dff!important;}
+.st-key-boys_log_analytics_range [role="radiogroup"] button:hover{border-color:#4c8dff!important;color:#fff!important;}
 .ba-shell{max-width:1500px;margin:0 auto;padding:0 10px 34px;color:#173664;}
 .ba-hero{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid #d8e5f4;border-radius:8px;background:#f8fbff;padding:18px 20px;margin-bottom:12px;}
 .ba-hero span,.ba-card-head span{display:block;color:#7184a4;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;}
@@ -2253,8 +2277,19 @@ if analytics_view:
                 key="bl_view_toggle",
                 on_click=toggle_dashboard_view,
             )
+    with st.container(key="boys_log_analytics_range"):
+        analytics_range = st.segmented_control(
+            "Analytics range",
+            ANALYTICS_RANGES,
+            default="1W",
+            key="bl_analytics_range",
+            label_visibility="collapsed",
+        )
     try:
-        st.markdown(analytics_dashboard_html(day), unsafe_allow_html=True)
+        st.markdown(
+            analytics_dashboard_html(day, analytics_range or "1W"),
+            unsafe_allow_html=True,
+        )
     except baby_log_store.StorageError as exc:
         st.error(str(exc))
     if baby_log_store.storage_warning():
