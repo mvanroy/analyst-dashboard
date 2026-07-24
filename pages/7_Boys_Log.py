@@ -1520,7 +1520,10 @@ def analytics_dashboard_html(end_day: date, period: str = "1W") -> str:
         baby: format_sleep_duration(summaries[baby]["sleep_seconds"])[0]
         for baby, _ in BABIES
     }
-    range_label = f"{data['days'][0].strftime('%d %b')} – {data['days'][-1].strftime('%d %b %Y')}"
+    if data["days"][0] == data["days"][-1]:
+        range_label = data["days"][0].strftime("%d %b %Y")
+    else:
+        range_label = f"{data['days'][0].strftime('%d %b')} – {data['days'][-1].strftime('%d %b %Y')}"
     period_days = len(data["days"])
     period_label = f"{period_days} day{'s' if period_days != 1 else ''}"
     comparison_rows = [
