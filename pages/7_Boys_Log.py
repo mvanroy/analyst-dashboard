@@ -1902,6 +1902,14 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .st-key-boys_log_analytics_range [role="radiogroup"] button p{margin:0!important;color:inherit!important;font-size:15px!important;font-weight:950!important;line-height:1!important;letter-spacing:.01em!important;}
 .st-key-boys_log_analytics_range [role="radiogroup"] button[aria-checked="true"]{border-color:#4c8dff!important;background:#211d4f!important;color:#4c8dff!important;box-shadow:inset 0 0 0 1px #4c8dff!important;}
 .st-key-boys_log_analytics_range [role="radiogroup"] button:hover{border-color:#4c8dff!important;color:#fff!important;}
+@media(max-width:900px){
+  .st-key-boys_log_analytics_range{margin-bottom:10px!important;}
+  .st-key-boys_log_analytics_range [role="radiogroup"]{width:238px!important;max-width:100%!important;height:40px!important;gap:3px!important;padding:3px!important;}
+  .st-key-boys_log_analytics_range [role="radiogroup"] button{height:34px!important;min-height:34px!important;}
+  .st-key-boys_log_analytics_range [role="radiogroup"] button:first-child{border-radius:9px 0 0 9px!important;}
+  .st-key-boys_log_analytics_range [role="radiogroup"] button:last-child{border-radius:0 9px 9px 0!important;}
+  .st-key-boys_log_analytics_range [role="radiogroup"] button p{font-size:.78rem!important;font-weight:720!important;}
+}
 .ba-shell{max-width:1500px;margin:0 auto;padding:0 10px 34px;color:#173664;}
 .ba-hero{display:flex;align-items:center;justify-content:space-between;gap:18px;border:1px solid #d8e5f4;border-radius:8px;background:#f8fbff;padding:18px 20px;margin-bottom:12px;}
 .ba-hero span,.ba-card-head span{display:block;color:#7184a4;font-size:10px;font-weight:900;letter-spacing:.08em;text-transform:uppercase;}
