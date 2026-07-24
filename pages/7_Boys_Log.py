@@ -1353,6 +1353,7 @@ def format_sleep_duration(total_seconds: int) -> tuple[str, str]:
 def toggle_dashboard_view() -> None:
     current = st.session_state.get("boys_log_view", "log")
     st.session_state["boys_log_view"] = "log" if current == "analytics" else "analytics"
+    st.session_state["bl_scroll_after_view_toggle"] = True
 
 
 def numeric_measurement(value) -> float | None:
@@ -2268,6 +2269,31 @@ with st.container(key="boys_log_toolbar"):
 
 day = selected_day()
 analytics_view = st.session_state.get("boys_log_view", "log") == "analytics"
+if st.session_state.pop("bl_scroll_after_view_toggle", False):
+    components.html(
+        """
+<script>
+(() => {
+  const w = window.parent;
+  const doc = w.document;
+  const scrollTop = () => {
+    const host = doc.querySelector('[data-testid="stMain"]');
+    if (host && typeof host.scrollTo === 'function') {
+      host.scrollTo({top: 0, left: 0, behavior: 'auto'});
+    }
+    w.scrollTo({top: 0, left: 0, behavior: 'auto'});
+    doc.documentElement.scrollTop = 0;
+    doc.body.scrollTop = 0;
+  };
+  scrollTop();
+  w.requestAnimationFrame(scrollTop);
+  w.setTimeout(scrollTop, 80);
+})();
+</script>
+""",
+        height=0,
+        width=0,
+    )
 
 if analytics_view:
     with st.container(key="boys_log_analytics_nav"):
