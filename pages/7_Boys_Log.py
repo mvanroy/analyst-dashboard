@@ -50,7 +50,7 @@ KINDS = [
     ("other", "Other"),
 ]
 KIND_LABELS = dict(KINDS)
-BOTTLE_AMOUNTS = tuple(range(10, 121, 10))
+BOTTLE_AMOUNTS = tuple(range(10, 121, 5))
 BREASTFEED_MINUTES = (15, 20, 25, 30, 35, 40, 45)
 MILK_TYPES = ("FOR", "EBM")
 FEED_KINDS = {"left", "right", "bottle"}
@@ -438,7 +438,7 @@ def feed_wheel_picker_html(
       #bl-feed-wheel-bottle-fields{{gap:10px}}
       .bl-feed-wheel-milk-card{{padding:12px;border:1px solid #456487;border-radius:13px;background:#142b47}}
       .bl-feed-wheel-milk-title{{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}}
-      .bl-feed-wheel-milk-title b{{display:inline-flex;align-items:center;justify-content:center;min-width:44px;padding:5px 8px;border-radius:7px;background:#dceafe;color:#173664;font-size:14px;font-weight:900;letter-spacing:.04em}}
+      .bl-feed-wheel-milk-title b{{display:inline-flex;align-items:center;justify-content:center;padding:2px 0;background:transparent;color:#f5f7fb;font-size:16px;font-weight:900;letter-spacing:.04em}}
       .bl-feed-wheel-milk-title span{{color:#b9c8dc;font-size:12px;font-weight:700}}
       .bl-feed-wheel-milk-grid{{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
       .bl-feed-wheel-milk-grid label{{margin-bottom:5px;font-size:11px}}
@@ -1763,9 +1763,9 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-bottle-summary{gap:2px;padding:2px 1px;}
 .bl-bottle-entry{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;min-width:0;}
 .bl-bottle-entry+.bl-bottle-entry{margin-top:1px;padding-top:3px;border-top:1px solid rgba(82,112,154,.24);}
-.bl-bottle-entry b{display:flex;align-items:center;justify-content:center;gap:3px;max-width:100%;color:#174f9d;font-size:11px;font-weight:950;line-height:1;white-space:nowrap;}
-.bl-bottle-entry b em{display:inline-flex;align-items:center;justify-content:center;min-width:23px;padding:2px 3px;border-radius:4px;background:#dceafe;color:#174f9d;font-size:8px;font-style:normal;font-weight:950;letter-spacing:.03em;}
-.bl-bottle-entry small{display:block;color:#6e84a8;font-size:9px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.bl-bottle-entry b{display:flex;align-items:center;justify-content:center;gap:3px;max-width:100%;color:#174f9d;font-size:12px;font-weight:950;line-height:1;white-space:nowrap;}
+.bl-bottle-entry b em{display:inline-flex;align-items:center;justify-content:center;padding:0;background:transparent;color:#174f9d;font-size:10px;font-style:normal;font-weight:950;letter-spacing:.03em;}
+.bl-bottle-entry small{display:block;color:#6e84a8;font-size:10px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
 [class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) .bl-time,[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) [class*="st-key-blslot_"]{min-height:66px;}
 .bl-chip.feed,.bl-chip.change,.bl-chip.sleep,.bl-chip.other{color:inherit;background:transparent!important;border:0!important;}
 [class*="st-key-bl_bottle_picker_"]{position:absolute!important;inset:2px!important;z-index:4;width:calc(100% - 4px)!important;min-width:0!important;height:34px!important;margin:0!important;}
@@ -2098,12 +2098,12 @@ body:has(.bl-theme-state.dark) .bl-chip-duration{color:#c7d3e5!important}
 body:has(.bl-theme-state.dark) .bl-chip-sleep-state{color:#fff!important}
 body:has(.bl-theme-state.dark) .bl-chip-time{font-size:13px!important;color:#e8eef8!important}
 body:has(.bl-theme-state.dark) .bl-bottle-entry b{color:#fff!important}
-body:has(.bl-theme-state.dark) .bl-bottle-entry b em{background:rgba(126,182,255,.2);color:#fff!important}
+body:has(.bl-theme-state.dark) .bl-bottle-entry b em{background:transparent;color:#fff!important}
 body:has(.bl-theme-state.dark) .bl-bottle-entry small{color:#d7e3f3!important}
 body:has(.bl-theme-state.dark) .bl-bottle-entry+.bl-bottle-entry{border-top-color:rgba(215,227,243,.22)}
 @media(max-width:900px){body:has(.bl-theme-state.dark) .bl-chip img{width:17px!important;height:17px!important}body:has(.bl-theme-state.dark) .bl-chip-time{font-size:11px!important}}
 @media(max-width:900px){.bl-chip-duration{font-size:9px!important}.bl-chip:has(.bl-chip-duration){gap:2px!important}.bl-chip:has(.bl-chip-duration) .bl-chip-time{font-size:9px!important}}
-@media(max-width:900px){.bl-bottle-entry b{gap:2px;font-size:9px}.bl-bottle-entry b em{min-width:20px;padding:2px;font-size:7px}.bl-bottle-entry small{font-size:7.5px}[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) .bl-time,[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) [class*="st-key-blslot_"]{min-height:62px!important}}
+@media(max-width:900px){.bl-bottle-entry b{gap:2px;font-size:10px}.bl-bottle-entry b em{padding:0;font-size:9px}.bl-bottle-entry small{font-size:8.5px}[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) .bl-time,[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) [class*="st-key-blslot_"]{min-height:62px!important}}
 
 /* KPI values are white in dark mode; keep a readable navy equivalent in light mode. */
 .st-key-bl_panel_a .bl-metric-total b,.st-key-bl_panel_a .bl-metric-line b,.st-key-bl_panel_b .bl-metric-total b,.st-key-bl_panel_b .bl-metric-line b{color:#112f62!important}
