@@ -83,6 +83,7 @@ ICON_FILES = {
     "title_bun_right": "buns-right-header.png",
     "title_koala": "baby-title-koala.png",
     "title_echidna": "baby-title-echidna.png",
+    "undo": "undo.svg",
 }
 
 
@@ -1356,6 +1357,13 @@ def toggle_dashboard_view() -> None:
     st.session_state["bl_scroll_after_view_toggle"] = True
 
 
+def sync_theme_from_mobile_analytics() -> None:
+    st.session_state["bl_theme_choice"] = st.session_state.get(
+        "bl_analytics_mobile_theme",
+        "Dark",
+    )
+
+
 def numeric_measurement(value) -> float | None:
     cleaned = "".join(char for char in str(value or "") if char.isdigit() or char in ".-")
     if not cleaned or cleaned in {".", "-", "-."}:
@@ -1892,6 +1900,7 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .st-key-boys_log_view_nav [data-testid="stElementContainer"]{width:auto!important;}
 .st-key-boys_log_analytics_nav{position:relative!important;z-index:5!important;max-width:1500px;margin:-2px auto 12px;padding:0 10px;display:flex!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;}
 .st-key-boys_log_analytics_nav [data-testid="stElementContainer"]{width:auto!important;}
+.st-key-boys_log_analytics_theme_bottom{display:none!important;}
 .st-key-bl_view_toggle button{width:auto!important;min-width:112px!important;height:38px!important;min-height:38px!important;border:1px solid #cbdcf2!important;border-radius:999px!important;background:#fff!important;color:#173664!important;font-size:12px!important;font-weight:900!important;box-shadow:none!important;padding:0 16px!important;}
 .st-key-bl_view_toggle button:hover,.st-key-bl_view_toggle button:focus,.st-key-bl_view_toggle button:active{border-color:#9fc0e9!important;background:#f4f8ff!important;box-shadow:none!important;outline:0!important;transform:none!important;}
 .st-key-boys_log_analytics_range{max-width:1500px;margin:0 auto 10px;padding:0 10px;}
@@ -1904,6 +1913,11 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .st-key-boys_log_analytics_range [role="radiogroup"] button[aria-checked="true"]{border-color:#4c8dff!important;background:#211d4f!important;color:#4c8dff!important;box-shadow:inset 0 0 0 1px #4c8dff!important;}
 .st-key-boys_log_analytics_range [role="radiogroup"] button:hover{border-color:#4c8dff!important;color:#fff!important;}
 @media(max-width:900px){
+  .st-key-boys_log_analytics_nav{display:none!important;}
+  .st-key-boys_log_analytics_theme_bottom{display:flex!important;justify-content:center!important;max-width:1500px;margin:14px auto 4px;padding:0 8px;}
+  .st-key-boys_log_analytics_theme_bottom [data-testid="stElementContainer"]{width:auto!important;}
+  .st-key-boys_log_analytics_theme_bottom [role="radiogroup"]{box-shadow:none!important;}
+  .st-key-boys_log_analytics_theme_bottom [role="radiogroup"] label{min-width:68px!important;padding:0 9px!important;}
   .st-key-boys_log_analytics_range{margin-bottom:10px!important;}
   .st-key-boys_log_analytics_range [role="radiogroup"]{width:238px!important;max-width:100%!important;height:40px!important;gap:3px!important;padding:3px!important;}
   .st-key-boys_log_analytics_range [role="radiogroup"] button{height:34px!important;min-height:34px!important;}
@@ -2179,6 +2193,22 @@ body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-total b,body:has(.b
 /* Mobile date navigation: one precisely centred arrow, without a surrounding box. */
 @media(max-width:900px){.st-key-bl_prev .stButton>button,.st-key-bl_next .stButton>button{position:relative!important;display:block!important;width:44px!important;height:42px!important;min-height:42px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:transparent!important}.st-key-bl_prev .stButton>button p,.st-key-bl_prev .stButton>button span,.st-key-bl_next .stButton>button p,.st-key-bl_next .stButton>button span{font-size:0!important;line-height:0!important;color:transparent!important}.st-key-bl_prev .stButton>button:before,.st-key-bl_next .stButton>button:before{position:absolute!important;left:50%!important;top:50%!important;display:block!important;width:28px!important;margin:0!important;transform:translate(-50%,-54%)!important;text-align:center!important;font-size:30px!important;line-height:1!important;color:#173664!important}.st-key-bl_prev .stButton>button:before{content:"‹"!important}.st-key-bl_next .stButton>button:before{content:"›"!important}.st-key-bl_prev .stButton>button:hover,.st-key-bl_prev .stButton>button:focus,.st-key-bl_next .stButton>button:hover,.st-key-bl_next .stButton>button:focus{border:0!important;background:rgba(126,182,255,.08)!important;box-shadow:none!important}body:has(.bl-theme-state.dark) .st-key-bl_prev .stButton>button:before,body:has(.bl-theme-state.dark) .st-key-bl_next .stButton>button:before{color:#dce7f6!important}}
 @media(max-width:900px){body:has(.bl-theme-state.dark) .st-key-bl_prev .stButton>button,body:has(.bl-theme-state.dark) .st-key-bl_next .stButton>button{border:0!important;background:transparent!important;box-shadow:none!important}}
+.st-key-bl_back_to_log{margin:0!important;}
+.st-key-bl_back_to_log .stButton>button{position:relative!important;width:46px!important;height:46px!important;min-height:46px!important;padding:0!important;border:1px solid #dce6f3!important;border-radius:12px!important;background:#fff!important;color:transparent!important;font-size:0!important;box-shadow:0 10px 24px rgba(61,95,140,.07)!important;}
+.st-key-bl_back_to_log .stButton>button:before{content:""!important;position:absolute!important;left:50%!important;top:50%!important;width:23px!important;height:23px!important;transform:translate(-50%,-50%)!important;background:#173664!important;-webkit-mask-repeat:no-repeat!important;mask-repeat:no-repeat!important;-webkit-mask-position:center!important;mask-position:center!important;-webkit-mask-size:contain!important;mask-size:contain!important;}
+.st-key-bl_back_to_log .stButton>button:hover,.st-key-bl_back_to_log .stButton>button:focus,.st-key-bl_back_to_log .stButton>button:active{border-color:#9fc0e9!important;background:#f4f8ff!important;box-shadow:none!important;outline:0!important;transform:none!important;}
+body:has(.bl-theme-state.dark) .st-key-bl_back_to_log .stButton>button{border-color:#29425f!important;background:rgba(16,36,61,.90)!important;box-shadow:none!important;}
+body:has(.bl-theme-state.dark) .st-key-bl_back_to_log .stButton>button:before{background:#dce7f6!important;}
+@media(max-width:900px){
+  .st-key-boys_log_toolbar [data-testid="stHorizontalBlock"]:has(.st-key-bl_back_to_log){grid-template-columns:40px 44px minmax(0,1fr) 44px!important;gap:4px!important;}
+  .st-key-boys_log_toolbar [data-testid="stHorizontalBlock"]>[data-testid="stColumn"]:has(.st-key-bl_back_to_log){grid-column:1!important;}
+  .st-key-boys_log_toolbar [data-testid="stHorizontalBlock"]:has(.st-key-bl_back_to_log)>[data-testid="stColumn"]:has(.st-key-bl_prev){grid-column:2!important;}
+  .st-key-boys_log_toolbar [data-testid="stHorizontalBlock"]:has(.st-key-bl_back_to_log)>[data-testid="stColumn"]:has(.st-key-bl_date_control){grid-column:3!important;}
+  .st-key-boys_log_toolbar [data-testid="stHorizontalBlock"]:has(.st-key-bl_back_to_log)>[data-testid="stColumn"]:has(.st-key-bl_next){grid-column:4!important;}
+  .st-key-bl_back_to_log .stButton>button{width:40px!important;height:42px!important;min-height:42px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;}
+  .st-key-bl_back_to_log .stButton>button:before{width:22px!important;height:22px!important;}
+  body:has(.bl-theme-state.dark) .st-key-bl_back_to_log .stButton>button{border:0!important;background:transparent!important;}
+}
 
 /* Bottom utility row: theme selector immediately to the left of Analytics/Back. */
 .st-key-boys_log_theme{position:relative!important;display:flex!important;align-items:center!important;width:auto!important;max-width:none!important;min-height:38px!important;margin:0!important;padding:0!important}
@@ -2222,6 +2252,18 @@ body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-group.sleep_kpi .bl
 
 title_koala = icon_data_uri("title_koala")
 title_echidna = icon_data_uri("title_echidna")
+undo_icon = icon_data_uri("undo")
+st.markdown(
+    f"""
+<style>
+.st-key-bl_back_to_log .stButton>button:before{{
+  -webkit-mask-image:url("{undo_icon}")!important;
+  mask-image:url("{undo_icon}")!important;
+}}
+</style>
+""",
+    unsafe_allow_html=True,
+)
 st.markdown(
     "<div id='bl-top-anchor' class='bl-mobile-title'>"
     f"<img class='bl-title-art-left bl-title-bun-left' src='{title_koala}' alt='Sleeping koala on a crescent moon'>"
@@ -2240,9 +2282,22 @@ with st.container(key="boys_log_theme_state"):
 
 st.markdown("<div class='bl-shell'>", unsafe_allow_html=True)
 
+analytics_view = st.session_state.get("boys_log_view", "log") == "analytics"
 with st.container(key="boys_log_toolbar"):
     current_day = selected_day()
-    c_prev, c_date, c_today, c_next, c_sync = st.columns([0.8, 2.4, 0.9, 0.8, 1.4])
+    if analytics_view:
+        c_back, c_prev, c_date, c_today, c_next, c_sync = st.columns(
+            [0.65, 0.8, 2.4, 0.9, 0.8, 1.4]
+        )
+        with c_back:
+            st.button(
+                "Back to log",
+                key="bl_back_to_log",
+                on_click=toggle_dashboard_view,
+                help="Back to daily log",
+            )
+    else:
+        c_prev, c_date, c_today, c_next, c_sync = st.columns([0.8, 2.4, 0.9, 0.8, 1.4])
     with c_prev:
         st.button("‹", key="bl_prev", on_click=shift_day, args=(-1,), use_container_width=True)
     with c_date:
@@ -2268,7 +2323,6 @@ with st.container(key="boys_log_toolbar"):
         )
 
 day = selected_day()
-analytics_view = st.session_state.get("boys_log_view", "log") == "analytics"
 if st.session_state.pop("bl_scroll_after_view_toggle", False):
     components.html(
         """
@@ -2297,22 +2351,14 @@ if st.session_state.pop("bl_scroll_after_view_toggle", False):
 
 if analytics_view:
     with st.container(key="boys_log_analytics_nav"):
-        theme_col, back_col = st.columns([1, 1], gap="small")
-        with theme_col:
-            with st.container(key="boys_log_theme"):
-                st.radio(
-                    "Theme",
-                    ("Light", "Dark"),
-                    horizontal=True,
-                    index=1,
-                    key="bl_theme_choice",
-                    label_visibility="collapsed",
-                )
-        with back_col:
-            st.button(
-                "Back to log",
-                key="bl_view_toggle",
-                on_click=toggle_dashboard_view,
+        with st.container(key="boys_log_theme"):
+            st.radio(
+                "Theme",
+                ("Light", "Dark"),
+                horizontal=True,
+                index=1,
+                key="bl_theme_choice",
+                label_visibility="collapsed",
             )
     with st.container(key="boys_log_analytics_range"):
         analytics_range = st.segmented_control(
@@ -2331,6 +2377,19 @@ if analytics_view:
         st.error(str(exc))
     if baby_log_store.storage_warning():
         st.caption("Storage status: shared database unavailable — analytics are using the local cache.")
+    st.session_state["bl_analytics_mobile_theme"] = st.session_state.get(
+        "bl_theme_choice",
+        "Dark",
+    )
+    with st.container(key="boys_log_analytics_theme_bottom"):
+        st.radio(
+            "Theme",
+            ("Light", "Dark"),
+            horizontal=True,
+            key="bl_analytics_mobile_theme",
+            on_change=sync_theme_from_mobile_analytics,
+            label_visibility="collapsed",
+        )
     st.markdown("</div>", unsafe_allow_html=True)
     st.stop()
 
