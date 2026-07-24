@@ -386,7 +386,6 @@ def feed_wheel_picker_html(
     hour: int,
     current_value: int | None,
     current_duration: int | None = None,
-    current_milk_type: str = "FOR",
     bottle_entries: dict[str, dict] | None = None,
 ) -> str:
     is_bottle = kind == "bottle"
@@ -399,7 +398,7 @@ def feed_wheel_picker_html(
             "hour": hour,
             "is_bottle": is_bottle,
             "title": f"{'Bottle feed' if is_bottle else f'{side} feed duration'} · {hour_label(hour)}",
-            "help": "Choose the amount and how long the feed took." if is_bottle else "Tap the duration field and roll to the correct time.",
+            "help": "Add FOR, EBM, or both. Both feeds will be saved in this same hourly cell." if is_bottle else "Tap the duration field and roll to the correct time.",
             "field_label": "Bottle amount" if is_bottle else f"{side} feed duration",
             "unit": "ml" if is_bottle else "minutes",
             "values": list(values),
@@ -407,7 +406,6 @@ def feed_wheel_picker_html(
             "duration_values": list(BREASTFEED_MINUTES),
             "current_duration": current_duration,
             "milk_types": list(MILK_TYPES),
-            "current_milk_type": current_milk_type if current_milk_type in MILK_TYPES else "FOR",
             "bottle_entries": bottle_entries or {},
         }
     )
@@ -430,10 +428,15 @@ def feed_wheel_picker_html(
       .bl-feed-wheel-field{{margin-top:13px}}
       .bl-feed-wheel-field label{{display:block;margin:0 0 6px;color:#d9e4f2;font-size:13px;font-weight:750}}
       .bl-feed-wheel-field select{{display:block;width:100%;height:58px;padding:0 14px;border:1px solid #6687ad;border-radius:12px;background:#f7fbff;color:#173664;font-size:18px;font-weight:800;text-align:center;text-align-last:center}}
-      #bl-feed-wheel-milk-field,#bl-feed-wheel-duration-field,#bl-feed-wheel-save{{display:none}}
-      #bl-feed-wheel-milk-buttons{{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
-      #bl-feed-wheel-milk-buttons button{{height:46px;border:1px solid #6687ad;border-radius:11px;background:#17304f;color:#d9e4f2;font-size:16px;font-weight:850}}
-      #bl-feed-wheel-milk-buttons button[aria-pressed="true"]{{background:#f7fbff;color:#173664;box-shadow:inset 0 0 0 2px #8eb8e8}}
+      #bl-feed-wheel-bottle-fields,#bl-feed-wheel-duration-field,#bl-feed-wheel-save{{display:none}}
+      #bl-feed-wheel-bottle-fields{{gap:10px}}
+      .bl-feed-wheel-milk-card{{padding:12px;border:1px solid #456487;border-radius:13px;background:#142b47}}
+      .bl-feed-wheel-milk-title{{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}}
+      .bl-feed-wheel-milk-title b{{display:inline-flex;align-items:center;justify-content:center;min-width:44px;padding:5px 8px;border-radius:7px;background:#dceafe;color:#173664;font-size:14px;font-weight:900;letter-spacing:.04em}}
+      .bl-feed-wheel-milk-title span{{color:#b9c8dc;font-size:12px;font-weight:700}}
+      .bl-feed-wheel-milk-grid{{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
+      .bl-feed-wheel-milk-grid label{{margin-bottom:5px;font-size:11px}}
+      .bl-feed-wheel-milk-grid select{{height:46px;padding:0 6px;font-size:15px}}
       #bl-feed-wheel-save{{width:100%;height:48px;margin-top:16px;border:1px solid #6f99c7;border-radius:11px;background:#397dcc;color:#fff;font-size:16px;font-weight:850}}
       #bl-feed-wheel-actions{{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}}
       #bl-feed-wheel-actions button{{height:46px;border:1px solid #456487;border-radius:11px;background:#17304f;color:#e8eef8;font-size:15px;font-weight:800}}
@@ -446,27 +449,25 @@ def feed_wheel_picker_html(
         <label id="bl-feed-wheel-primary-label" for="bl-feed-wheel-select"></label>
         <select id="bl-feed-wheel-select"><option value="">Select</option></select>
       </div>
-      <div class="bl-feed-wheel-field" id="bl-feed-wheel-milk-field">
-        <label>Milk type</label>
-        <div id="bl-feed-wheel-milk-buttons" role="group" aria-label="Milk type"></div>
+      <div class="bl-feed-wheel-field" id="bl-feed-wheel-bottle-fields" aria-label="Bottle feeds">
       </div>
       <div class="bl-feed-wheel-field" id="bl-feed-wheel-duration-field">
         <label for="bl-feed-wheel-duration">Feed duration</label>
         <select id="bl-feed-wheel-duration" aria-label="Bottle feed duration"><option value="">Select minutes</option></select>
       </div>
-      <button type="button" id="bl-feed-wheel-save" data-action="save">Save feed</button>
+      <button type="button" id="bl-feed-wheel-save" data-action="save">Save bottle feeds</button>
       <div id="bl-feed-wheel-actions">
-        <button type="button" data-action="clear">Clear</button>
+        <button type="button" data-action="clear">Clear all</button>
         <button type="button" data-action="cancel">Cancel</button>
       </div>
     </div>`;
 
   doc.body.appendChild(overlay);
   const panel = overlay.querySelector("#bl-feed-wheel-panel");
+  const primaryField = overlay.querySelector("#bl-feed-wheel-select").closest(".bl-feed-wheel-field");
   const select = overlay.querySelector("#bl-feed-wheel-select");
   const durationSelect = overlay.querySelector("#bl-feed-wheel-duration");
-  const milkButtons = overlay.querySelector("#bl-feed-wheel-milk-buttons");
-  let milkType = config.current_milk_type || "FOR";
+  const bottleFields = overlay.querySelector("#bl-feed-wheel-bottle-fields");
   overlay.querySelector("#bl-feed-wheel-title").textContent = config.title;
   overlay.querySelector("#bl-feed-wheel-help").textContent = config.help;
   overlay.querySelector("#bl-feed-wheel-primary-label").textContent = config.field_label;
@@ -487,28 +488,38 @@ def feed_wheel_picker_html(
     durationSelect.appendChild(option);
   }});
   if (config.is_bottle) {{
-    overlay.querySelector("#bl-feed-wheel-milk-field").style.display = "block";
-    overlay.querySelector("#bl-feed-wheel-duration-field").style.display = "block";
+    primaryField.style.display = "none";
+    bottleFields.style.display = "grid";
     overlay.querySelector("#bl-feed-wheel-save").style.display = "block";
-    const setMilkType = (nextType) => {{
-      milkType = config.milk_types.includes(nextType) ? nextType : "FOR";
-      [...milkButtons.querySelectorAll("button")].forEach((button) =>
-        button.setAttribute("aria-pressed", String(button.dataset.milkType === milkType))
-      );
-      const entry = config.bottle_entries[milkType] || {{}};
-      select.value = entry.value == null ? "" : String(entry.value);
-      durationSelect.value = entry.duration == null ? "" : String(entry.duration);
-      overlay.querySelector('[data-action="clear"]').textContent = `Clear ${{milkType}}`;
-    }};
     config.milk_types.forEach((type) => {{
-      const button = doc.createElement("button");
-      button.type = "button";
-      button.dataset.milkType = type;
-      button.textContent = type;
-      button.addEventListener("click", () => setMilkType(type));
-      milkButtons.appendChild(button);
+      const entry = config.bottle_entries[type] || {{}};
+      const card = doc.createElement("div");
+      card.className = "bl-feed-wheel-milk-card";
+      card.dataset.milkType = type;
+      card.innerHTML = `
+        <div class="bl-feed-wheel-milk-title"><b>${{type}}</b><span>${{type === "FOR" ? "Formula" : "Expressed breast milk"}}</span></div>
+        <div class="bl-feed-wheel-milk-grid">
+          <div><label for="bl-feed-${{type}}-amount">Amount</label><select id="bl-feed-${{type}}-amount" data-role="amount"><option value="">None</option></select></div>
+          <div><label for="bl-feed-${{type}}-duration">Duration</label><select id="bl-feed-${{type}}-duration" data-role="duration"><option value="">None</option></select></div>
+        </div>`;
+      const amount = card.querySelector('[data-role="amount"]');
+      const duration = card.querySelector('[data-role="duration"]');
+      config.values.forEach((value) => {{
+        const option = doc.createElement("option");
+        option.value = String(value);
+        option.textContent = `${{value}} ml`;
+        option.selected = Number(entry.value) === value;
+        amount.appendChild(option);
+      }});
+      config.duration_values.forEach((value) => {{
+        const option = doc.createElement("option");
+        option.value = String(value);
+        option.textContent = `${{value}} min`;
+        option.selected = Number(entry.duration) === value;
+        duration.appendChild(option);
+      }});
+      bottleFields.appendChild(card);
     }});
-    setMilkType(milkType);
   }}
 
   const trigger = (selector) => {{
@@ -522,15 +533,39 @@ def feed_wheel_picker_html(
     trigger(`[class*="st-key-bl_feed_value_${{config.baby}}_${{config.kind}}_${{config.hour}}_${{select.value}}"] button`);
   }});
   overlay.querySelector('[data-action="save"]').addEventListener("click", () => {{
-    if (!select.value || !durationSelect.value) {{
-      overlay.querySelector("#bl-feed-wheel-help").textContent = "Please choose both the amount and duration.";
+    const feeds = {{}};
+    let invalid = false;
+    [...bottleFields.querySelectorAll(".bl-feed-wheel-milk-card")].forEach((card) => {{
+      const amount = card.querySelector('[data-role="amount"]').value;
+      const duration = card.querySelector('[data-role="duration"]').value;
+      if ((amount && !duration) || (!amount && duration)) invalid = true;
+      feeds[card.dataset.milkType] = amount && duration
+        ? {{amount: Number(amount), duration: Number(duration)}}
+        : null;
+    }});
+    if (invalid) {{
+      overlay.querySelector("#bl-feed-wheel-help").textContent = "Choose both amount and duration for each feed.";
       return;
     }}
-    trigger(`[class*="st-key-bl_feed_value_${{config.baby}}_${{config.kind}}_${{config.hour}}_${{milkType}}_${{select.value}}_${{durationSelect.value}}"] button`);
+    const payloadInput = doc.querySelector(`[class*="st-key-bl_bottle_combo_payload_${{config.baby}}_${{config.hour}}"] input`);
+    const submit = doc.querySelector(`[class*="st-key-bl_bottle_combo_submit_${{config.baby}}_${{config.hour}}"] button`);
+    if (!payloadInput || !submit) {{
+      overlay.querySelector("#bl-feed-wheel-help").textContent = "The save control is not ready. Close and reopen this bottle cell.";
+      return;
+    }}
+    const setter = Object.getOwnPropertyDescriptor(doc.defaultView.HTMLInputElement.prototype, "value").set;
+    setter.call(payloadInput, JSON.stringify(feeds));
+    payloadInput.dispatchEvent(new Event("input", {{bubbles: true}}));
+    payloadInput.dispatchEvent(new Event("change", {{bubbles: true}}));
+    setTimeout(() => submit.click(), 80);
+    overlay.remove();
   }});
   overlay.querySelector('[data-action="clear"]').addEventListener("click", () => {{
-    const suffix = config.is_bottle ? `_${{milkType}}` : "";
-    trigger(`[class*="st-key-bl_feed_clear_${{config.baby}}_${{config.kind}}_${{config.hour}}${{suffix}}"] button`);
+    if (!config.is_bottle) {{
+      trigger(`[class*="st-key-bl_feed_clear_${{config.baby}}_${{config.kind}}_${{config.hour}}"] button`);
+      return;
+    }}
+    [...bottleFields.querySelectorAll("select")].forEach((field) => field.value = "");
   }});
   overlay.querySelector('[data-action="cancel"]').addEventListener("click", () =>
     trigger(`[class*="st-key-bl_feed_cancel_${{config.baby}}_${{config.kind}}_${{config.hour}}"] button`)
@@ -980,6 +1015,88 @@ def choose_feed_value(
     st.toast(f"Logged {milk_text}{value} {unit}{duration_text} at {event_ts.strftime('%H:%M')}")
     if sleep_interrupted:
         st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
+
+
+def choose_bottle_combo(baby: str, hour: int, payload_key: str) -> None:
+    try:
+        payload = json.loads(st.session_state.get(payload_key) or "{}")
+    except (TypeError, json.JSONDecodeError):
+        st.toast("Could not read the bottle feeds. Please try again.")
+        return
+
+    desired: dict[str, dict | None] = {}
+    for milk_type in MILK_TYPES:
+        entry = payload.get(milk_type)
+        if entry is None:
+            desired[milk_type] = None
+            continue
+        try:
+            amount = int(entry.get("amount"))
+            duration = int(entry.get("duration"))
+        except (AttributeError, TypeError, ValueError):
+            st.toast(f"Choose both amount and duration for {milk_type}.")
+            return
+        if amount not in BOTTLE_AMOUNTS or duration not in BREASTFEED_MINUTES:
+            st.toast(f"Choose a valid amount and duration for {milk_type}.")
+            return
+        desired[milk_type] = {"amount": amount, "duration": duration}
+
+    day = selected_day().isoformat()
+    existing = [
+        event
+        for event in baby_log_store.load_events(day)
+        if event.get("baby") == baby
+        and event.get("kind") == "bottle"
+        and parse_dt(event.get("event_ts")).hour == hour
+    ]
+    existing_by_type = {
+        milk_type: [event for event in existing if bottle_milk_type(event) == milk_type]
+        for milk_type in MILK_TYPES
+    }
+    now = datetime.now(MEL)
+    event_ts = datetime.combine(selected_day(), datetime.min.time(), tzinfo=MEL).replace(
+        hour=hour,
+        minute=now.minute,
+        second=now.second,
+        microsecond=0,
+    )
+    added = []
+    for milk_type in MILK_TYPES:
+        current_events = existing_by_type[milk_type]
+        target = desired[milk_type]
+        latest = current_events[-1] if current_events else None
+        unchanged = (
+            latest is not None
+            and target is not None
+            and int(latest.get("amount_ml") or 0) == target["amount"]
+            and event_duration_minutes(latest) == target["duration"]
+        )
+        if unchanged:
+            continue
+        for event in current_events:
+            baby_log_store.delete_event(event.get("id"))
+        if target is not None:
+            baby_log_store.add_event(
+                baby,
+                "bottle",
+                amount_ml=target["amount"],
+                note=f"milk_type={milk_type};duration_minutes={target['duration']}",
+                event_ts=event_ts,
+            )
+            added.append(milk_type)
+
+    st.session_state.boys_log_feed_picker = None
+    st.session_state[payload_key] = ""
+    if added:
+        sleep_interrupted = end_active_sleep(baby, event_ts, "bottle")
+        feed_text = " and ".join(added)
+        st.toast(f"Saved {feed_text} in the {hour_label(hour)} bottle cell")
+        if sleep_interrupted:
+            st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
+    elif any(desired.values()):
+        st.toast(f"Bottle feeds unchanged at {hour_label(hour)}")
+    else:
+        st.toast(f"Cleared bottle feeds at {hour_label(hour)}")
 
 
 def log_bath_time(baby: str) -> None:
@@ -2233,7 +2350,6 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                 feed_events = events_by_baby_hour_kind.get((baby_id, hour, kind), [])
                                 current_value = None
                                 current_duration = None
-                                current_milk_type = "FOR"
                                 bottle_entries: dict[str, dict] = {}
                                 if feed_events and feed_events[-1].get("amount_ml") is not None:
                                     try:
@@ -2241,7 +2357,6 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                     except (TypeError, ValueError):
                                         current_value = None
                                     if kind == "bottle":
-                                        current_milk_type = bottle_milk_type(feed_events[-1])
                                         current_duration = event_duration_minutes(feed_events[-1])
                                         for bottle_event in feed_events:
                                             entry_type = bottle_milk_type(bottle_event)
@@ -2254,20 +2369,18 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                 with st.container(key=f"bl_feed_wheel_host_{baby_id}_{kind}_{hour}"):
                                     with st.container(key=f"bl_feed_wheel_actions_{baby_id}_{kind}_{hour}"):
                                         if kind == "bottle":
-                                            for milk_type in MILK_TYPES:
-                                                for value in feed_values:
-                                                    for duration in BREASTFEED_MINUTES:
-                                                        st.button(
-                                                            f"{milk_type} · {value} ml · {duration} minutes",
-                                                            key=f"bl_feed_value_{baby_id}_{kind}_{hour}_{milk_type}_{value}_{duration}",
-                                                            on_click=choose_feed_value,
-                                                            args=(baby_id, kind, hour, value, duration, milk_type),
-                                                        )
-                                                st.button(
-                                                    f"Clear {milk_type}",
-                                                    key=f"bl_feed_clear_{baby_id}_{kind}_{hour}_{milk_type}",
-                                                    on_click=choose_feed_value,
-                                                    args=(baby_id, kind, hour, None, None, milk_type),
+                                            payload_key = f"bl_bottle_combo_payload_{baby_id}_{hour}"
+                                            with st.form(
+                                                key=f"bl_bottle_combo_form_{baby_id}_{hour}",
+                                                clear_on_submit=False,
+                                                border=False,
+                                            ):
+                                                st.text_input("Bottle feed payload", key=payload_key)
+                                                st.form_submit_button(
+                                                    "Save bottle feeds",
+                                                    key=f"bl_bottle_combo_submit_{baby_id}_{hour}",
+                                                    on_click=choose_bottle_combo,
+                                                    args=(baby_id, hour, payload_key),
                                                 )
                                         else:
                                             for value in feed_values:
@@ -2295,7 +2408,6 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                             hour,
                                             current_value,
                                             current_duration,
-                                            current_milk_type,
                                             bottle_entries,
                                         ),
                                         height=1,
