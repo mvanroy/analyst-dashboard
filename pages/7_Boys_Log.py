@@ -769,11 +769,12 @@ def bottle_cell_summary(events: list[dict]) -> str:
     for event in ordered:
         amount = f"{esc(event.get('amount_ml'))} ml" if event.get("amount_ml") is not None else "Bottle"
         duration = event_duration_minutes(event)
-        details = [f"{duration} min" if duration else "", fmt_time(event.get("event_ts"))]
         entries.append(
             "<span class='bl-bottle-entry'>"
-            f"<b><em>{esc(bottle_milk_type(event))}</em><span>{amount}</span></b>"
-            f"<small>{esc(' · '.join(part for part in details if part))}</small>"
+            f"<b><em>{esc(bottle_milk_type(event))}</em></b>"
+            f"<span class='bl-bottle-entry-amount'>{amount}</span>"
+            f"<span class='bl-bottle-entry-duration'>{esc(f'{duration} min' if duration else '—')}</span>"
+            f"<small>{esc(fmt_time(event.get('event_ts')))}</small>"
             "</span>"
         )
     multi_class = " multi" if len(entries) > 1 else ""
@@ -1763,10 +1764,13 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-bottle-summary{gap:2px;padding:2px 1px;}
 .bl-bottle-entry{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;min-width:0;}
 .bl-bottle-entry+.bl-bottle-entry{margin-top:1px;padding-top:3px;border-top:1px solid rgba(82,112,154,.24);}
-.bl-bottle-entry b{display:flex;align-items:center;justify-content:center;gap:3px;max-width:100%;color:#174f9d;font-size:12px;font-weight:950;line-height:1;white-space:nowrap;}
+.bl-bottle-entry b{display:flex;align-items:center;justify-content:center;max-width:100%;color:#174f9d;font-size:12px;font-weight:950;line-height:1;white-space:nowrap;}
 .bl-bottle-entry b em{display:inline-flex;align-items:center;justify-content:center;padding:0;background:transparent;color:#174f9d;font-size:10px;font-style:normal;font-weight:950;letter-spacing:.03em;}
+.bl-bottle-entry-amount{display:block;color:#174f9d;font-size:12px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+.bl-bottle-entry-duration{display:block;color:#52709a;font-size:10px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .bl-bottle-entry small{display:block;color:#6e84a8;font-size:10px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
-[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) .bl-time,[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) [class*="st-key-blslot_"]{min-height:66px;}
+[class*="st-key-blrow_"]:has(.bl-bottle-summary) .bl-time,[class*="st-key-blrow_"]:has(.bl-bottle-summary) [class*="st-key-blslot_"]{min-height:72px;}
+[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) .bl-time,[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) [class*="st-key-blslot_"]{min-height:108px;}
 .bl-chip.feed,.bl-chip.change,.bl-chip.sleep,.bl-chip.other{color:inherit;background:transparent!important;border:0!important;}
 [class*="st-key-bl_bottle_picker_"]{position:absolute!important;inset:2px!important;z-index:4;width:calc(100% - 4px)!important;min-width:0!important;height:34px!important;margin:0!important;}
 [class*="st-key-bl_bottle_picker_"] label{display:none!important;}
@@ -2099,11 +2103,13 @@ body:has(.bl-theme-state.dark) .bl-chip-sleep-state{color:#fff!important}
 body:has(.bl-theme-state.dark) .bl-chip-time{font-size:13px!important;color:#e8eef8!important}
 body:has(.bl-theme-state.dark) .bl-bottle-entry b{color:#fff!important}
 body:has(.bl-theme-state.dark) .bl-bottle-entry b em{background:transparent;color:#fff!important}
+body:has(.bl-theme-state.dark) .bl-bottle-entry-amount{color:#fff!important}
+body:has(.bl-theme-state.dark) .bl-bottle-entry-duration{color:#c7d3e5!important}
 body:has(.bl-theme-state.dark) .bl-bottle-entry small{color:#d7e3f3!important}
 body:has(.bl-theme-state.dark) .bl-bottle-entry+.bl-bottle-entry{border-top-color:rgba(215,227,243,.22)}
 @media(max-width:900px){body:has(.bl-theme-state.dark) .bl-chip img{width:17px!important;height:17px!important}body:has(.bl-theme-state.dark) .bl-chip-time{font-size:11px!important}}
 @media(max-width:900px){.bl-chip-duration{font-size:9px!important}.bl-chip:has(.bl-chip-duration){gap:2px!important}.bl-chip:has(.bl-chip-duration) .bl-chip-time{font-size:9px!important}}
-@media(max-width:900px){.bl-bottle-entry b{gap:2px;font-size:10px}.bl-bottle-entry b em{padding:0;font-size:9px}.bl-bottle-entry small{font-size:8.5px}[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) .bl-time,[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) [class*="st-key-blslot_"]{min-height:62px!important}}
+@media(max-width:900px){.bl-bottle-entry b{font-size:10px}.bl-bottle-entry b em{padding:0;font-size:9px}.bl-bottle-entry-amount{font-size:10px}.bl-bottle-entry-duration{font-size:9px}.bl-bottle-entry small{font-size:8.5px}[class*="st-key-blrow_"]:has(.bl-bottle-summary) .bl-time,[class*="st-key-blrow_"]:has(.bl-bottle-summary) [class*="st-key-blslot_"]{min-height:68px!important}[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) .bl-time,[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) [class*="st-key-blslot_"]{min-height:102px!important}}
 
 /* KPI values are white in dark mode; keep a readable navy equivalent in light mode. */
 .st-key-bl_panel_a .bl-metric-total b,.st-key-bl_panel_a .bl-metric-line b,.st-key-bl_panel_b .bl-metric-total b,.st-key-bl_panel_b .bl-metric-line b{color:#112f62!important}
