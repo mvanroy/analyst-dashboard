@@ -2294,8 +2294,8 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                     "feed_kpi",
                     "Feeds",
                     [
-                        ("Feed count", str(baby_totals["feeds"]), ""),
-                        ("Bottle total", str(baby_totals["bottle"]), "mL"),
+                        ("Feeds", str(baby_totals["feeds"]), ""),
+                        ("Total mL", str(baby_totals["bottle"]), ""),
                     ],
                 ),
                 metric_group_card(
