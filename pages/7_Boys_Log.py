@@ -57,6 +57,7 @@ FEED_KINDS = {"left", "right", "bottle"}
 CHANGE_KINDS = {"pee", "poop"}
 SLEEP_INTERRUPT_KINDS = FEED_KINDS | CHANGE_KINDS
 SLEEP_LOOKBACK_DAYS = 14
+ANALYTICS_START_DAY = date(2026, 7, 24)
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ICON_ASSET_VERSION = "2026-07-watercolor-v4-title"
 ICON_FILES = {
@@ -1371,11 +1372,20 @@ def format_measurement(value: float | None, unit: str) -> str:
 
 
 def analytics_data(end_day: date) -> dict:
-    days = [end_day - timedelta(days=offset) for offset in range(6, -1, -1)]
+    window_start = max(ANALYTICS_START_DAY, end_day - timedelta(days=6))
+    days = [
+        window_start + timedelta(days=offset)
+        for offset in range((end_day - window_start).days + 1)
+    ]
     start_day = days[0].isoformat()
     sleep_context_start = (days[0] - timedelta(days=SLEEP_LOOKBACK_DAYS)).isoformat()
     end_day_text = days[-1].isoformat()
-    events = baby_log_store.load_events_range(sleep_context_start, end_day_text)
+    sleep_context_events = baby_log_store.load_events_range(sleep_context_start, end_day_text)
+    events = [
+        event
+        for event in sleep_context_events
+        if start_day <= str(event.get("day") or "") <= end_day_text
+    ]
     care_records = baby_log_store.load_care_details_range(start_day, end_day_text)
     daily: dict[str, list[dict]] = {baby: [] for baby, _ in BABIES}
     hour_counts: dict[str, list[int]] = {baby: [0] * 24 for baby, _ in BABIES}
@@ -1387,7 +1397,7 @@ def analytics_data(end_day: date) -> dict:
                 for event in events
                 if event.get("baby") == baby and event.get("day") == day_value.isoformat()
             ]
-            sleep_seconds, _ = sleep_block_summary(events, baby, day_value)
+            sleep_seconds, _ = sleep_block_summary(sleep_context_events, baby, day_value)
             entry = {
                 "day": day_value,
                 "feeds": sum(1 for event in day_events if event.get("kind") in FEED_KINDS),
@@ -1480,6 +1490,15 @@ def rhythm_row(hour_counts: list[int], baby: str, label: str) -> str:
 
 
 def analytics_dashboard_html(end_day: date) -> str:
+    if end_day < ANALYTICS_START_DAY:
+        return f"""
+<div class='ba-shell'>
+  <section class='ba-hero'>
+    <div><span>Care analytics</span><b class='ba-title'>Twin care overview</b>
+    <p>Tracking begins {esc(ANALYTICS_START_DAY.strftime('%d %b %Y'))}</p></div>
+  </section>
+</div>
+"""
     data = analytics_data(end_day)
     summaries = data["summaries"]
     sleep_text = {
@@ -1487,6 +1506,8 @@ def analytics_dashboard_html(end_day: date) -> str:
         for baby, _ in BABIES
     }
     range_label = f"{data['days'][0].strftime('%d %b')} – {data['days'][-1].strftime('%d %b %Y')}"
+    period_days = len(data["days"])
+    period_label = f"{period_days} day{'s' if period_days != 1 else ''}"
     comparison_rows = [
         ("Total feeds", str(summaries["a"]["feeds"]), str(summaries["b"]["feeds"])),
         ("Breastfeeds", str(summaries["a"]["breastfeeds"]), str(summaries["b"]["breastfeeds"])),
@@ -1525,11 +1546,11 @@ def analytics_dashboard_html(end_day: date) -> str:
     for baby, label in BABIES:
         fields = data["growth"][baby]
         metric_html = "".join(
-            f"<div><span>{esc(field.title())}</span><b>{esc(format_measurement(fields[field]['latest'], fields[field]['unit']))}</b>"
+                f"<div><span>{esc(field.title())}</span><b>{esc(format_measurement(fields[field]['latest'], fields[field]['unit']))}</b>"
             + (
-                f"<small>{fields[field]['change']:+.1f} {fields[field]['unit']} in 7 days</small>"
+                f"<small>{fields[field]['change']:+.1f} {fields[field]['unit']} in range</small>"
                 if fields[field]["change"] is not None
-                else "<small>No 7-day change yet</small>"
+                else "<small>No change in range yet</small>"
             )
             + "</div>"
             for field in ("weight", "length")
@@ -1561,17 +1582,17 @@ def analytics_dashboard_html(end_day: date) -> str:
     return f"""
 <div class='ba-shell'>
   <section class='ba-hero'>
-    <div><span>7-day analytics</span><b class='ba-title'>Twin care overview</b><p>{esc(range_label)}</p></div>
+    <div><span>Tracking from {esc(ANALYTICS_START_DAY.strftime('%d %b %Y'))}</span><b class='ba-title'>Twin care overview</b><p>{esc(range_label)}</p></div>
     <div class='ba-legend'><span class='ba-a'>Zander</span><span class='ba-b'>Phoenix</span></div>
   </section>
   <div class='ba-grid'>
     <section class='ba-card ba-wide'>
-      <div class='ba-card-head'><div><span>Comparison</span><b class='ba-card-title'>Twin comparison</b></div><small>7 days</small></div>
+      <div class='ba-card-head'><div><span>Comparison</span><b class='ba-card-title'>Twin comparison</b></div><small>{esc(period_label)}</small></div>
       <div class='ba-compare-head'><span></span><b class='ba-a'>Zander</b><b class='ba-b'>Phoenix</b></div>
       <div class='ba-compare'>{comparison_html}</div>
     </section>
     <section class='ba-card'>
-      <div class='ba-card-head'><div><span>Feeding</span><b class='ba-card-title'>7-day daily feed volume</b></div></div>
+      <div class='ba-card-head'><div><span>Feeding</span><b class='ba-card-title'>Daily feed volume</b></div></div>
       <p class='ba-note'>Recorded bottle volume only; breastfeeds are counted separately.</p>
       {feed_chart}
       <div class='ba-chart-foot'><span class='ba-a'>Zander: <b>{summaries['a']['bottle_ml']} ml</b></span><span class='ba-b'>Phoenix: <b>{summaries['b']['bottle_ml']} ml</b></span></div>
@@ -1583,7 +1604,7 @@ def analytics_dashboard_html(end_day: date) -> str:
       <div class='ba-chart-foot'><span class='ba-a'>Zander: <b>{sleep_text['a']}</b></span><span class='ba-b'>Phoenix: <b>{sleep_text['b']}</b></span></div>
     </section>
     <section class='ba-card'>
-      <div class='ba-card-head'><div><span>Care</span><b class='ba-card-title'>Nappy summary</b></div><small>7 days</small></div>
+      <div class='ba-card-head'><div><span>Care</span><b class='ba-card-title'>Nappy summary</b></div><small>{esc(period_label)}</small></div>
       <div class='ba-nappy'>{nappy_rows}</div>
     </section>
     <section class='ba-card ba-wide'>
