@@ -2194,20 +2194,20 @@ body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-total b,body:has(.b
 @media(max-width:900px){.st-key-bl_prev .stButton>button,.st-key-bl_next .stButton>button{position:relative!important;display:block!important;width:44px!important;height:42px!important;min-height:42px!important;padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;color:transparent!important}.st-key-bl_prev .stButton>button p,.st-key-bl_prev .stButton>button span,.st-key-bl_next .stButton>button p,.st-key-bl_next .stButton>button span{font-size:0!important;line-height:0!important;color:transparent!important}.st-key-bl_prev .stButton>button:before,.st-key-bl_next .stButton>button:before{position:absolute!important;left:50%!important;top:50%!important;display:block!important;width:28px!important;margin:0!important;transform:translate(-50%,-54%)!important;text-align:center!important;font-size:30px!important;line-height:1!important;color:#173664!important}.st-key-bl_prev .stButton>button:before{content:"‹"!important}.st-key-bl_next .stButton>button:before{content:"›"!important}.st-key-bl_prev .stButton>button:hover,.st-key-bl_prev .stButton>button:focus,.st-key-bl_next .stButton>button:hover,.st-key-bl_next .stButton>button:focus{border:0!important;background:rgba(126,182,255,.08)!important;box-shadow:none!important}body:has(.bl-theme-state.dark) .st-key-bl_prev .stButton>button:before,body:has(.bl-theme-state.dark) .st-key-bl_next .stButton>button:before{color:#dce7f6!important}}
 @media(max-width:900px){body:has(.bl-theme-state.dark) .st-key-bl_prev .stButton>button,body:has(.bl-theme-state.dark) .st-key-bl_next .stButton>button{border:0!important;background:transparent!important;box-shadow:none!important}}
 .st-key-bl_back_to_log{margin:0!important;}
-.st-key-bl_back_to_log .stButton>button{position:relative!important;width:46px!important;height:46px!important;min-height:46px!important;padding:0!important;border:1px solid #dce6f3!important;border-radius:12px!important;background:#fff!important;color:transparent!important;font-size:0!important;box-shadow:0 10px 24px rgba(61,95,140,.07)!important;}
-.st-key-bl_back_to_log .stButton>button:before{content:""!important;position:absolute!important;left:50%!important;top:50%!important;width:23px!important;height:23px!important;transform:translate(-50%,-50%)!important;background:#173664!important;-webkit-mask-repeat:no-repeat!important;mask-repeat:no-repeat!important;-webkit-mask-position:center!important;mask-position:center!important;-webkit-mask-size:contain!important;mask-size:contain!important;}
-.st-key-bl_back_to_log .stButton>button:hover,.st-key-bl_back_to_log .stButton>button:focus,.st-key-bl_back_to_log .stButton>button:active{border-color:#9fc0e9!important;background:#f4f8ff!important;box-shadow:none!important;outline:0!important;transform:none!important;}
-body:has(.bl-theme-state.dark) .st-key-bl_back_to_log .stButton>button{border-color:#29425f!important;background:rgba(16,36,61,.90)!important;box-shadow:none!important;}
-body:has(.bl-theme-state.dark) .st-key-bl_back_to_log .stButton>button:before{background:#dce7f6!important;}
+.st-key-bl_back_to_log button{position:relative!important;width:46px!important;height:46px!important;min-height:46px!important;padding:0!important;border:1px solid #dce6f3!important;border-radius:12px!important;background:#fff!important;color:transparent!important;font-size:0!important;box-shadow:0 10px 24px rgba(61,95,140,.07)!important;}
+.st-key-bl_back_to_log button:before{content:""!important;position:absolute!important;left:50%!important;top:50%!important;width:23px!important;height:23px!important;transform:translate(-50%,-50%)!important;background:#173664!important;-webkit-mask-repeat:no-repeat!important;mask-repeat:no-repeat!important;-webkit-mask-position:center!important;mask-position:center!important;-webkit-mask-size:contain!important;mask-size:contain!important;}
+.st-key-bl_back_to_log button:hover,.st-key-bl_back_to_log button:focus,.st-key-bl_back_to_log button:active{border-color:#9fc0e9!important;background:#f4f8ff!important;box-shadow:none!important;outline:0!important;transform:none!important;}
+body:has(.bl-theme-state.dark) .st-key-bl_back_to_log button{border-color:#29425f!important;background:rgba(16,36,61,.90)!important;box-shadow:none!important;}
+body:has(.bl-theme-state.dark) .st-key-bl_back_to_log button:before{background:#dce7f6!important;}
 @media(max-width:900px){
   .st-key-boys_log_toolbar [data-testid="stHorizontalBlock"]:has(.st-key-bl_back_to_log){grid-template-columns:40px 44px minmax(0,1fr) 44px!important;gap:4px!important;}
   .st-key-boys_log_toolbar [data-testid="stHorizontalBlock"]>[data-testid="stColumn"]:has(.st-key-bl_back_to_log){grid-column:1!important;}
   .st-key-boys_log_toolbar [data-testid="stHorizontalBlock"]:has(.st-key-bl_back_to_log)>[data-testid="stColumn"]:has(.st-key-bl_prev){grid-column:2!important;}
   .st-key-boys_log_toolbar [data-testid="stHorizontalBlock"]:has(.st-key-bl_back_to_log)>[data-testid="stColumn"]:has(.st-key-bl_date_control){grid-column:3!important;}
   .st-key-boys_log_toolbar [data-testid="stHorizontalBlock"]:has(.st-key-bl_back_to_log)>[data-testid="stColumn"]:has(.st-key-bl_next){grid-column:4!important;}
-  .st-key-bl_back_to_log .stButton>button{width:40px!important;height:42px!important;min-height:42px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;}
-  .st-key-bl_back_to_log .stButton>button:before{width:22px!important;height:22px!important;}
-  body:has(.bl-theme-state.dark) .st-key-bl_back_to_log .stButton>button{border:0!important;background:transparent!important;}
+  .st-key-bl_back_to_log button{width:40px!important;height:42px!important;min-height:42px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important;}
+  .st-key-bl_back_to_log button:before{width:22px!important;height:22px!important;}
+  body:has(.bl-theme-state.dark) .st-key-bl_back_to_log button{border:0!important;background:transparent!important;}
 }
 
 /* Bottom utility row: theme selector immediately to the left of Analytics/Back. */
@@ -2256,7 +2256,7 @@ undo_icon = icon_data_uri("undo")
 st.markdown(
     f"""
 <style>
-.st-key-bl_back_to_log .stButton>button:before{{
+.st-key-bl_back_to_log button:before{{
   -webkit-mask-image:url("{undo_icon}")!important;
   mask-image:url("{undo_icon}")!important;
 }}
@@ -2294,7 +2294,6 @@ with st.container(key="boys_log_toolbar"):
                 "Back to log",
                 key="bl_back_to_log",
                 on_click=toggle_dashboard_view,
-                help="Back to daily log",
             )
     else:
         c_prev, c_date, c_today, c_next, c_sync = st.columns([0.8, 2.4, 0.9, 0.8, 1.4])
