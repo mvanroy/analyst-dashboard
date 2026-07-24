@@ -46,6 +46,7 @@ KINDS = [
 KIND_LABELS = dict(KINDS)
 BOTTLE_AMOUNTS = tuple(range(10, 121, 10))
 BREASTFEED_MINUTES = (15, 20, 25, 30, 35, 40, 45)
+MILK_TYPES = ("FOR", "EBM")
 FEED_KINDS = {"left", "right", "bottle"}
 CHANGE_KINDS = {"pee", "poop"}
 SLEEP_INTERRUPT_KINDS = FEED_KINDS | CHANGE_KINDS
@@ -116,6 +117,11 @@ def event_note_value(event: dict, key: str) -> str:
         if separator and name == key:
             return value.strip()
     return ""
+
+
+def bottle_milk_type(event: dict) -> str:
+    milk_type = event_note_value(event, "milk_type").upper()
+    return milk_type if milk_type in MILK_TYPES else "FOR"
 
 
 def sleep_event_state(event: dict) -> str:
@@ -380,6 +386,8 @@ def feed_wheel_picker_html(
     hour: int,
     current_value: int | None,
     current_duration: int | None = None,
+    current_milk_type: str = "FOR",
+    bottle_entries: dict[str, dict] | None = None,
 ) -> str:
     is_bottle = kind == "bottle"
     values = BOTTLE_AMOUNTS if is_bottle else BREASTFEED_MINUTES
@@ -390,14 +398,17 @@ def feed_wheel_picker_html(
             "kind": kind,
             "hour": hour,
             "is_bottle": is_bottle,
-            "title": f"{'Formula amount' if is_bottle else f'{side} feed duration'} · {hour_label(hour)}",
+            "title": f"{'Bottle feed' if is_bottle else f'{side} feed duration'} · {hour_label(hour)}",
             "help": "Choose the amount and how long the feed took." if is_bottle else "Tap the duration field and roll to the correct time.",
-            "field_label": "Formula amount" if is_bottle else f"{side} feed duration",
+            "field_label": "Bottle amount" if is_bottle else f"{side} feed duration",
             "unit": "ml" if is_bottle else "minutes",
             "values": list(values),
             "current": current_value,
             "duration_values": list(BREASTFEED_MINUTES),
             "current_duration": current_duration,
+            "milk_types": list(MILK_TYPES),
+            "current_milk_type": current_milk_type if current_milk_type in MILK_TYPES else "FOR",
+            "bottle_entries": bottle_entries or {},
         }
     )
     return f"""
@@ -413,13 +424,16 @@ def feed_wheel_picker_html(
     <style>
       #bl-feed-wheel-overlay{{position:fixed;inset:0;z-index:2147483000;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box;background:rgba(2,10,23,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}}
       #bl-feed-wheel-overlay *{{box-sizing:border-box}}
-      #bl-feed-wheel-panel{{width:min(100%,380px);padding:20px;border:1px solid #456487;border-radius:18px;background:#10243d;box-shadow:0 24px 80px rgba(0,0,0,.62);color:#f5f7fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
+      #bl-feed-wheel-panel{{width:min(100%,380px);max-height:calc(100dvh - 32px);overflow-y:auto;padding:20px;border:1px solid #456487;border-radius:18px;background:#10243d;box-shadow:0 24px 80px rgba(0,0,0,.62);color:#f5f7fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
       #bl-feed-wheel-title{{margin:0 0 7px;font-size:20px;font-weight:850;text-align:center}}
       #bl-feed-wheel-help{{margin:0 0 16px;color:#b9c8dc;font-size:13px;font-weight:650;line-height:1.35;text-align:center}}
       .bl-feed-wheel-field{{margin-top:13px}}
       .bl-feed-wheel-field label{{display:block;margin:0 0 6px;color:#d9e4f2;font-size:13px;font-weight:750}}
       .bl-feed-wheel-field select{{display:block;width:100%;height:58px;padding:0 14px;border:1px solid #6687ad;border-radius:12px;background:#f7fbff;color:#173664;font-size:18px;font-weight:800;text-align:center;text-align-last:center}}
-      #bl-feed-wheel-duration-field,#bl-feed-wheel-save{{display:none}}
+      #bl-feed-wheel-milk-field,#bl-feed-wheel-duration-field,#bl-feed-wheel-save{{display:none}}
+      #bl-feed-wheel-milk-buttons{{display:grid;grid-template-columns:1fr 1fr;gap:8px}}
+      #bl-feed-wheel-milk-buttons button{{height:46px;border:1px solid #6687ad;border-radius:11px;background:#17304f;color:#d9e4f2;font-size:16px;font-weight:850}}
+      #bl-feed-wheel-milk-buttons button[aria-pressed="true"]{{background:#f7fbff;color:#173664;box-shadow:inset 0 0 0 2px #8eb8e8}}
       #bl-feed-wheel-save{{width:100%;height:48px;margin-top:16px;border:1px solid #6f99c7;border-radius:11px;background:#397dcc;color:#fff;font-size:16px;font-weight:850}}
       #bl-feed-wheel-actions{{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}}
       #bl-feed-wheel-actions button{{height:46px;border:1px solid #456487;border-radius:11px;background:#17304f;color:#e8eef8;font-size:15px;font-weight:800}}
@@ -432,9 +446,13 @@ def feed_wheel_picker_html(
         <label id="bl-feed-wheel-primary-label" for="bl-feed-wheel-select"></label>
         <select id="bl-feed-wheel-select"><option value="">Select</option></select>
       </div>
+      <div class="bl-feed-wheel-field" id="bl-feed-wheel-milk-field">
+        <label>Milk type</label>
+        <div id="bl-feed-wheel-milk-buttons" role="group" aria-label="Milk type"></div>
+      </div>
       <div class="bl-feed-wheel-field" id="bl-feed-wheel-duration-field">
         <label for="bl-feed-wheel-duration">Feed duration</label>
-        <select id="bl-feed-wheel-duration" aria-label="Formula feed duration"><option value="">Select minutes</option></select>
+        <select id="bl-feed-wheel-duration" aria-label="Bottle feed duration"><option value="">Select minutes</option></select>
       </div>
       <button type="button" id="bl-feed-wheel-save" data-action="save">Save feed</button>
       <div id="bl-feed-wheel-actions">
@@ -447,6 +465,8 @@ def feed_wheel_picker_html(
   const panel = overlay.querySelector("#bl-feed-wheel-panel");
   const select = overlay.querySelector("#bl-feed-wheel-select");
   const durationSelect = overlay.querySelector("#bl-feed-wheel-duration");
+  const milkButtons = overlay.querySelector("#bl-feed-wheel-milk-buttons");
+  let milkType = config.current_milk_type || "FOR";
   overlay.querySelector("#bl-feed-wheel-title").textContent = config.title;
   overlay.querySelector("#bl-feed-wheel-help").textContent = config.help;
   overlay.querySelector("#bl-feed-wheel-primary-label").textContent = config.field_label;
@@ -467,8 +487,28 @@ def feed_wheel_picker_html(
     durationSelect.appendChild(option);
   }});
   if (config.is_bottle) {{
+    overlay.querySelector("#bl-feed-wheel-milk-field").style.display = "block";
     overlay.querySelector("#bl-feed-wheel-duration-field").style.display = "block";
     overlay.querySelector("#bl-feed-wheel-save").style.display = "block";
+    const setMilkType = (nextType) => {{
+      milkType = config.milk_types.includes(nextType) ? nextType : "FOR";
+      [...milkButtons.querySelectorAll("button")].forEach((button) =>
+        button.setAttribute("aria-pressed", String(button.dataset.milkType === milkType))
+      );
+      const entry = config.bottle_entries[milkType] || {{}};
+      select.value = entry.value == null ? "" : String(entry.value);
+      durationSelect.value = entry.duration == null ? "" : String(entry.duration);
+      overlay.querySelector('[data-action="clear"]').textContent = `Clear ${{milkType}}`;
+    }};
+    config.milk_types.forEach((type) => {{
+      const button = doc.createElement("button");
+      button.type = "button";
+      button.dataset.milkType = type;
+      button.textContent = type;
+      button.addEventListener("click", () => setMilkType(type));
+      milkButtons.appendChild(button);
+    }});
+    setMilkType(milkType);
   }}
 
   const trigger = (selector) => {{
@@ -486,11 +526,12 @@ def feed_wheel_picker_html(
       overlay.querySelector("#bl-feed-wheel-help").textContent = "Please choose both the amount and duration.";
       return;
     }}
-    trigger(`[class*="st-key-bl_feed_value_${{config.baby}}_${{config.kind}}_${{config.hour}}_${{select.value}}_${{durationSelect.value}}"] button`);
+    trigger(`[class*="st-key-bl_feed_value_${{config.baby}}_${{config.kind}}_${{config.hour}}_${{milkType}}_${{select.value}}_${{durationSelect.value}}"] button`);
   }});
-  overlay.querySelector('[data-action="clear"]').addEventListener("click", () =>
-    trigger(`[class*="st-key-bl_feed_clear_${{config.baby}}_${{config.kind}}_${{config.hour}}"] button`)
-  );
+  overlay.querySelector('[data-action="clear"]').addEventListener("click", () => {{
+    const suffix = config.is_bottle ? `_${{milkType}}` : "";
+    trigger(`[class*="st-key-bl_feed_clear_${{config.baby}}_${{config.kind}}_${{config.hour}}${{suffix}}"] button`);
+  }});
   overlay.querySelector('[data-action="cancel"]').addEventListener("click", () =>
     trigger(`[class*="st-key-bl_feed_cancel_${{config.baby}}_${{config.kind}}_${{config.hour}}"] button`)
   );
@@ -646,7 +687,7 @@ def event_label(event: dict) -> str:
     if event.get("kind") == "bottle" and event.get("amount_ml"):
         duration = event_duration_minutes(event)
         duration_text = f", {duration} minutes" if duration else ""
-        return f"Bottle fed, {event['amount_ml']} ml{duration_text}"
+        return f"{bottle_milk_type(event)} bottle, {event['amount_ml']} ml{duration_text}"
     if event.get("kind") == "bottle":
         return "Bottle fed"
     if event.get("kind") == "pee":
@@ -660,7 +701,10 @@ def cell_event_label(event: dict) -> str:
     if event.get("kind") == "bottle" and event.get("amount_ml"):
         duration = event_duration_minutes(event)
         duration_text = f"<span class='bl-chip-duration'>{esc(duration)} min</span>" if duration else ""
-        return f"<b class='bl-chip-amount'>{esc(event.get('amount_ml'))} ml</b>{duration_text}"
+        return (
+            f"<b class='bl-chip-amount'><em class='bl-bottle-type'>{esc(bottle_milk_type(event))}</em> "
+            f"{esc(event.get('amount_ml'))} ml</b>{duration_text}"
+        )
     if event.get("kind") in {"left", "right"} and event.get("amount_ml"):
         return f"<b class='bl-chip-amount'>{esc(event.get('amount_ml'))} min</b>"
     if sleep_event_state(event) == "start":
@@ -676,6 +720,23 @@ def cell_event_label(event: dict) -> str:
     if not icon:
         return "✓"
     return f"<img src='{icon}' alt='Done'>"
+
+
+def bottle_cell_summary(events: list[dict]) -> str:
+    ordered = sorted(events, key=lambda event: event.get("event_ts") or "")
+    entries = []
+    for event in ordered:
+        amount = f"{esc(event.get('amount_ml'))} ml" if event.get("amount_ml") is not None else "Bottle"
+        duration = event_duration_minutes(event)
+        details = [f"{duration} min" if duration else "", fmt_time(event.get("event_ts"))]
+        entries.append(
+            "<span class='bl-bottle-entry'>"
+            f"<b><em>{esc(bottle_milk_type(event))}</em><span>{amount}</span></b>"
+            f"<small>{esc(' · '.join(part for part in details if part))}</small>"
+            "</span>"
+        )
+    multi_class = " multi" if len(entries) > 1 else ""
+    return f"<span class='bl-chip feed bl-bottle-summary{multi_class}'>{''.join(entries)}</span>"
 
 
 def event_class(kind: str) -> str:
@@ -876,12 +937,27 @@ def choose_feed_value(
     hour: int,
     value: int | None,
     duration_minutes: int | None = None,
+    milk_type: str | None = None,
 ) -> None:
     day = selected_day().isoformat()
-    baby_log_store.delete_events_for_hour(day, baby, kind, hour)
+    selected_milk_type = milk_type.upper() if milk_type and milk_type.upper() in MILK_TYPES else "FOR"
+    if kind == "bottle":
+        existing = [
+            event
+            for event in baby_log_store.load_events(day)
+            if event.get("baby") == baby
+            and event.get("kind") == kind
+            and parse_dt(event.get("event_ts")).hour == hour
+            and bottle_milk_type(event) == selected_milk_type
+        ]
+        for event in existing:
+            baby_log_store.delete_event(event.get("id"))
+    else:
+        baby_log_store.delete_events_for_hour(day, baby, kind, hour)
     st.session_state.boys_log_feed_picker = None
     if value is None:
-        st.toast(f"Cleared {KIND_LABELS.get(kind, kind)} at {hour_label(hour)}")
+        cleared_label = f"{selected_milk_type} bottle" if kind == "bottle" else KIND_LABELS.get(kind, kind)
+        st.toast(f"Cleared {cleared_label} at {hour_label(hour)}")
         return
     now = datetime.now(MEL)
     event_ts = datetime.combine(selected_day(), datetime.min.time(), tzinfo=MEL).replace(
@@ -890,12 +966,18 @@ def choose_feed_value(
         second=now.second,
         microsecond=0,
     )
-    note = f"duration_minutes={duration_minutes}" if kind == "bottle" and duration_minutes else ""
+    note_parts = []
+    if kind == "bottle":
+        note_parts.append(f"milk_type={selected_milk_type}")
+        if duration_minutes:
+            note_parts.append(f"duration_minutes={duration_minutes}")
+    note = ";".join(note_parts)
     baby_log_store.add_event(baby, kind, amount_ml=value, note=note, event_ts=event_ts)
     sleep_interrupted = end_active_sleep(baby, event_ts, kind)
     unit = "ml" if kind == "bottle" else "minutes"
     duration_text = f" · {duration_minutes} minutes" if kind == "bottle" and duration_minutes else ""
-    st.toast(f"Logged {value} {unit}{duration_text} at {event_ts.strftime('%H:%M')}")
+    milk_text = f"{selected_milk_type} · " if kind == "bottle" else ""
+    st.toast(f"Logged {milk_text}{value} {unit}{duration_text} at {event_ts.strftime('%H:%M')}")
     if sleep_interrupted:
         st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
 
@@ -1539,6 +1621,13 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-chip-sleep-state{display:block;color:#4a3f78;font-size:11px;font-weight:950;line-height:1;white-space:nowrap;}
 .bl-chip-time{display:block;color:#6e84a8;font-size:12px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
 .bl-chip:has(.bl-chip-duration){gap:2px;}
+.bl-bottle-summary{gap:2px;padding:2px 1px;}
+.bl-bottle-entry{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;min-width:0;}
+.bl-bottle-entry+.bl-bottle-entry{margin-top:1px;padding-top:3px;border-top:1px solid rgba(82,112,154,.24);}
+.bl-bottle-entry b{display:flex;align-items:center;justify-content:center;gap:3px;max-width:100%;color:#174f9d;font-size:11px;font-weight:950;line-height:1;white-space:nowrap;}
+.bl-bottle-entry b em{display:inline-flex;align-items:center;justify-content:center;min-width:23px;padding:2px 3px;border-radius:4px;background:#dceafe;color:#174f9d;font-size:8px;font-style:normal;font-weight:950;letter-spacing:.03em;}
+.bl-bottle-entry small{display:block;color:#6e84a8;font-size:9px;font-weight:900;line-height:1;font-variant-numeric:tabular-nums;white-space:nowrap;}
+[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) .bl-time,[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) [class*="st-key-blslot_"]{min-height:66px;}
 .bl-chip.feed,.bl-chip.change,.bl-chip.sleep,.bl-chip.other{color:inherit;background:transparent!important;border:0!important;}
 [class*="st-key-bl_bottle_picker_"]{position:absolute!important;inset:2px!important;z-index:4;width:calc(100% - 4px)!important;min-width:0!important;height:34px!important;margin:0!important;}
 [class*="st-key-bl_bottle_picker_"] label{display:none!important;}
@@ -1869,8 +1958,13 @@ body:has(.bl-theme-state.dark) .bl-chip-amount{color:#fff!important}
 body:has(.bl-theme-state.dark) .bl-chip-duration{color:#c7d3e5!important}
 body:has(.bl-theme-state.dark) .bl-chip-sleep-state{color:#fff!important}
 body:has(.bl-theme-state.dark) .bl-chip-time{font-size:13px!important;color:#e8eef8!important}
+body:has(.bl-theme-state.dark) .bl-bottle-entry b{color:#fff!important}
+body:has(.bl-theme-state.dark) .bl-bottle-entry b em{background:rgba(126,182,255,.2);color:#fff!important}
+body:has(.bl-theme-state.dark) .bl-bottle-entry small{color:#d7e3f3!important}
+body:has(.bl-theme-state.dark) .bl-bottle-entry+.bl-bottle-entry{border-top-color:rgba(215,227,243,.22)}
 @media(max-width:900px){body:has(.bl-theme-state.dark) .bl-chip img{width:17px!important;height:17px!important}body:has(.bl-theme-state.dark) .bl-chip-time{font-size:11px!important}}
 @media(max-width:900px){.bl-chip-duration{font-size:9px!important}.bl-chip:has(.bl-chip-duration){gap:2px!important}.bl-chip:has(.bl-chip-duration) .bl-chip-time{font-size:9px!important}}
+@media(max-width:900px){.bl-bottle-entry b{gap:2px;font-size:9px}.bl-bottle-entry b em{min-width:20px;padding:2px;font-size:7px}.bl-bottle-entry small{font-size:7.5px}[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) .bl-time,[class*="st-key-blrow_"]:has(.bl-bottle-summary.multi) [class*="st-key-blslot_"]{min-height:62px!important}}
 
 /* KPI values are white in dark mode; keep a readable navy equivalent in light mode. */
 .st-key-bl_panel_a .bl-metric-total b,.st-key-bl_panel_a .bl-metric-line b,.st-key-bl_panel_b .bl-metric-total b,.st-key-bl_panel_b .bl-metric-line b{color:#112f62!important}
@@ -2124,11 +2218,14 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                         if kind == "sleep"
                         else cell_events
                     )
-                    for event in visible_cell_events:
-                        chips.append(
-                            f"<span class='bl-chip {event_class(kind)}'>"
-                            f"{cell_event_label(event)}<small class='bl-chip-time'>{esc(fmt_time(event.get('event_ts')))}</small></span>"
-                        )
+                    if kind == "bottle" and visible_cell_events:
+                        chips.append(bottle_cell_summary(visible_cell_events))
+                    else:
+                        for event in visible_cell_events:
+                            chips.append(
+                                f"<span class='bl-chip {event_class(kind)}'>"
+                                f"{cell_event_label(event)}<small class='bl-chip-time'>{esc(fmt_time(event.get('event_ts')))}</small></span>"
+                            )
                     with cell_col:
                         with st.container(key=f"blslot_{baby_id}_{hour}_{kind}"):
                             picker_open = st.session_state.get("boys_log_feed_picker") == (baby_id, kind, hour)
@@ -2136,26 +2233,42 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                 feed_events = events_by_baby_hour_kind.get((baby_id, hour, kind), [])
                                 current_value = None
                                 current_duration = None
+                                current_milk_type = "FOR"
+                                bottle_entries: dict[str, dict] = {}
                                 if feed_events and feed_events[-1].get("amount_ml") is not None:
                                     try:
                                         current_value = int(feed_events[-1].get("amount_ml"))
                                     except (TypeError, ValueError):
                                         current_value = None
                                     if kind == "bottle":
+                                        current_milk_type = bottle_milk_type(feed_events[-1])
                                         current_duration = event_duration_minutes(feed_events[-1])
+                                        for bottle_event in feed_events:
+                                            entry_type = bottle_milk_type(bottle_event)
+                                            bottle_entries[entry_type] = {
+                                                "value": bottle_event.get("amount_ml"),
+                                                "duration": event_duration_minutes(bottle_event),
+                                            }
                                 feed_values = BOTTLE_AMOUNTS if kind == "bottle" else BREASTFEED_MINUTES
                                 unit = "ml" if kind == "bottle" else "minutes"
                                 with st.container(key=f"bl_feed_wheel_host_{baby_id}_{kind}_{hour}"):
                                     with st.container(key=f"bl_feed_wheel_actions_{baby_id}_{kind}_{hour}"):
                                         if kind == "bottle":
-                                            for value in feed_values:
-                                                for duration in BREASTFEED_MINUTES:
-                                                    st.button(
-                                                        f"{value} ml · {duration} minutes",
-                                                        key=f"bl_feed_value_{baby_id}_{kind}_{hour}_{value}_{duration}",
-                                                        on_click=choose_feed_value,
-                                                        args=(baby_id, kind, hour, value, duration),
-                                                    )
+                                            for milk_type in MILK_TYPES:
+                                                for value in feed_values:
+                                                    for duration in BREASTFEED_MINUTES:
+                                                        st.button(
+                                                            f"{milk_type} · {value} ml · {duration} minutes",
+                                                            key=f"bl_feed_value_{baby_id}_{kind}_{hour}_{milk_type}_{value}_{duration}",
+                                                            on_click=choose_feed_value,
+                                                            args=(baby_id, kind, hour, value, duration, milk_type),
+                                                        )
+                                                st.button(
+                                                    f"Clear {milk_type}",
+                                                    key=f"bl_feed_clear_{baby_id}_{kind}_{hour}_{milk_type}",
+                                                    on_click=choose_feed_value,
+                                                    args=(baby_id, kind, hour, None, None, milk_type),
+                                                )
                                         else:
                                             for value in feed_values:
                                                 st.button(
@@ -2164,12 +2277,12 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                                     on_click=choose_feed_value,
                                                     args=(baby_id, kind, hour, value),
                                                 )
-                                        st.button(
-                                            "Clear",
-                                            key=f"bl_feed_clear_{baby_id}_{kind}_{hour}",
-                                            on_click=choose_feed_value,
-                                            args=(baby_id, kind, hour, None),
-                                        )
+                                            st.button(
+                                                "Clear",
+                                                key=f"bl_feed_clear_{baby_id}_{kind}_{hour}",
+                                                on_click=choose_feed_value,
+                                                args=(baby_id, kind, hour, None),
+                                            )
                                         st.button(
                                             "Cancel",
                                             key=f"bl_feed_cancel_{baby_id}_{kind}_{hour}",
@@ -2182,6 +2295,8 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                             hour,
                                             current_value,
                                             current_duration,
+                                            current_milk_type,
+                                            bottle_entries,
                                         ),
                                         height=1,
                                         width=1,
