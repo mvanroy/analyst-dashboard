@@ -50,7 +50,7 @@ KINDS = [
     ("other", "Other"),
 ]
 KIND_LABELS = dict(KINDS)
-BOTTLE_AMOUNTS = tuple(range(10, 121, 5))
+BOTTLE_AMOUNTS = (0,) + tuple(range(10, 121, 5))
 BREASTFEED_MINUTES = (15, 20, 25, 30, 35, 40, 45)
 MILK_TYPES = ("FOR", "EBM")
 FEED_KINDS = {"left", "right", "bottle"}
