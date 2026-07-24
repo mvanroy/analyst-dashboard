@@ -416,13 +416,21 @@ def brand_html(word1, word2, sub=""):
     )
 
 
-def render_header(word1, word2, sub="", brand=True, startup_background="purple"):
+def render_header(
+    word1,
+    word2,
+    sub="",
+    brand=True,
+    startup_background="purple",
+    show_clocks=True,
+):
     """Top chrome for a secondary page: nav + clocks row, then the brand block.
     Reproduces app.py's header layout (st.columns([1.5, 2.1]) with the clocks on
     the right) so the brand aligns across pages. Call once at the page top. Pass
-    brand=False to render only the nav + clocks (e.g. when the page wants to place
-    the brand alongside an action button itself). Use startup_background="navy"
-    for the Log page so the shared chrome never paints the trading gradient."""
+    brand=False to render only the navigation/header row. Use show_clocks=False
+    on pages that do not need market-session information. Use
+    startup_background="navy" for the Log page so the shared chrome never paints
+    the trading gradient."""
     if startup_background == "navy":
         base_color = "#061326"
         chrome_background = base_color
@@ -447,13 +455,16 @@ def render_header(word1, word2, sub="", brand=True, startup_background="purple")
     st.markdown(_mobile_footer_html(word1, word2), unsafe_allow_html=True)
 
     with st.container(key="desktop_header_row"):
-        navc, clockc = st.columns([1.5, 2.1])
-        with navc:
+        if show_clocks:
+            navc, clockc = st.columns([1.5, 2.1])
+            with navc:
+                render_nav(st.container(key="topnav"))
+            with clockc:
+                with st.container(key="desktop_clocks"):
+                    if not _server_is_mobile():
+                        render_clocks()
+        else:
             render_nav(st.container(key="topnav"))
-        with clockc:
-            with st.container(key="desktop_clocks"):
-                if not _server_is_mobile():
-                    render_clocks()
 
     if brand:
         brand_row = st.container(key="brandrow")

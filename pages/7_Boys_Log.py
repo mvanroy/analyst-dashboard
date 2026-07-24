@@ -30,7 +30,13 @@ if STANDALONE:
     buggins_pwa.install()
 buggins_auth.require_auth()
 if not STANDALONE:
-    chrome.render_header("BUGGINS DAILY", "LOG", "", startup_background="navy")
+    chrome.render_header(
+        "BUGGINS DAILY",
+        "LOG",
+        "",
+        startup_background="navy",
+        show_clocks=False,
+    )
 
 MEL = ZoneInfo("Australia/Melbourne")
 BABIES = [("a", "Zander"), ("b", "Phoenix")]
@@ -1149,6 +1155,12 @@ def save_care_field(baby: str, field: str) -> None:
 def toggle_baby_panel(baby: str) -> None:
     key = f"bl_panel_open_{baby}"
     st.session_state[key] = not st.session_state.get(key, False)
+    open_babies = [
+        baby_id
+        for baby_id, _ in BABIES
+        if st.session_state.get(f"bl_panel_open_{baby_id}", False)
+    ]
+    st.query_params["log_open"] = ",".join(open_babies) if open_babies else "none"
 
 
 def client_is_phone(user_agent: str) -> bool:
@@ -1171,9 +1183,19 @@ def initialise_baby_panels() -> None:
     defaults_key = "bl_panel_defaults_desktop_tablet_v1"
     if st.session_state.get(defaults_key):
         return
-    is_open = default_baby_panels_open()
-    for baby, _ in BABIES:
-        st.session_state[f"bl_panel_open_{baby}"] = is_open
+    saved_open = st.query_params.get("log_open")
+    if saved_open is not None:
+        open_babies = {
+            baby.strip()
+            for baby in str(saved_open).split(",")
+            if baby.strip() in {baby_id for baby_id, _ in BABIES}
+        }
+        for baby, _ in BABIES:
+            st.session_state[f"bl_panel_open_{baby}"] = baby in open_babies
+    else:
+        is_open = default_baby_panels_open()
+        for baby, _ in BABIES:
+            st.session_state[f"bl_panel_open_{baby}"] = is_open
     st.session_state[defaults_key] = True
 
 
