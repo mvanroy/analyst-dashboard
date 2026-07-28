@@ -84,6 +84,8 @@ ICON_FILES = {
     "title_koala": "baby-title-koala.png",
     "title_echidna": "baby-title-echidna.png",
     "undo": "undo.svg",
+    "nav_log": "baby-bottle-3.svg",
+    "nav_analytics": "data-analytics.svg",
 }
 
 
@@ -1673,6 +1675,8 @@ st.markdown(
     + """
 html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{background:#fff!important;background-image:none!important;}
 [data-testid="stMain"],[data-testid="stMainBlockContainer"]{background:transparent!important;}
+[data-testid="stSidebar"],[data-testid="stSidebarNav"],[data-testid="stExpandSidebarButton"],[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stHeaderActionElements"],[data-testid="stMainMenu"],[data-testid="stMainMenuButton"],.stDeployButton{display:none!important;}
+[data-testid="stAppViewContainer"]>.main{padding-top:0!important;}
 .st-key-topnav a,.st-key-topnav a p,.st-key-topnav a span{color:#526784!important;}
 .st-key-topnav a[data-testid="stPageLink-NavLink"][aria-current="page"],.st-key-topnav a:hover{background:rgba(82,103,132,.10)!important;color:#173664!important;}
 .st-key-brandrow{display:none!important;}
@@ -1920,7 +1924,9 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .st-key-buggins_primary_nav .bl-primary-nav-state{display:none!important;}
 .st-key-buggins_primary_nav [data-testid="stHorizontalBlock"]{gap:3px!important;}
 .st-key-buggins_primary_nav [data-testid="stColumn"]{min-width:0!important;}
-.st-key-buggins_primary_nav button{width:100%!important;height:38px!important;min-height:38px!important;padding:0 14px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#7184a4!important;font-size:12px!important;font-weight:900!important;box-shadow:none!important;}
+.st-key-buggins_primary_nav button{width:100%!important;height:38px!important;min-height:38px!important;padding:0!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#7184a4!important;box-shadow:none!important;display:flex!important;align-items:center!important;justify-content:center!important;}
+.st-key-buggins_primary_nav button p{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
+.st-key-buggins_primary_nav button:before{content:"";display:block;width:24px;height:24px;background-color:currentColor;-webkit-mask-position:center;mask-position:center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:contain;mask-size:contain;}
 .st-key-buggins_primary_nav button:hover,.st-key-buggins_primary_nav button:focus,.st-key-buggins_primary_nav button:active{background:#f4f8ff!important;color:#173664!important;box-shadow:none!important;outline:0!important;transform:none!important;}
 .st-key-buggins_primary_nav:has(.bl-primary-nav-state.log) .st-key-bl_nav_log button,.st-key-buggins_primary_nav:has(.bl-primary-nav-state.analytics) .st-key-bl_nav_analytics button{background:#173664!important;color:#fff!important;}
 body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav{border-color:#29425f!important;background:rgba(7,21,38,.94)!important;box-shadow:none!important;}
@@ -1945,6 +1951,7 @@ body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav:has(.bl-primary-nav-s
   .st-key-buggins_primary_nav{position:fixed!important;left:0!important;right:0!important;bottom:0!important;z-index:2147483647!important;width:100%!important;max-width:none!important;margin:0!important;padding:7px 8px calc(7px + env(safe-area-inset-bottom))!important;border:0!important;border-top:1px solid rgba(122,151,188,.24)!important;border-radius:0!important;background:rgba(7,21,38,.94)!important;backdrop-filter:blur(14px)!important;}
   .st-key-buggins_primary_nav [data-testid="stHorizontalBlock"]{width:min(100%,420px)!important;margin:0 auto!important;}
   .st-key-buggins_primary_nav button{height:48px!important;min-height:48px!important;border-radius:11px!important;color:#8fa0b6!important;}
+  .st-key-buggins_primary_nav button:before{width:27px;height:27px;}
   .st-key-buggins_primary_nav:has(.bl-primary-nav-state.log) .st-key-bl_nav_log button,.st-key-buggins_primary_nav:has(.bl-primary-nav-state.analytics) .st-key-bl_nav_analytics button{background:rgba(76,141,255,.16)!important;color:#72a7ff!important;}
   .st-key-boys_log_analytics_nav{display:none!important;}
   .st-key-boys_log_analytics_theme_bottom{display:flex!important;justify-content:center!important;max-width:1500px;margin:14px auto 78px;padding:0 8px;}
@@ -2289,12 +2296,22 @@ body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-group.sleep_kpi .bl
 title_koala = icon_data_uri("title_koala")
 title_echidna = icon_data_uri("title_echidna")
 undo_icon = icon_data_uri("undo")
+nav_log_icon = icon_data_uri("nav_log")
+nav_analytics_icon = icon_data_uri("nav_analytics")
 st.markdown(
     f"""
 <style>
 .st-key-bl_back_to_log button:before{{
   -webkit-mask-image:url("{undo_icon}")!important;
   mask-image:url("{undo_icon}")!important;
+}}
+.st-key-bl_nav_log button:before{{
+  -webkit-mask-image:url("{nav_log_icon}")!important;
+  mask-image:url("{nav_log_icon}")!important;
+}}
+.st-key-bl_nav_analytics button:before{{
+  -webkit-mask-image:url("{nav_analytics_icon}")!important;
+  mask-image:url("{nav_analytics_icon}")!important;
 }}
 </style>
 """,
