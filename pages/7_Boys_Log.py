@@ -701,6 +701,112 @@ def sleep_detail_overlay_html(baby: str, baby_label: str, hour: int, cycles: lis
 """
 
 
+def sleep_detail_registry_html(entries: list[dict]) -> str:
+    """Install one shared sleep-detail overlay for every completed cycle cell."""
+    config = json.dumps(entries)
+    return f"""
+<script>
+(() => {{
+  const configs = {config};
+  const parentWindow = window.parent;
+  const doc = parentWindow.document;
+  const previous = parentWindow.__blSleepDetailRegistry || [];
+  previous.forEach((entry) =>
+    entry.button.removeEventListener("click", entry.handler, true)
+  );
+  parentWindow.__blSleepDetailRegistry = [];
+
+  const closeOverlay = () =>
+    doc.getElementById("bl-sleep-detail-overlay")?.remove();
+  const escapeHtml = (value) => String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+
+  const showOverlay = (config) => {{
+    closeOverlay();
+    doc.getElementById("bl-feed-wheel-overlay")?.remove();
+    const overlay = doc.createElement("div");
+    overlay.id = "bl-sleep-detail-overlay";
+    const rows = config.cycles.map((cycle) => `
+      <div class="bl-sleep-overlay-row">
+        <div><span>Start</span><b>${{escapeHtml(cycle.start)}}</b></div>
+        <div><span>End</span><b>${{escapeHtml(cycle.end)}}</b></div>
+        <div><span>Duration</span><b>${{escapeHtml(cycle.duration)}}</b></div>
+      </div>`).join("");
+    overlay.innerHTML = `
+      <style>
+        #bl-sleep-detail-overlay{{position:fixed;inset:0;z-index:2147483647;display:flex;align-items:center;justify-content:center;width:100%;height:100vh;height:100dvh;padding:16px;box-sizing:border-box;background:rgba(2,10,23,.72);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px)}}
+        #bl-sleep-detail-overlay *{{box-sizing:border-box}}
+        #bl-sleep-detail-panel{{width:min(100%,390px);max-height:calc(100dvh - 32px);overflow-y:auto;padding:20px;border:1px solid #456487;border-radius:18px;background:#10243d;box-shadow:0 24px 80px rgba(0,0,0,.62);color:#f5f7fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
+        #bl-sleep-detail-head{{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px}}
+        #bl-sleep-detail-title{{color:#b9c8dc;font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}}
+        #bl-sleep-detail-baby{{font-size:20px;font-weight:850}}
+        .bl-sleep-overlay-row{{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:16px 0;border-top:1px solid rgba(102,135,173,.38);text-align:center}}
+        .bl-sleep-overlay-row>div{{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}}
+        .bl-sleep-overlay-row span{{color:#b9c8dc;font-size:11px;font-weight:750;letter-spacing:.06em;text-transform:uppercase}}
+        .bl-sleep-overlay-row b{{color:#fff;font-size:17px;font-weight:850;font-variant-numeric:tabular-nums;white-space:nowrap}}
+        #bl-sleep-detail-close{{width:100%;height:46px;margin-top:2px;border:1px solid #456487;border-radius:11px;background:#17304f;color:#e8eef8;font-size:15px;font-weight:800}}
+        #bl-sleep-detail-close:active{{background:#214266}}
+        @media(max-width:600px){{
+          #bl-sleep-detail-panel{{width:100%;padding:18px}}
+          .bl-sleep-overlay-row b{{font-size:16px}}
+        }}
+      </style>
+      <div id="bl-sleep-detail-panel" role="dialog" aria-modal="true" aria-labelledby="bl-sleep-detail-title">
+        <div id="bl-sleep-detail-head">
+          <span id="bl-sleep-detail-title">Sleep details</span>
+          <b id="bl-sleep-detail-baby">${{escapeHtml(config.baby)}}</b>
+        </div>
+        <div>${{rows}}</div>
+        <button type="button" id="bl-sleep-detail-close">Close</button>
+      </div>`;
+    doc.body.appendChild(overlay);
+    const panel = overlay.querySelector("#bl-sleep-detail-panel");
+    panel.addEventListener("click", (event) => event.stopPropagation());
+    overlay.addEventListener("click", closeOverlay);
+    overlay.querySelector("#bl-sleep-detail-close").addEventListener("click", closeOverlay);
+    overlay.querySelector("#bl-sleep-detail-close").focus();
+  }};
+
+  const install = (attempt = 0) => {{
+    const installed = [];
+    configs.forEach((config) => {{
+      const selector = `[class*="st-key-blcell_${{config.key}}_sleep"] button`;
+      [...doc.querySelectorAll(selector)].forEach((button) => {{
+        const handler = (event) => {{
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          showOverlay(config);
+        }};
+        button.addEventListener("click", handler, true);
+        installed.push({{button, handler}});
+      }});
+    }});
+    if (installed.length < configs.length && attempt < 20) {{
+      installed.forEach((entry) =>
+        entry.button.removeEventListener("click", entry.handler, true)
+      );
+      parentWindow.setTimeout(() => install(attempt + 1), 50);
+      return;
+    }}
+    parentWindow.__blSleepDetailRegistry = installed;
+  }};
+
+  if (!parentWindow.__blSleepDetailEscapeInstalled) {{
+    doc.addEventListener("keydown", (event) => {{
+      if (event.key === "Escape") closeOverlay();
+    }});
+    parentWindow.__blSleepDetailEscapeInstalled = true;
+  }}
+  install();
+}})();
+</script>
+"""
+
+
 def sleep_cell_fill(segments: list[tuple[str, str, str, str, float, float, float]]) -> str:
     if not segments:
         return ""
@@ -884,7 +990,11 @@ def care_details_card(bath_time: str = "") -> str:
 
 def selected_day() -> date:
     if "boys_log_day" not in st.session_state:
-        st.session_state.boys_log_day = datetime.now(MEL).date()
+        query_day = str(st.query_params.get("day") or "")
+        try:
+            st.session_state.boys_log_day = date.fromisoformat(query_day)
+        except ValueError:
+            st.session_state.boys_log_day = datetime.now(MEL).date()
     if "bl_date_picker" not in st.session_state:
         st.session_state.bl_date_picker = st.session_state.boys_log_day
     return st.session_state.boys_log_day
@@ -893,6 +1003,7 @@ def selected_day() -> date:
 def set_day(value: date) -> None:
     st.session_state.boys_log_day = value
     st.session_state.bl_date_picker = value
+    st.query_params["day"] = value.isoformat()
 
 
 def shift_day(days: int) -> None:
@@ -906,7 +1017,7 @@ def use_today() -> None:
 def sync_day_from_picker() -> None:
     picked = st.session_state.get("bl_date_picker")
     if isinstance(picked, date):
-        st.session_state.boys_log_day = picked
+        set_day(picked)
 
 
 def log_event(baby: str, kind: str, amount_ml: int | None = None, note: str = "") -> None:
@@ -1359,7 +1470,9 @@ def toggle_dashboard_view() -> None:
 
 
 def set_dashboard_view(view: str) -> None:
-    st.session_state["boys_log_view"] = "analytics" if view == "analytics" else "log"
+    chosen = "analytics" if view == "analytics" else "log"
+    st.session_state["boys_log_view"] = chosen
+    st.query_params["view"] = chosen
     st.session_state["bl_scroll_after_view_toggle"] = True
 
 
@@ -1376,6 +1489,25 @@ def sync_theme_from_mobile_analytics() -> None:
         "bl_analytics_mobile_theme",
         "Dark",
     )
+    sync_theme_query()
+
+
+def sync_theme_query() -> None:
+    theme = str(st.session_state.get("bl_theme_choice") or "Dark").lower()
+    st.query_params["theme"] = "light" if theme == "light" else "dark"
+
+
+def initialise_interface_state() -> None:
+    if "boys_log_view" not in st.session_state:
+        query_view = str(st.query_params.get("view") or "log").lower()
+        st.session_state["boys_log_view"] = (
+            "analytics" if query_view == "analytics" else "log"
+        )
+    if "bl_theme_choice" not in st.session_state:
+        query_theme = str(st.query_params.get("theme") or "dark").lower()
+        st.session_state["bl_theme_choice"] = (
+            "Light" if query_theme == "light" else "Dark"
+        )
 
 
 def numeric_measurement(value) -> float | None:
@@ -1676,11 +1808,13 @@ st.markdown(
 html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{background:#fff!important;background-image:none!important;}
 [data-testid="stMain"],[data-testid="stMainBlockContainer"]{background:transparent!important;}
 [data-testid="stSidebar"],[data-testid="stSidebarNav"],[data-testid="stExpandSidebarButton"],[data-testid="stHeader"],[data-testid="stToolbar"],[data-testid="stHeaderActionElements"],[data-testid="stMainMenu"],[data-testid="stMainMenuButton"],.stDeployButton{display:none!important;}
-[data-testid="stAppViewContainer"]>.main{padding-top:0!important;}
+[data-testid="stMainBlockContainer"]{padding-top:0!important;padding-bottom:96px!important;}
+[data-testid="stMainBlockContainer"]>[data-testid="stVerticalBlock"]>*:has(~ [data-testid="stElementContainer"] .bl-mobile-title):not(:has(.mobile-footer-nav)){display:none!important;}
+[data-testid="stLayoutWrapper"]:has(.st-key-buggins_primary_nav){display:contents!important;}
 .st-key-topnav a,.st-key-topnav a p,.st-key-topnav a span{color:#526784!important;}
 .st-key-topnav a[data-testid="stPageLink-NavLink"][aria-current="page"],.st-key-topnav a:hover{background:rgba(82,103,132,.10)!important;color:#173664!important;}
 .st-key-brandrow{display:none!important;}
-.bl-mobile-title{display:flex;align-items:center;justify-content:center;gap:14px;text-align:center;margin:-4px 0 10px;}
+.bl-mobile-title{display:flex;align-items:center;justify-content:center;gap:14px;text-align:center;margin:0 0 10px;}
 .bl-mobile-title img{width:88px;height:88px;object-fit:contain;display:block;flex:0 0 88px;}
 .bl-mobile-title h1{margin:0;color:#173664;font-size:28px;font-weight:950;letter-spacing:.01em;line-height:1.05;white-space:nowrap;}
 .bl-shell{max-width:1500px;margin:-30px auto 0;padding:0 10px 30px;color:#14315f;}
@@ -1755,8 +1889,8 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-metric-total{text-align:center;}
 .bl-metric-total b{display:inline-block;color:#112f62;font-size:30px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;margin:0;}
 .bl-metric-total small{display:block;color:#63779c;font-size:11px;font-weight:850;line-height:1.1;margin:0 0 4px;white-space:nowrap;}
-.bl-toolbar .stButton>button,[class*="st-key-bl_"] .stButton>button{height:46px;border-radius:12px!important;border:1px solid #dce6f3!important;background:#fff!important;color:#173664!important;font-weight:900!important;font-size:13px!important;box-shadow:0 10px 24px rgba(61,95,140,.07)!important;}
-.bl-toolbar .stButton>button:active,[class*="st-key-bl_"] .stButton>button:active{transform:scale(.98);}
+.bl-toolbar .stButton>button,[class*="st-key-bl_"]:not(.st-key-bl_nav_log):not(.st-key-bl_nav_analytics) .stButton>button{height:46px;border-radius:12px!important;border:1px solid #dce6f3!important;background:#fff!important;color:#173664!important;font-weight:900!important;font-size:13px!important;box-shadow:0 10px 24px rgba(61,95,140,.07)!important;}
+.bl-toolbar .stButton>button:active,[class*="st-key-bl_"]:not(.st-key-bl_nav_log):not(.st-key-bl_nav_analytics) .stButton>button:active{transform:scale(.98);}
 .st-key-bl_panel_a [class*="st-key-bl_toggle_"],.st-key-bl_panel_b [class*="st-key-bl_toggle_"]{margin:0!important;}
 .st-key-bl_panel_a [class*="st-key-bl_toggle_"],.st-key-bl_panel_a [class*="st-key-bl_toggle_"] *,.st-key-bl_panel_b [class*="st-key-bl_toggle_"],.st-key-bl_panel_b [class*="st-key-bl_toggle_"] *{-webkit-tap-highlight-color:transparent!important;box-shadow:none!important;filter:none!important;outline:0!important;}
 .st-key-bl_panel_a [class*="st-key-bl_toggle_"] button,.st-key-bl_panel_a [class*="st-key-bl_toggle_"] button:hover,.st-key-bl_panel_a [class*="st-key-bl_toggle_"] button:focus,.st-key-bl_panel_a [class*="st-key-bl_toggle_"] button:focus-visible,.st-key-bl_panel_a [class*="st-key-bl_toggle_"] button:active,.st-key-bl_panel_b [class*="st-key-bl_toggle_"] button,.st-key-bl_panel_b [class*="st-key-bl_toggle_"] button:hover,.st-key-bl_panel_b [class*="st-key-bl_toggle_"] button:focus,.st-key-bl_panel_b [class*="st-key-bl_toggle_"] button:focus-visible,.st-key-bl_panel_b [class*="st-key-bl_toggle_"] button:active{background:transparent!important;border:0!important;box-shadow:none!important;outline:0!important;transform:none!important;}
@@ -1920,19 +2054,6 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-empty{color:#7184a4;font-size:12px;font-weight:750;padding:5px 0;}
 .st-key-boys_log_view_nav{position:relative!important;z-index:5!important;max-width:1500px;margin:18px auto 28px;padding:0 10px;display:flex!important;flex-direction:row!important;justify-content:flex-end!important;align-items:center!important;}
 .st-key-boys_log_view_nav [data-testid="stElementContainer"]{width:auto!important;}
-.st-key-buggins_primary_nav{position:relative!important;z-index:8!important;width:min(360px,calc(100% - 20px))!important;margin:0 auto 14px!important;padding:3px!important;border:1px solid #dce6f3!important;border-radius:14px!important;background:rgba(255,255,255,.94)!important;box-shadow:0 10px 28px rgba(61,95,140,.08)!important;}
-.st-key-buggins_primary_nav .bl-primary-nav-state{display:none!important;}
-.st-key-buggins_primary_nav [data-testid="stHorizontalBlock"]{gap:3px!important;}
-.st-key-buggins_primary_nav [data-testid="stColumn"]{min-width:0!important;}
-.st-key-buggins_primary_nav button{width:100%!important;height:38px!important;min-height:38px!important;padding:0!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#7184a4!important;box-shadow:none!important;display:flex!important;align-items:center!important;justify-content:center!important;}
-.st-key-buggins_primary_nav button p{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important;}
-.st-key-buggins_primary_nav button:before{content:"";display:block;width:24px;height:24px;background-color:currentColor;-webkit-mask-position:center;mask-position:center;-webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;-webkit-mask-size:contain;mask-size:contain;}
-.st-key-buggins_primary_nav button:hover,.st-key-buggins_primary_nav button:focus,.st-key-buggins_primary_nav button:active{background:#f4f8ff!important;color:#173664!important;box-shadow:none!important;outline:0!important;transform:none!important;}
-.st-key-buggins_primary_nav:has(.bl-primary-nav-state.log) .st-key-bl_nav_log button,.st-key-buggins_primary_nav:has(.bl-primary-nav-state.analytics) .st-key-bl_nav_analytics button{background:#173664!important;color:#fff!important;}
-body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav{border-color:#29425f!important;background:rgba(7,21,38,.94)!important;box-shadow:none!important;}
-body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav button{color:#9fb0c6!important;}
-body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav button:hover,body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav button:focus{background:rgba(76,141,255,.14)!important;color:#fff!important;}
-body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav:has(.bl-primary-nav-state.log) .st-key-bl_nav_log button,body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav:has(.bl-primary-nav-state.analytics) .st-key-bl_nav_analytics button{background:#4c8dff!important;color:#07101f!important;}
 .st-key-boys_log_analytics_nav{position:relative!important;z-index:5!important;max-width:1500px;margin:-2px auto 12px;padding:0 10px;display:flex!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;}
 .st-key-boys_log_analytics_nav [data-testid="stElementContainer"]{width:auto!important;}
 .st-key-boys_log_analytics_theme_bottom{display:none!important;}
@@ -1948,11 +2069,6 @@ body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav:has(.bl-primary-nav-s
 .st-key-boys_log_analytics_range [role="radiogroup"] button[aria-checked="true"]{border-color:#4c8dff!important;background:#211d4f!important;color:#4c8dff!important;box-shadow:inset 0 0 0 1px #4c8dff!important;}
 .st-key-boys_log_analytics_range [role="radiogroup"] button:hover{border-color:#4c8dff!important;color:#fff!important;}
 @media(max-width:900px){
-  .st-key-buggins_primary_nav{position:fixed!important;left:0!important;right:0!important;bottom:0!important;z-index:2147483647!important;width:100%!important;max-width:none!important;margin:0!important;padding:7px 8px calc(7px + env(safe-area-inset-bottom))!important;border:0!important;border-top:1px solid rgba(122,151,188,.24)!important;border-radius:0!important;background:rgba(7,21,38,.94)!important;backdrop-filter:blur(14px)!important;}
-  .st-key-buggins_primary_nav [data-testid="stHorizontalBlock"]{width:min(100%,420px)!important;margin:0 auto!important;}
-  .st-key-buggins_primary_nav button{height:48px!important;min-height:48px!important;border-radius:11px!important;color:#8fa0b6!important;}
-  .st-key-buggins_primary_nav button:before{width:27px;height:27px;}
-  .st-key-buggins_primary_nav:has(.bl-primary-nav-state.log) .st-key-bl_nav_log button,.st-key-buggins_primary_nav:has(.bl-primary-nav-state.analytics) .st-key-bl_nav_analytics button{background:rgba(76,141,255,.16)!important;color:#72a7ff!important;}
   .st-key-boys_log_analytics_nav{display:none!important;}
   .st-key-boys_log_analytics_theme_bottom{display:flex!important;justify-content:center!important;max-width:1500px;margin:14px auto 78px;padding:0 8px;}
   .st-key-boys_log_analytics_theme_bottom [data-testid="stElementContainer"]{width:auto!important;}
@@ -2105,7 +2221,7 @@ body:has(.bl-theme-state.dark) .st-key-boys_log_theme [role="radiogroup"]{border
 body:has(.bl-theme-state.dark) .st-key-boys_log_theme [role="radiogroup"] label p{color:#8fa3bd!important}
 body:has(.bl-theme-state.dark) .st-key-boys_log_theme [role="radiogroup"] label:has(input:checked){background:linear-gradient(135deg,#4d7fe6,#7767d8)!important;box-shadow:0 5px 15px rgba(82,118,224,.30)!important}
 body:has(.bl-theme-state.dark) .st-key-boys_log_theme [role="radiogroup"] label:has(input:checked) p{color:#fff!important}
-body:has(.bl-theme-state.dark) .bl-date-display,body:has(.bl-theme-state.dark) .bl-sync,body:has(.bl-theme-state.dark) .bl-toolbar .stButton>button,body:has(.bl-theme-state.dark) [class*="st-key-bl_"] .stButton>button{border-color:#29425f!important;background:#0d1d33!important;color:#e8eef8!important;box-shadow:0 10px 24px rgba(0,0,0,.18)!important}
+body:has(.bl-theme-state.dark) .bl-date-display,body:has(.bl-theme-state.dark) .bl-sync,body:has(.bl-theme-state.dark) .bl-toolbar .stButton>button,body:has(.bl-theme-state.dark) [class*="st-key-bl_"]:not(.st-key-bl_nav_log):not(.st-key-bl_nav_analytics) .stButton>button{border-color:#29425f!important;background:#0d1d33!important;color:#e8eef8!important;box-shadow:0 10px 24px rgba(0,0,0,.18)!important}
 body:has(.bl-theme-state.dark) .bl-date-display{color:#f5f7fb!important}
 body:has(.bl-theme-state.dark) .bl-sync{color:#9fb0c6!important}
 body:has(.bl-theme-state.dark) .st-key-bl_prev .stButton>button:before,body:has(.bl-theme-state.dark) .st-key-bl_next .stButton>button:before{color:#dce7f6!important}
@@ -2313,6 +2429,165 @@ st.markdown(
   -webkit-mask-image:url("{nav_analytics_icon}")!important;
   mask-image:url("{nav_analytics_icon}")!important;
 }}
+.st-key-buggins_primary_nav{{
+  position:fixed!important;
+  left:0!important;
+  right:0!important;
+  bottom:0!important;
+  z-index:2147483647!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  max-width:none!important;
+  min-height:68px!important;
+  gap:0!important;
+  margin:0!important;
+  padding:8px 16px calc(8px + env(safe-area-inset-bottom))!important;
+  border:0!important;
+  border-top:1px solid rgba(122,151,188,.22)!important;
+  border-radius:0!important;
+  background:rgba(248,251,255,.94)!important;
+  box-shadow:0 -8px 28px rgba(30,55,90,.08)!important;
+  backdrop-filter:blur(16px)!important;
+  -webkit-backdrop-filter:blur(16px)!important;
+}}
+.st-key-buggins_primary_nav .bl-primary-nav-state{{display:none!important;}}
+.st-key-buggins_primary_nav [data-testid="stElementContainer"]:has(.bl-primary-nav-state){{
+  display:none!important;
+  width:0!important;
+  height:0!important;
+  min-height:0!important;
+  margin:0!important;
+  padding:0!important;
+}}
+.st-key-buggins_primary_nav [data-testid="stHorizontalBlock"]{{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:auto!important;
+  gap:72px!important;
+  margin:0 auto!important;
+}}
+.st-key-buggins_primary_nav [data-testid="stColumn"],
+.st-key-buggins_primary_nav [data-testid="stColumn"] [data-testid="stElementContainer"],
+.st-key-buggins_primary_nav .stButton{{
+  flex:0 0 48px!important;
+  width:48px!important;
+  min-width:48px!important;
+  max-width:48px!important;
+  height:48px!important;
+  min-height:48px!important;
+  margin:0!important;
+  padding:0!important;
+}}
+.st-key-buggins_primary_nav button{{
+  position:relative!important;
+  display:block!important;
+  width:48px!important;
+  min-width:48px!important;
+  max-width:48px!important;
+  height:48px!important;
+  min-height:48px!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:50%!important;
+  background:transparent!important;
+  color:#7184a4!important;
+  box-shadow:none!important;
+  outline:0!important;
+  transform:none!important;
+  -webkit-tap-highlight-color:transparent!important;
+}}
+.st-key-buggins_primary_nav button [data-testid="stMarkdownContainer"]{{
+  position:absolute!important;
+  width:1px!important;
+  height:1px!important;
+  margin:-1px!important;
+  padding:0!important;
+  overflow:hidden!important;
+  clip:rect(0,0,0,0)!important;
+  white-space:nowrap!important;
+  border:0!important;
+}}
+.st-key-buggins_primary_nav button:before{{
+  content:""!important;
+  position:absolute!important;
+  left:50%!important;
+  top:50%!important;
+  display:block!important;
+  width:27px!important;
+  height:27px!important;
+  min-width:27px!important;
+  transform:translate(-50%,-54%)!important;
+  background-color:currentColor!important;
+  -webkit-mask-position:center!important;
+  mask-position:center!important;
+  -webkit-mask-repeat:no-repeat!important;
+  mask-repeat:no-repeat!important;
+  -webkit-mask-size:contain!important;
+  mask-size:contain!important;
+}}
+.st-key-buggins_primary_nav button:hover,
+.st-key-buggins_primary_nav button:active{{
+  border:0!important;
+  background:transparent!important;
+  color:#173664!important;
+  box-shadow:none!important;
+  transform:none!important;
+}}
+.st-key-buggins_primary_nav button:focus-visible{{
+  outline:0!important;
+  color:#4c8dff!important;
+}}
+.st-key-buggins_primary_nav:has(.bl-primary-nav-state.log) .st-key-bl_nav_log button,
+.st-key-buggins_primary_nav:has(.bl-primary-nav-state.analytics) .st-key-bl_nav_analytics button{{
+  border:0!important;
+  background:transparent!important;
+  color:#4c8dff!important;
+  box-shadow:none!important;
+}}
+.st-key-buggins_primary_nav:has(.bl-primary-nav-state.log) .st-key-bl_nav_log button:after,
+.st-key-buggins_primary_nav:has(.bl-primary-nav-state.analytics) .st-key-bl_nav_analytics button:after{{
+  content:""!important;
+  position:absolute!important;
+  left:50%!important;
+  bottom:2px!important;
+  width:4px!important;
+  height:4px!important;
+  border-radius:50%!important;
+  background:currentColor!important;
+  transform:translateX(-50%)!important;
+}}
+body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav{{
+  border-top-color:rgba(122,151,188,.24)!important;
+  background:rgba(7,21,38,.94)!important;
+  box-shadow:none!important;
+}}
+body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav button{{
+  border:0!important;
+  background:transparent!important;
+  color:#8fa0b6!important;
+  box-shadow:none!important;
+}}
+body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav button:hover,
+body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav button:active{{
+  border:0!important;
+  background:transparent!important;
+  color:#dce7f6!important;
+  box-shadow:none!important;
+}}
+body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav:has(.bl-primary-nav-state.log) .st-key-bl_nav_log button,
+body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav:has(.bl-primary-nav-state.analytics) .st-key-bl_nav_analytics button{{
+  border:0!important;
+  background:transparent!important;
+  color:#72a7ff!important;
+  box-shadow:none!important;
+}}
+@media(max-width:430px){{
+  .st-key-buggins_primary_nav [data-testid="stHorizontalBlock"]{{gap:64px!important;}}
+}}
 </style>
 """,
     unsafe_allow_html=True,
@@ -2326,6 +2601,7 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
+initialise_interface_state()
 with st.container(key="boys_log_theme_state"):
     theme_choice = st.session_state.get("bl_theme_choice", "Dark")
     st.markdown(
@@ -2432,6 +2708,7 @@ if analytics_view:
                 horizontal=True,
                 index=1,
                 key="bl_theme_choice",
+                on_change=sync_theme_query,
                 label_visibility="collapsed",
             )
     with st.container(key="boys_log_analytics_range"):
@@ -2489,6 +2766,7 @@ for event in events:
     events_by_baby_hour[(event.get("baby"), dt.hour)].append(event)
 
 initialise_baby_panels()
+sleep_detail_entries: list[dict] = []
 cols = st.columns(2)
 for idx, (baby_id, baby_label) in enumerate(BABIES):
     with cols[idx]:
@@ -2711,15 +2989,19 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                     use_container_width=True,
                                 )
                                 if show_sleep_detail:
-                                    components.html(
-                                        sleep_detail_overlay_html(
-                                            baby_id,
-                                            baby_label,
-                                            hour,
-                                            hour_sleep_cycles,
-                                        ),
-                                        height=1,
-                                        width=1,
+                                    sleep_detail_entries.append(
+                                        {
+                                            "key": f"{baby_id}_{hour}",
+                                            "baby": baby_label,
+                                            "cycles": [
+                                                {
+                                                    "start": cycle.get("start"),
+                                                    "end": cycle.get("end"),
+                                                    "duration": cycle.get("duration"),
+                                                }
+                                                for cycle in hour_sleep_cycles
+                                            ],
+                                        }
                                     )
                             if chips:
                                 st.markdown("".join(chips), unsafe_allow_html=True)
@@ -2820,6 +3102,12 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                     )
                 st.markdown("</div>", unsafe_allow_html=True)
 
+if sleep_detail_entries:
+    components.html(
+        sleep_detail_registry_html(sleep_detail_entries),
+        height=1,
+        width=1,
+    )
 st.markdown("</div>", unsafe_allow_html=True)
 st.markdown(
     """
@@ -2885,5 +3173,6 @@ with st.container(key="boys_log_view_nav"):
             horizontal=True,
             index=1,
             key="bl_theme_choice",
+            on_change=sync_theme_query,
             label_visibility="collapsed",
         )

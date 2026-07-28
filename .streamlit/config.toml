@@ -9,3 +9,7 @@ font = "sans serif"
 [server]
 headless = false
 enableStaticServing = true
+
+[client]
+showSidebarNavigation = false
+toolbarMode = "minimal"
