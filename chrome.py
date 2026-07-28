@@ -386,8 +386,6 @@ def inject_background():
 
 # Page nav links, in order. Labels are the single source of truth across pages.
 _NAV = [
-    ("pages/7_Boys_Log.py", "Log"),
-    ("pages/0_Scanner.py", "Scanner"),
     ("pages/1_Trade_Setup.py", "Trade Setup"),
     ("pages/4_Live_Trades.py", "Live Trades"),
     ("pages/5_Tracker.py", "Tracking"),
@@ -477,15 +475,13 @@ def _mobile_nav_html(word1, word2):
 
 def _mobile_footer_html(word1, word2):
     current = f"{word1} {word2}".strip().lower()
-    log_active = "active" if "daily log" in current or "boys log" in current else ""
     setup_active = "active" if "trade setup" in current else ""
     trades_active = "active" if "live trades" in current else ""
     tracking_active = "active" if "tracker" in current or "tracking" in current else ""
-    log_icon = _inline_icon("baby-bottle-3.svg")
     trade_icon = _inline_icon("target.svg")
     trades_icon = _inline_icon("alert-play.svg")
     tracking_icon = _inline_icon("data-analytics.svg")
-    base = "https://app.igbycentral.com"
+    base = "https://trading.igbycentral.com"
     def item(active, path, icon, label):
         href = f"{base}{path}"
         nav = f"window.location.href='{href}';return false;"
@@ -496,7 +492,6 @@ def _mobile_footer_html(word1, word2):
         )
     return (
         '<nav class="mobile-footer-nav" aria-label="Mobile navigation">'
-        + item(log_active, "/Boys_Log", log_icon, "Log")
         + item(setup_active, "/Trade_Setup", trade_icon, "Setup")
         + item(trades_active, "/Live_Trades", trades_icon, "Trades")
         + item(tracking_active, "/Tracker", tracking_icon, "Tracking")

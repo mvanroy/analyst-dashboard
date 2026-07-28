@@ -351,13 +351,7 @@ def _trade_plan(tp, symbol=""):
         '<div class="tphead"><div class="dtitle">Trade Plan</div>'
         f'<div class="tpdir">{_e(tp.get("direction"))}</div></div>'
     )
-    btn = ""
-    if symbol:
-        btn = (
-            f'<a class="pushbtn" target="_self" '
-            f'href="/Position_Size_Calculator?symbol={_e(symbol)}">Push To Calculator</a>'
-        )
-    return head + rows + btn
+    return head + rows
 
 
 def _levels(kl):
@@ -1852,19 +1846,8 @@ def _pattern_entry(entry, current=None, symbol=None):
     em0 = (elow + ehigh) / 2 if (elow is not None and ehigh is not None) else (elow if elow is not None else ehigh)
     direction = (entry.get("direction") or ("short" if (em0 is not None and ref0 is not None and ref0 < em0) else "long")).lower()
 
-    calc = ""
-    if symbol:
-        _parts = [f"symbol={symbol}", f"dir={direction}"]
-        for _k, _v in (("entry", em0), ("stop", sv), ("t1", t1v), ("t2", t2v)):
-            if _v is not None:
-                _parts.append(f"{_k}={_v}")
-        calc = (
-            '<a class="ezcalc" target="_self" title="Push to Calculator" '
-            f'href="/Position_Size_Calculator?{"&".join(_parts)}">{_CALC_SVG}</a>'
-        )
     hero = (
         f'<div class="ezhero ez-{direction}">'
-        + calc
         + '<div class="ezpill">Entry Zone</div>'
         + f'<div class="ezbig">{_e(zone.get("label") or "")}</div>'
         + (f'<div class="ezsub">{_e((zone.get("subtitle") or "").upper())}</div>' if zone.get("subtitle") else "")
