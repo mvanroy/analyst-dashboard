@@ -1353,8 +1353,20 @@ def format_sleep_duration(total_seconds: int) -> tuple[str, str]:
 
 def toggle_dashboard_view() -> None:
     current = st.session_state.get("boys_log_view", "log")
-    st.session_state["boys_log_view"] = "log" if current == "analytics" else "analytics"
+    set_dashboard_view("log" if current == "analytics" else "analytics")
+
+
+def set_dashboard_view(view: str) -> None:
+    st.session_state["boys_log_view"] = "analytics" if view == "analytics" else "log"
     st.session_state["bl_scroll_after_view_toggle"] = True
+
+
+def show_log_view() -> None:
+    set_dashboard_view("log")
+
+
+def show_analytics_view() -> None:
+    set_dashboard_view("analytics")
 
 
 def sync_theme_from_mobile_analytics() -> None:
@@ -1664,7 +1676,9 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .st-key-topnav a,.st-key-topnav a p,.st-key-topnav a span{color:#526784!important;}
 .st-key-topnav a[data-testid="stPageLink-NavLink"][aria-current="page"],.st-key-topnav a:hover{background:rgba(82,103,132,.10)!important;color:#173664!important;}
 .st-key-brandrow{display:none!important;}
-.bl-mobile-title{display:none;}
+.bl-mobile-title{display:flex;align-items:center;justify-content:center;gap:14px;text-align:center;margin:-4px 0 10px;}
+.bl-mobile-title img{width:88px;height:88px;object-fit:contain;display:block;flex:0 0 88px;}
+.bl-mobile-title h1{margin:0;color:#173664;font-size:28px;font-weight:950;letter-spacing:.01em;line-height:1.05;white-space:nowrap;}
 .bl-shell{max-width:1500px;margin:-30px auto 0;padding:0 10px 30px;color:#14315f;}
 .bl-toolbar{display:grid;grid-template-columns:auto 1fr auto auto auto;gap:10px;align-items:center;margin-bottom:14px;}
 .bl-date{border:1px solid #dce6f3;background:#fff;border-radius:12px;padding:12px 15px;color:#173664;font-size:18px;font-weight:950;text-align:center;box-shadow:0 12px 30px rgba(61,95,140,.08);}
@@ -1902,6 +1916,17 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-empty{color:#7184a4;font-size:12px;font-weight:750;padding:5px 0;}
 .st-key-boys_log_view_nav{position:relative!important;z-index:5!important;max-width:1500px;margin:18px auto 28px;padding:0 10px;display:flex!important;flex-direction:row!important;justify-content:flex-end!important;align-items:center!important;}
 .st-key-boys_log_view_nav [data-testid="stElementContainer"]{width:auto!important;}
+.st-key-buggins_primary_nav{position:relative!important;z-index:8!important;width:min(360px,calc(100% - 20px))!important;margin:0 auto 14px!important;padding:3px!important;border:1px solid #dce6f3!important;border-radius:14px!important;background:rgba(255,255,255,.94)!important;box-shadow:0 10px 28px rgba(61,95,140,.08)!important;}
+.st-key-buggins_primary_nav .bl-primary-nav-state{display:none!important;}
+.st-key-buggins_primary_nav [data-testid="stHorizontalBlock"]{gap:3px!important;}
+.st-key-buggins_primary_nav [data-testid="stColumn"]{min-width:0!important;}
+.st-key-buggins_primary_nav button{width:100%!important;height:38px!important;min-height:38px!important;padding:0 14px!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#7184a4!important;font-size:12px!important;font-weight:900!important;box-shadow:none!important;}
+.st-key-buggins_primary_nav button:hover,.st-key-buggins_primary_nav button:focus,.st-key-buggins_primary_nav button:active{background:#f4f8ff!important;color:#173664!important;box-shadow:none!important;outline:0!important;transform:none!important;}
+.st-key-buggins_primary_nav:has(.bl-primary-nav-state.log) .st-key-bl_nav_log button,.st-key-buggins_primary_nav:has(.bl-primary-nav-state.analytics) .st-key-bl_nav_analytics button{background:#173664!important;color:#fff!important;}
+body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav{border-color:#29425f!important;background:rgba(7,21,38,.94)!important;box-shadow:none!important;}
+body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav button{color:#9fb0c6!important;}
+body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav button:hover,body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav button:focus{background:rgba(76,141,255,.14)!important;color:#fff!important;}
+body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav:has(.bl-primary-nav-state.log) .st-key-bl_nav_log button,body:has(.bl-theme-state.dark) .st-key-buggins_primary_nav:has(.bl-primary-nav-state.analytics) .st-key-bl_nav_analytics button{background:#4c8dff!important;color:#07101f!important;}
 .st-key-boys_log_analytics_nav{position:relative!important;z-index:5!important;max-width:1500px;margin:-2px auto 12px;padding:0 10px;display:flex!important;flex-direction:row!important;justify-content:center!important;align-items:center!important;}
 .st-key-boys_log_analytics_nav [data-testid="stElementContainer"]{width:auto!important;}
 .st-key-boys_log_analytics_theme_bottom{display:none!important;}
@@ -1917,8 +1942,12 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .st-key-boys_log_analytics_range [role="radiogroup"] button[aria-checked="true"]{border-color:#4c8dff!important;background:#211d4f!important;color:#4c8dff!important;box-shadow:inset 0 0 0 1px #4c8dff!important;}
 .st-key-boys_log_analytics_range [role="radiogroup"] button:hover{border-color:#4c8dff!important;color:#fff!important;}
 @media(max-width:900px){
+  .st-key-buggins_primary_nav{position:fixed!important;left:0!important;right:0!important;bottom:0!important;z-index:2147483647!important;width:100%!important;max-width:none!important;margin:0!important;padding:7px 8px calc(7px + env(safe-area-inset-bottom))!important;border:0!important;border-top:1px solid rgba(122,151,188,.24)!important;border-radius:0!important;background:rgba(7,21,38,.94)!important;backdrop-filter:blur(14px)!important;}
+  .st-key-buggins_primary_nav [data-testid="stHorizontalBlock"]{width:min(100%,420px)!important;margin:0 auto!important;}
+  .st-key-buggins_primary_nav button{height:48px!important;min-height:48px!important;border-radius:11px!important;color:#8fa0b6!important;}
+  .st-key-buggins_primary_nav:has(.bl-primary-nav-state.log) .st-key-bl_nav_log button,.st-key-buggins_primary_nav:has(.bl-primary-nav-state.analytics) .st-key-bl_nav_analytics button{background:rgba(76,141,255,.16)!important;color:#72a7ff!important;}
   .st-key-boys_log_analytics_nav{display:none!important;}
-  .st-key-boys_log_analytics_theme_bottom{display:flex!important;justify-content:center!important;max-width:1500px;margin:14px auto 4px;padding:0 8px;}
+  .st-key-boys_log_analytics_theme_bottom{display:flex!important;justify-content:center!important;max-width:1500px;margin:14px auto 78px;padding:0 8px;}
   .st-key-boys_log_analytics_theme_bottom [data-testid="stElementContainer"]{width:auto!important;}
   .st-key-boys_log_analytics_theme_bottom [role="radiogroup"]{box-shadow:none!important;}
   .st-key-boys_log_analytics_theme_bottom [role="radiogroup"] label{min-width:68px!important;padding:0 9px!important;}
@@ -2286,6 +2315,28 @@ with st.container(key="boys_log_theme_state"):
         f"<div class='bl-theme-state {'dark' if theme_choice == 'Dark' else 'light'}'></div>",
         unsafe_allow_html=True,
     )
+
+primary_view = st.session_state.get("boys_log_view", "log")
+with st.container(key="buggins_primary_nav"):
+    st.markdown(
+        f"<span class='bl-primary-nav-state {primary_view}'></span>",
+        unsafe_allow_html=True,
+    )
+    nav_log_col, nav_analytics_col = st.columns(2, gap="small")
+    with nav_log_col:
+        st.button(
+            "Log",
+            key="bl_nav_log",
+            on_click=show_log_view,
+            use_container_width=True,
+        )
+    with nav_analytics_col:
+        st.button(
+            "Analytics",
+            key="bl_nav_analytics",
+            on_click=show_analytics_view,
+            use_container_width=True,
+        )
 
 st.markdown("<div class='bl-shell'>", unsafe_allow_html=True)
 
@@ -2810,20 +2861,12 @@ components.html(
     height=0,
 )
 with st.container(key="boys_log_view_nav"):
-    theme_col, analytics_col = st.columns([1, 1], gap="small")
-    with theme_col:
-        with st.container(key="boys_log_theme"):
-            st.radio(
-                "Theme",
-                ("Light", "Dark"),
-                horizontal=True,
-                index=1,
-                key="bl_theme_choice",
-                label_visibility="collapsed",
-            )
-    with analytics_col:
-        st.button(
-            "Analytics",
-            key="bl_view_toggle",
-            on_click=toggle_dashboard_view,
+    with st.container(key="boys_log_theme"):
+        st.radio(
+            "Theme",
+            ("Light", "Dark"),
+            horizontal=True,
+            index=1,
+            key="bl_theme_choice",
+            label_visibility="collapsed",
         )
