@@ -715,6 +715,7 @@ def sleep_detail_registry_html(entries: list[dict]) -> str:
     entry.button.removeEventListener("click", entry.handler, true)
   );
   parentWindow.__blSleepDetailRegistry = [];
+  doc.documentElement.dataset.blSleepDetailHandlers = "pending";
 
   const closeOverlay = () =>
     doc.getElementById("bl-sleep-detail-overlay")?.remove();
@@ -793,6 +794,7 @@ def sleep_detail_registry_html(entries: list[dict]) -> str:
       return;
     }}
     parentWindow.__blSleepDetailRegistry = installed;
+    doc.documentElement.dataset.blSleepDetailHandlers = String(installed.length);
   }};
 
   if (!parentWindow.__blSleepDetailEscapeInstalled) {{
@@ -3147,7 +3149,7 @@ components.html(
   const schedule = () => {
     if (!frame) frame = w.requestAnimationFrame(update);
   };
-  const observer = new MutationObserver(schedule);
+  const observer = new w.MutationObserver(schedule);
   observer.observe(doc.body, {childList: true, subtree: true});
   scrollHost.addEventListener('scroll', schedule, {passive: true});
   w.addEventListener('resize', schedule, {passive: true});
