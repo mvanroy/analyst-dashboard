@@ -1653,7 +1653,11 @@ def analytics_dashboard_html(end_day: date, period: str = "1W") -> str:
 
 st.markdown(
     "<style>"
-    + chrome._PAGE_BG_CSS.replace("<style>", "").replace("</style>", "")
+    + (
+        ""
+        if STANDALONE
+        else chrome._PAGE_BG_CSS.replace("<style>", "").replace("</style>", "")
+    )
     + """
 html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{background:#fff!important;background-image:none!important;}
 [data-testid="stMain"],[data-testid="stMainBlockContainer"]{background:transparent!important;}
