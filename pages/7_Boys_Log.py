@@ -16,7 +16,7 @@ import buggins_auth
 import buggins_pwa
 
 
-STANDALONE = (os.getenv("BUGGINS_STANDALONE") or "").strip().lower() in {"1", "true", "yes", "on"}
+STANDALONE = (os.getenv("BUGGINS_STANDALONE") or "1").strip().lower() in {"1", "true", "yes", "on"}
 if not STANDALONE:
     import chrome
 
