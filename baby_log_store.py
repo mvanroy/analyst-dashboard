@@ -4,6 +4,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 import json
 import os
+import threading
 import uuid
 from zoneinfo import ZoneInfo
 
@@ -23,6 +24,9 @@ class StorageError(RuntimeError):
 
 
 _storage_warning = ""
+_client_lock = threading.Lock()
+_shared_client: httpx.Client | None = None
+_shared_client_credentials: tuple[str, str] | None = None
 
 
 def storage_warning() -> str:
@@ -313,23 +317,40 @@ def _request(method: str, path: str, **kwargs):
     url, key = _credentials()
     if not url or not key:
         raise RuntimeError("Supabase is not configured.")
-    headers = {
-        "apikey": key,
-        "Authorization": f"Bearer {key}",
-        "Content-Type": "application/json",
-    }
-    headers.update(kwargs.pop("headers", {}) or {})
-    response = httpx.request(
+    client = _shared_http_client(url, key)
+    headers = kwargs.pop("headers", {}) or None
+    response = client.request(
         method,
-        url.rstrip("/") + path,
+        path,
         headers=headers,
-        timeout=20,
         **kwargs,
     )
     response.raise_for_status()
     if not response.content:
         return []
     return response.json()
+
+
+def _shared_http_client(url: str, key: str) -> httpx.Client:
+    global _shared_client, _shared_client_credentials
+    credentials = (url.rstrip("/"), key)
+    with _client_lock:
+        if _shared_client is None or _shared_client_credentials != credentials:
+            if _shared_client is not None:
+                _shared_client.close()
+            _shared_client = httpx.Client(
+                base_url=credentials[0],
+                headers={
+                    "apikey": key,
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json",
+                },
+                timeout=httpx.Timeout(20.0, connect=5.0),
+                limits=httpx.Limits(max_connections=20, max_keepalive_connections=10),
+                transport=httpx.HTTPTransport(retries=1),
+            )
+            _shared_client_credentials = credentials
+        return _shared_client
 
 
 def _credentials() -> tuple[str, str]:

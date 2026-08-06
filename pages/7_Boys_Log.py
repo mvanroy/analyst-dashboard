@@ -3,9 +3,11 @@ from __future__ import annotations
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 import base64
+from functools import wraps
 import html
 import json
 import os
+import time
 from zoneinfo import ZoneInfo
 
 import streamlit as st
@@ -29,6 +31,112 @@ st.set_page_config(
 if STANDALONE:
     buggins_pwa.install()
 buggins_auth.require_auth()
+components.html(
+    """
+<script>
+(() => {
+  const w = window.parent;
+  const doc = w.document;
+  const hiddenKey = "bl-session-hidden-at-v1";
+  const recoveryKey = "bl-session-recovery-at-v1";
+  let tapWatchdog = 0;
+
+  if (w.__blReliabilityCleanup) w.__blReliabilityCleanup();
+  doc.getElementById("bl-interaction-status")?.remove();
+  doc.getElementById("bl-feed-wheel-overlay")?.remove();
+  doc.getElementById("bl-sleep-detail-overlay")?.remove();
+
+  const clearWatchdog = () => {
+    if (tapWatchdog) w.clearTimeout(tapWatchdog);
+    tapWatchdog = 0;
+  };
+  const showStatus = (message, blocking = false) => {
+    doc.getElementById("bl-interaction-status")?.remove();
+    const status = doc.createElement("div");
+    status.id = "bl-interaction-status";
+    status.dataset.blocking = blocking ? "true" : "false";
+    status.innerHTML = `<span>${message}</span>`;
+    Object.assign(status.style, blocking ? {
+      position: "fixed", inset: "0", zIndex: "2147483647",
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: "rgba(2,10,23,.72)", backdropFilter: "blur(4px)",
+      WebkitBackdropFilter: "blur(4px)", pointerEvents: "auto"
+    } : {
+      position: "fixed", left: "50%", top: "calc(env(safe-area-inset-top) + 12px)",
+      transform: "translateX(-50%)", zIndex: "2147483647", pointerEvents: "none"
+    });
+    Object.assign(status.firstElementChild.style, {
+      display: "inline-flex", alignItems: "center", justifyContent: "center",
+      minWidth: "112px", minHeight: "42px", padding: "9px 16px",
+      border: "1px solid rgba(126,182,255,.48)", borderRadius: "999px",
+      background: "#10243d", color: "#f5f7fb", boxShadow: "0 12px 32px rgba(0,0,0,.34)",
+      font: "800 14px/1.2 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
+    });
+    doc.body.appendChild(status);
+    if (!blocking) {
+      w.setTimeout(() => {
+        if (doc.getElementById("bl-interaction-status") === status) status.remove();
+      }, 1800);
+    }
+  };
+  const recover = () => {
+    const now = Date.now();
+    const lastRecovery = Number(w.sessionStorage.getItem(recoveryKey) || 0);
+    if (now - lastRecovery < 8000) return;
+    clearWatchdog();
+    w.sessionStorage.setItem(recoveryKey, String(now));
+    showStatus("Reconnecting…", true);
+    w.setTimeout(() => w.location.reload(), 80);
+  };
+  const markHidden = () => {
+    w.sessionStorage.setItem(hiddenKey, String(Date.now()));
+    clearWatchdog();
+  };
+  const resume = (force = false) => {
+    const hiddenAt = Number(w.sessionStorage.getItem(hiddenKey) || 0);
+    w.sessionStorage.removeItem(hiddenKey);
+    if (force || (hiddenAt && Date.now() - hiddenAt > 8000)) recover();
+  };
+  const onVisibility = () => {
+    if (doc.visibilityState === "hidden") markHidden();
+    else resume(false);
+  };
+  const onPageShow = (event) => resume(Boolean(event.persisted));
+  const onOnline = () => recover();
+  const onOffline = () => showStatus("Connection lost", true);
+  const onPointerDown = (event) => {
+    const target = event.target && typeof event.target.closest === "function"
+      ? event.target.closest('[class*="st-key-blcell_"] button, [class*="st-key-bl_toggle_"] button')
+      : null;
+    if (!target) return;
+    clearWatchdog();
+    showStatus(target.closest('[class*="st-key-blcell_"]') ? "Working…" : "Opening…");
+    tapWatchdog = w.setTimeout(recover, 12000);
+  };
+
+  doc.addEventListener("visibilitychange", onVisibility, {passive: true});
+  doc.addEventListener("pointerdown", onPointerDown, true);
+  w.addEventListener("pagehide", markHidden, {passive: true});
+  w.addEventListener("pageshow", onPageShow, {passive: true});
+  w.addEventListener("online", onOnline, {passive: true});
+  w.addEventListener("offline", onOffline, {passive: true});
+  w.__blReliabilityCleanup = () => {
+    clearWatchdog();
+    doc.removeEventListener("visibilitychange", onVisibility);
+    doc.removeEventListener("pointerdown", onPointerDown, true);
+    w.removeEventListener("pagehide", markHidden);
+    w.removeEventListener("pageshow", onPageShow);
+    w.removeEventListener("online", onOnline);
+    w.removeEventListener("offline", onOffline);
+    doc.getElementById("bl-interaction-status")?.remove();
+  };
+  if (doc.visibilityState === "visible") resume(false);
+})();
+</script>
+""",
+    height=0,
+    width=0,
+)
 if not STANDALONE:
     chrome.render_header(
         "BUGGINS DAILY",
@@ -180,6 +288,15 @@ def sleep_sessions(
 
 def sleep_history_for(baby: str, at_time: datetime) -> list[dict]:
     start_day = (at_time.date() - timedelta(days=SLEEP_LOOKBACK_DAYS)).isoformat()
+    snapshot_start = st.session_state.get("bl_sleep_snapshot_start")
+    snapshot_end = st.session_state.get("bl_sleep_snapshot_end")
+    if (
+        snapshot_start
+        and snapshot_end
+        and str(snapshot_start) <= start_day
+        and str(snapshot_end) >= at_time.date().isoformat()
+    ):
+        return list(st.session_state.get("bl_sleep_snapshot") or [])
     return baby_log_store.load_events_range(start_day, at_time.date().isoformat())
 
 
@@ -1022,11 +1139,52 @@ def sync_day_from_picker() -> None:
         set_day(picked)
 
 
+def day_events_snapshot(day: str) -> list[dict]:
+    if st.session_state.get("bl_events_snapshot_day") == day:
+        return list(st.session_state.get("bl_events_snapshot") or [])
+    return baby_log_store.load_events(day)
+
+
+def care_details_snapshot(day: str, baby: str) -> dict:
+    snapshots = st.session_state.setdefault("bl_care_snapshots", {})
+    key = f"{day}:{baby}"
+    cached = snapshots.get(key) or {}
+    if cached and time.monotonic() - float(cached.get("loaded_at") or 0) < 30:
+        return dict(cached.get("details") or {})
+    details = baby_log_store.load_care_details(day, baby)
+    snapshots[key] = {"loaded_at": time.monotonic(), "details": dict(details)}
+    return details
+
+
+def set_care_details_snapshot(day: str, baby: str, details: dict) -> None:
+    snapshots = st.session_state.setdefault("bl_care_snapshots", {})
+    snapshots[f"{day}:{baby}"] = {
+        "loaded_at": time.monotonic(),
+        "details": dict(details),
+    }
+
+
+def reliable_log_action(action):
+    @wraps(action)
+    def wrapped(*args, **kwargs):
+        st.session_state.pop("bl_action_error", None)
+        try:
+            return action(*args, **kwargs)
+        except baby_log_store.StorageError as exc:
+            st.session_state["bl_action_error"] = str(exc)
+            st.toast("That entry was not saved. Please try again.", icon="⚠️")
+            return None
+
+    return wrapped
+
+
+@reliable_log_action
 def log_event(baby: str, kind: str, amount_ml: int | None = None, note: str = "") -> None:
     baby_log_store.add_event(baby, kind, amount_ml=amount_ml, note=note)
     st.toast(f"Logged {KIND_LABELS.get(kind, kind)} for {dict(BABIES).get(baby, baby)}")
 
 
+@reliable_log_action
 def toggle_cell_event(baby: str, kind: str, hour: int, amount_ml: int | None = None) -> None:
     if kind == "sleep":
         toggle_sleep_tracking(baby, hour)
@@ -1035,7 +1193,7 @@ def toggle_cell_event(baby: str, kind: str, hour: int, amount_ml: int | None = N
     day = selected_day().isoformat()
     existing = [
         event
-        for event in baby_log_store.load_events(day)
+        for event in day_events_snapshot(day)
         if event.get("baby") == baby
         and event.get("kind") == kind
         and parse_dt(event.get("event_ts")).hour == hour
@@ -1091,6 +1249,7 @@ def close_feed_picker() -> None:
     st.session_state.boys_log_feed_picker = None
 
 
+@reliable_log_action
 def choose_feed_value(
     baby: str,
     kind: str,
@@ -1104,7 +1263,7 @@ def choose_feed_value(
     if kind == "bottle":
         existing = [
             event
-            for event in baby_log_store.load_events(day)
+            for event in day_events_snapshot(day)
             if event.get("baby") == baby
             and event.get("kind") == kind
             and parse_dt(event.get("event_ts")).hour == hour
@@ -1142,6 +1301,7 @@ def choose_feed_value(
         st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
 
 
+@reliable_log_action
 def choose_bottle_combo(baby: str, hour: int, payload_key: str) -> None:
     try:
         payload = json.loads(st.session_state.get(payload_key) or "{}")
@@ -1169,7 +1329,7 @@ def choose_bottle_combo(baby: str, hour: int, payload_key: str) -> None:
     day = selected_day().isoformat()
     existing = [
         event
-        for event in baby_log_store.load_events(day)
+        for event in day_events_snapshot(day)
         if event.get("baby") == baby
         and event.get("kind") == "bottle"
         and parse_dt(event.get("event_ts")).hour == hour
@@ -1224,13 +1384,15 @@ def choose_bottle_combo(baby: str, hour: int, payload_key: str) -> None:
         st.toast(f"Cleared bottle feeds at {hour_label(hour)}")
 
 
+@reliable_log_action
 def log_bath_time(baby: str) -> None:
     day = selected_day().isoformat()
-    existing = [event for event in baby_log_store.load_events(day) if event.get("baby") == baby and event.get("kind") == "bath"]
+    existing = [event for event in day_events_snapshot(day) if event.get("baby") == baby and event.get("kind") == "bath"]
     if existing:
         for event in existing:
             baby_log_store.delete_event(event.get("id"))
-        baby_log_store.save_care_details(day, baby, {"bath_time": ""})
+        details = baby_log_store.save_care_details(day, baby, {"bath_time": ""})
+        set_care_details_snapshot(day, baby, details)
         st.session_state[f"bl_care_bath_time_{baby}"] = ""
         st.toast("Cleared bath time")
         return
@@ -1244,7 +1406,8 @@ def log_bath_time(baby: str) -> None:
     )
     baby_log_store.add_event(baby, "bath", event_ts=event_ts)
     bath_time = fmt_sheet_time(event_ts.isoformat())
-    baby_log_store.save_care_details(day, baby, {"bath_time": bath_time})
+    details = baby_log_store.save_care_details(day, baby, {"bath_time": bath_time})
+    set_care_details_snapshot(day, baby, details)
     st.session_state[f"bl_care_bath_time_{baby}"] = bath_time
     st.toast(f"Logged bath time at {event_ts.strftime('%H:%M')}")
 
@@ -1259,6 +1422,7 @@ def strip_care_unit(value: str, unit: str) -> str:
     return cleaned
 
 
+@reliable_log_action
 def save_care_field(baby: str, field: str) -> None:
     key = f"bl_care_{field}_{baby}"
     value = st.session_state.get(key, "")
@@ -1268,12 +1432,20 @@ def save_care_field(baby: str, field: str) -> None:
     elif field == "weight":
         value = strip_care_unit(value, "kg")
         st.session_state[key] = value
-    baby_log_store.save_care_details(selected_day().isoformat(), baby, {field: value})
+    day = selected_day().isoformat()
+    details = baby_log_store.save_care_details(day, baby, {field: value})
+    set_care_details_snapshot(day, baby, details)
 
 
 def toggle_baby_panel(baby: str) -> None:
     key = f"bl_panel_open_{baby}"
-    st.session_state[key] = not st.session_state.get(key, False)
+    opening = not st.session_state.get(key, False)
+    if opening and current_client_is_phone():
+        for baby_id, _ in BABIES:
+            st.session_state[f"bl_panel_open_{baby_id}"] = baby_id == baby
+        st.session_state.boys_log_feed_picker = None
+    else:
+        st.session_state[key] = opening
     open_babies = [
         baby_id
         for baby_id, _ in BABIES
@@ -1289,13 +1461,17 @@ def client_is_phone(user_agent: str) -> bool:
     )
 
 
-def default_baby_panels_open() -> bool:
+def current_client_is_phone() -> bool:
     try:
         headers = getattr(st.context, "headers", {}) or {}
         user_agent = headers.get("User-Agent") or headers.get("user-agent") or ""
     except Exception:
         user_agent = ""
-    return not client_is_phone(str(user_agent))
+    return client_is_phone(str(user_agent))
+
+
+def default_baby_panels_open() -> bool:
+    return not current_client_is_phone()
 
 
 def initialise_baby_panels() -> None:
@@ -1304,11 +1480,13 @@ def initialise_baby_panels() -> None:
         return
     saved_open = st.query_params.get("log_open")
     if saved_open is not None:
-        open_babies = {
+        open_babies = [
             baby.strip()
             for baby in str(saved_open).split(",")
             if baby.strip() in {baby_id for baby_id, _ in BABIES}
-        }
+        ]
+        if current_client_is_phone() and len(open_babies) > 1:
+            open_babies = open_babies[:1]
         for baby, _ in BABIES:
             st.session_state[f"bl_panel_open_{baby}"] = baby in open_babies
     else:
@@ -2747,14 +2925,23 @@ if analytics_view:
     st.stop()
 
 try:
+    sleep_context_start = (day - timedelta(days=SLEEP_LOOKBACK_DAYS)).isoformat()
+    day_text = day.isoformat()
     events = baby_log_store.load_events(day.isoformat())
     sleep_context_events = baby_log_store.load_events_range(
-        (day - timedelta(days=SLEEP_LOOKBACK_DAYS)).isoformat(),
-        day.isoformat(),
+        sleep_context_start,
+        day_text,
     )
 except baby_log_store.StorageError as exc:
     st.error(str(exc))
     st.stop()
+st.session_state["bl_events_snapshot_day"] = day_text
+st.session_state["bl_events_snapshot"] = events
+st.session_state["bl_sleep_snapshot_start"] = sleep_context_start
+st.session_state["bl_sleep_snapshot_end"] = day_text
+st.session_state["bl_sleep_snapshot"] = sleep_context_events
+if action_error := st.session_state.pop("bl_action_error", None):
+    st.error(action_error)
 if baby_log_store.storage_warning():
     st.caption("Storage status: shared database unavailable — viewing the local cache read-only.")
 storage_warning_shown = bool(baby_log_store.storage_warning())
@@ -3018,13 +3205,14 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
             [event for event in baby_events if event.get("kind") == "bath"],
             key=lambda event: event.get("event_ts") or "",
         )
-        care_details = baby_log_store.load_care_details(day.isoformat(), baby_id)
+        care_details = care_details_snapshot(day.isoformat(), baby_id)
         if baby_log_store.storage_warning() and not storage_warning_shown:
             st.caption("Storage status: shared database unavailable — viewing the local cache read-only.")
             storage_warning_shown = True
         bath_time = care_details.get("bath_time") or (fmt_sheet_time(bath_events[-1].get("event_ts")) if bath_events else "")
         if bath_time and not care_details.get("bath_time"):
             care_details = baby_log_store.save_care_details(day.isoformat(), baby_id, {"bath_time": bath_time})
+            set_care_details_snapshot(day.isoformat(), baby_id, care_details)
         for field in ("length", "weight", "notes"):
             input_key = f"bl_care_{field}_{baby_id}"
             if input_key not in st.session_state:
@@ -3149,13 +3337,10 @@ components.html(
   const schedule = () => {
     if (!frame) frame = w.requestAnimationFrame(update);
   };
-  const observer = new w.MutationObserver(schedule);
-  observer.observe(doc.body, {childList: true, subtree: true});
   scrollHost.addEventListener('scroll', schedule, {passive: true});
   w.addEventListener('resize', schedule, {passive: true});
   w.addEventListener('orientationchange', schedule, {passive: true});
   w.__blMobileJumpCleanup = () => {
-    observer.disconnect();
     scrollHost.removeEventListener('scroll', schedule);
     w.removeEventListener('resize', schedule);
     w.removeEventListener('orientationchange', schedule);
