@@ -15,7 +15,6 @@ import streamlit.components.v1 as components
 
 import baby_log_store
 import buggins_auth
-import buggins_pwa
 
 
 STANDALONE = (os.getenv("BUGGINS_STANDALONE") or "1").strip().lower() in {"1", "true", "yes", "on"}
@@ -28,111 +27,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="collapsed",
 )
-if STANDALONE:
-    buggins_pwa.install()
 buggins_auth.require_auth()
-components.html(
-    """
-<script>
-(() => {
-  const w = window.parent;
-  const doc = w.document;
-  const recoveryKey = "bl-session-recovery-at-v1";
-  let tapWatchdog = 0;
-
-  if (w.__blReliabilityCleanup) w.__blReliabilityCleanup();
-  doc.getElementById("bl-interaction-status")?.remove();
-  doc.getElementById("bl-feed-wheel-overlay")?.remove();
-  doc.getElementById("bl-sleep-detail-overlay")?.remove();
-
-  const clearWatchdog = () => {
-    if (tapWatchdog) w.clearTimeout(tapWatchdog);
-    tapWatchdog = 0;
-  };
-  const showStatus = (message, blocking = false) => {
-    doc.getElementById("bl-interaction-status")?.remove();
-    const status = doc.createElement("div");
-    status.id = "bl-interaction-status";
-    status.dataset.blocking = blocking ? "true" : "false";
-    status.innerHTML = `<span>${message}</span>`;
-    Object.assign(status.style, blocking ? {
-      position: "fixed", inset: "0", zIndex: "2147483647",
-      display: "flex", alignItems: "center", justifyContent: "center",
-      background: "rgba(2,10,23,.72)", backdropFilter: "blur(4px)",
-      WebkitBackdropFilter: "blur(4px)", pointerEvents: "auto"
-    } : {
-      position: "fixed", left: "50%", top: "calc(env(safe-area-inset-top) + 12px)",
-      transform: "translateX(-50%)", zIndex: "2147483647", pointerEvents: "none"
-    });
-    Object.assign(status.firstElementChild.style, {
-      display: "inline-flex", alignItems: "center", justifyContent: "center",
-      minWidth: "112px", minHeight: "42px", padding: "9px 16px",
-      border: "1px solid rgba(126,182,255,.48)", borderRadius: "999px",
-      background: "#10243d", color: "#f5f7fb", boxShadow: "0 12px 32px rgba(0,0,0,.34)",
-      font: "800 14px/1.2 -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif"
-    });
-    doc.body.appendChild(status);
-    if (!blocking) {
-      w.setTimeout(() => {
-        if (doc.getElementById("bl-interaction-status") === status) status.remove();
-      }, 1800);
-    }
-  };
-  const recover = () => {
-    const now = Date.now();
-    const lastRecovery = Number(w.sessionStorage.getItem(recoveryKey) || 0);
-    if (now - lastRecovery < 8000) return;
-    clearWatchdog();
-    w.sessionStorage.setItem(recoveryKey, String(now));
-    showStatus("Reconnecting…", true);
-    w.setTimeout(() => w.location.reload(), 80);
-  };
-  const markHidden = () => clearWatchdog();
-  const resume = () => {
-    clearWatchdog();
-    const status = doc.getElementById("bl-interaction-status");
-    if (status?.dataset.blocking === "true" && w.navigator.onLine) status.remove();
-  };
-  const onVisibility = () => {
-    if (doc.visibilityState === "hidden") markHidden();
-    else resume();
-  };
-  const onPageShow = () => resume();
-  const onOnline = () => resume();
-  const onOffline = () => showStatus("Connection lost", true);
-  const onPointerDown = (event) => {
-    const target = event.target && typeof event.target.closest === "function"
-      ? event.target.closest('[class*="st-key-blcell_"] button, [class*="st-key-bl_toggle_"] button')
-      : null;
-    if (!target) return;
-    clearWatchdog();
-    showStatus(target.closest('[class*="st-key-blcell_"]') ? "Working…" : "Opening…");
-    tapWatchdog = w.setTimeout(recover, 12000);
-  };
-
-  doc.addEventListener("visibilitychange", onVisibility, {passive: true});
-  doc.addEventListener("pointerdown", onPointerDown, true);
-  w.addEventListener("pagehide", markHidden, {passive: true});
-  w.addEventListener("pageshow", onPageShow, {passive: true});
-  w.addEventListener("online", onOnline, {passive: true});
-  w.addEventListener("offline", onOffline, {passive: true});
-  w.__blReliabilityCleanup = () => {
-    clearWatchdog();
-    doc.removeEventListener("visibilitychange", onVisibility);
-    doc.removeEventListener("pointerdown", onPointerDown, true);
-    w.removeEventListener("pagehide", markHidden);
-    w.removeEventListener("pageshow", onPageShow);
-    w.removeEventListener("online", onOnline);
-    w.removeEventListener("offline", onOffline);
-    doc.getElementById("bl-interaction-status")?.remove();
-  };
-  if (doc.visibilityState === "visible") resume();
-})();
-</script>
-""",
-    height=0,
-    width=0,
-)
 if not STANDALONE:
     chrome.render_header(
         "BUGGINS DAILY",
@@ -1649,7 +1544,6 @@ def set_dashboard_view(view: str) -> None:
     chosen = "analytics" if view == "analytics" else "log"
     st.session_state["boys_log_view"] = chosen
     st.query_params["view"] = chosen
-    st.session_state["bl_scroll_after_view_toggle"] = True
 
 
 def show_log_view() -> None:
@@ -2849,31 +2743,6 @@ with st.container(key="boys_log_toolbar"):
         )
 
 day = selected_day()
-if st.session_state.pop("bl_scroll_after_view_toggle", False):
-    components.html(
-        """
-<script>
-(() => {
-  const w = window.parent;
-  const doc = w.document;
-  const scrollTop = () => {
-    const host = doc.querySelector('[data-testid="stMain"]');
-    if (host && typeof host.scrollTo === 'function') {
-      host.scrollTo({top: 0, left: 0, behavior: 'auto'});
-    }
-    w.scrollTo({top: 0, left: 0, behavior: 'auto'});
-    doc.documentElement.scrollTop = 0;
-    doc.body.scrollTop = 0;
-  };
-  scrollTop();
-  w.requestAnimationFrame(scrollTop);
-  w.setTimeout(scrollTop, 80);
-})();
-</script>
-""",
-        height=0,
-        width=0,
-    )
 
 if analytics_view:
     with st.container(key="boys_log_analytics_nav"):
@@ -2918,16 +2787,17 @@ if analytics_view:
             label_visibility="collapsed",
         )
     st.markdown("</div>", unsafe_allow_html=True)
+    st.markdown("<div id='bl-app-ready'></div>", unsafe_allow_html=True)
     st.stop()
 
 try:
     sleep_context_start = (day - timedelta(days=SLEEP_LOOKBACK_DAYS)).isoformat()
     day_text = day.isoformat()
-    events = baby_log_store.load_events(day.isoformat())
     sleep_context_events = baby_log_store.load_events_range(
         sleep_context_start,
         day_text,
     )
+    events = [event for event in sleep_context_events if event.get("day") == day_text]
 except baby_log_store.StorageError as exc:
     st.error(str(exc))
     st.stop()
@@ -3305,49 +3175,6 @@ st.markdown(
 """,
     unsafe_allow_html=True,
 )
-components.html(
-    """
-<script>
-(() => {
-  const w = window.parent;
-  const doc = w.document;
-  if (w.__blMobileJumpCleanup) w.__blMobileJumpCleanup();
-
-  const scrollHost = doc.querySelector('[data-testid="stMain"]') || w;
-  let frame = 0;
-  const update = () => {
-    frame = 0;
-    const nav = doc.querySelector('.bl-mobile-jump-nav');
-    if (!nav) return;
-    const compact = w.matchMedia('(max-width: 1100px)').matches;
-    const openPanels = [...doc.querySelectorAll(
-      '.st-key-bl_panel_a:has(.bl-panel-state.open), .st-key-bl_panel_b:has(.bl-panel-state.open)'
-    )];
-    const reachedFiveAm = openPanels.some((panel) => {
-      const baby = panel.classList.contains('st-key-bl_panel_a') ? 'a' : 'b';
-      const fiveAmRow = doc.querySelector(`.st-key-blrow_${baby}_5`);
-      return fiveAmRow && fiveAmRow.getBoundingClientRect().top < Math.max(180, Math.min(650, w.innerHeight - 132));
-    });
-    nav.classList.toggle('is-active', compact && reachedFiveAm);
-  };
-  const schedule = () => {
-    if (!frame) frame = w.requestAnimationFrame(update);
-  };
-  scrollHost.addEventListener('scroll', schedule, {passive: true});
-  w.addEventListener('resize', schedule, {passive: true});
-  w.addEventListener('orientationchange', schedule, {passive: true});
-  w.__blMobileJumpCleanup = () => {
-    scrollHost.removeEventListener('scroll', schedule);
-    w.removeEventListener('resize', schedule);
-    w.removeEventListener('orientationchange', schedule);
-    if (frame) w.cancelAnimationFrame(frame);
-  };
-  update();
-})();
-</script>
-""",
-    height=0,
-)
 with st.container(key="boys_log_view_nav"):
     with st.container(key="boys_log_theme"):
         st.radio(
@@ -3359,3 +3186,4 @@ with st.container(key="boys_log_view_nav"):
             on_change=sync_theme_query,
             label_visibility="collapsed",
         )
+st.markdown("<div id='bl-app-ready'></div>", unsafe_allow_html=True)
