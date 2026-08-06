@@ -37,7 +37,6 @@ components.html(
 (() => {
   const w = window.parent;
   const doc = w.document;
-  const hiddenKey = "bl-session-hidden-at-v1";
   const recoveryKey = "bl-session-recovery-at-v1";
   let tapWatchdog = 0;
 
@@ -88,21 +87,18 @@ components.html(
     showStatus("Reconnecting…", true);
     w.setTimeout(() => w.location.reload(), 80);
   };
-  const markHidden = () => {
-    w.sessionStorage.setItem(hiddenKey, String(Date.now()));
+  const markHidden = () => clearWatchdog();
+  const resume = () => {
     clearWatchdog();
-  };
-  const resume = (force = false) => {
-    const hiddenAt = Number(w.sessionStorage.getItem(hiddenKey) || 0);
-    w.sessionStorage.removeItem(hiddenKey);
-    if (force || (hiddenAt && Date.now() - hiddenAt > 8000)) recover();
+    const status = doc.getElementById("bl-interaction-status");
+    if (status?.dataset.blocking === "true" && w.navigator.onLine) status.remove();
   };
   const onVisibility = () => {
     if (doc.visibilityState === "hidden") markHidden();
-    else resume(false);
+    else resume();
   };
-  const onPageShow = (event) => resume(Boolean(event.persisted));
-  const onOnline = () => recover();
+  const onPageShow = () => resume();
+  const onOnline = () => resume();
   const onOffline = () => showStatus("Connection lost", true);
   const onPointerDown = (event) => {
     const target = event.target && typeof event.target.closest === "function"
@@ -130,7 +126,7 @@ components.html(
     w.removeEventListener("offline", onOffline);
     doc.getElementById("bl-interaction-status")?.remove();
   };
-  if (doc.visibilityState === "visible") resume(false);
+  if (doc.visibilityState === "visible") resume();
 })();
 </script>
 """,

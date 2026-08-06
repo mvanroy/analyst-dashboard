@@ -1,8 +1,8 @@
 {
-  "name": "Igby Central",
-  "short_name": "Igby",
+  "name": "Buggins Daily Log",
+  "short_name": "Buggins",
   "id": "/",
-  "start_url": "/Boys_Log",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#061326",
