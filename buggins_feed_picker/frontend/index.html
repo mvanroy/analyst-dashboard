@@ -116,7 +116,7 @@
         return item;
       };
 
-      const makeSelect = (labelText, values, unit, selectedValue, emptyLabel) => {
+      const makeSelect = (labelText, values, unit, selectedValue, emptyLabel, formatter = null) => {
         const field = document.createElement("div");
         field.className = "field";
         const label = document.createElement("label");
@@ -129,7 +129,7 @@
         select.appendChild(option("", emptyLabel, selectedValue === null || selectedValue === undefined));
         values.forEach((value) => select.appendChild(option(
           String(value),
-          `${value} ${unit}`,
+          formatter ? formatter(value) : `${value} ${unit}`.trim(),
           Number(selectedValue) === Number(value),
         )));
         field.append(label, select);
@@ -152,19 +152,33 @@
           config.current,
           "Select minutes",
         );
-        picker.select.addEventListener("change", () => {
-          if (!picker.select.value) return;
-          picker.select.disabled = true;
-          send("save", { value: Number(picker.select.value) });
-        });
+        const time = makeSelect(
+          "Adjust time",
+          config.time_values,
+          "",
+          config.time_minute,
+          "Minute",
+          (value) => String(value).padStart(2, "0"),
+        );
         const actions = document.createElement("div");
-        actions.className = "actions";
-        actions.innerHTML = '<button type="button" data-action="clear">Clear all</button><button type="button" data-action="cancel">Cancel</button>';
+        actions.className = "actions three";
+        actions.innerHTML = '<button type="button" class="primary" data-action="save">Save feed</button><button type="button" data-action="clear">Clear all</button><button type="button" data-action="cancel">Cancel</button>';
+        actions.querySelector('[data-action="save"]').addEventListener("click", () => {
+          if (!picker.select.value || time.select.value === "") {
+            showError("Choose a valid feed duration and time.");
+            return;
+          }
+          actions.querySelectorAll("button").forEach((button) => { button.disabled = true; });
+          send("save", {
+            value: Number(picker.select.value),
+            minute: Number(time.select.value),
+          });
+        });
         actions.querySelector('[data-action="clear"]').addEventListener("click", () => send("clear"));
         actions.querySelector('[data-action="cancel"]').addEventListener("click", () => send("cancel"));
         const error = document.createElement("p");
         error.className = "error";
-        app.append(picker.field, error, actions);
+        app.append(picker.field, time.field, error, actions);
       };
 
       const renderBottle = (config) => {
@@ -190,6 +204,14 @@
         });
         const error = document.createElement("p");
         error.className = "error";
+        const time = makeSelect(
+          "Adjust time",
+          config.time_values,
+          "",
+          config.time_minute,
+          "Minute",
+          (value) => String(value).padStart(2, "0"),
+        );
         const actions = document.createElement("div");
         actions.className = "actions three";
         actions.innerHTML = '<button type="button" class="primary" data-action="save">Save feeds</button><button type="button" data-action="clear">Clear all</button><button type="button" data-action="cancel">Cancel</button>';
@@ -209,14 +231,14 @@
             return;
           }
           actions.querySelectorAll("button").forEach((button) => { button.disabled = true; });
-          send("save", { feeds });
+          send("save", { feeds, minute: Number(time.select.value) });
         });
         actions.querySelector('[data-action="clear"]').addEventListener("click", () => {
           grid.querySelectorAll("select").forEach((select) => { select.value = ""; });
           app.querySelector(".error").style.display = "none";
         });
         actions.querySelector('[data-action="cancel"]').addEventListener("click", () => send("cancel"));
-        app.append(grid, error, actions);
+        app.append(grid, time.field, error, actions);
       };
 
       const render = (config) => {

@@ -1138,20 +1138,26 @@ def replace_feed_cell_in_snapshot(
     set_log_events_snapshot(current)
 
 
-def event_timestamp_for_hour(hour: int) -> datetime:
+def event_timestamp_for_hour(hour: int, minute: int | None = None) -> datetime:
     """Use the real current time only for the current hourly cell.
 
     A retrospective entry in a past or future cell represents that displayed
     hour, so default it to the exact hour instead of borrowing the current
-    clock's unrelated minute and second.
+    clock's unrelated minute and second. Callers with an explicit minute keep
+    the selected cell's hour while allowing the minute to be adjusted.
     """
     now = datetime.now(MEL)
     selected = selected_day()
     is_current_hour = selected == now.date() and hour == now.hour
+    selected_minute = now.minute if is_current_hour else 0
+    if minute is not None:
+        selected_minute = int(minute)
+        if not 0 <= selected_minute <= 59:
+            raise ValueError("Minute must be between 0 and 59.")
     return datetime.combine(selected, datetime.min.time(), tzinfo=MEL).replace(
         hour=hour,
-        minute=now.minute if is_current_hour else 0,
-        second=now.second if is_current_hour else 0,
+        minute=selected_minute,
+        second=0,
         microsecond=0,
     )
 
@@ -1230,7 +1236,10 @@ def toggle_cell_event(baby: str, kind: str, hour: int, amount_ml: int | None = N
         queue_toast(f"Cleared {KIND_LABELS.get(kind, kind)} at {hour_label(hour)}")
         return
 
-    event_ts = event_timestamp_for_hour(hour)
+    # A nappy tap keeps the row's hour but should never silently round the
+    # timestamp down to :00. Use the current clock minute as its default.
+    timestamp_minute = datetime.now(MEL).minute if kind in CHANGE_KINDS else None
+    event_ts = event_timestamp_for_hour(hour, timestamp_minute)
     saved = baby_log_store.add_event(baby, kind, amount_ml=amount_ml, event_ts=event_ts)
     add_events_to_snapshot([saved])
     sleep_interrupted = kind in SLEEP_INTERRUPT_KINDS and end_active_sleep(baby, event_ts, kind)
@@ -1277,13 +1286,14 @@ def choose_feed_value(
     value: int | None,
     duration_minutes: int | None = None,
     milk_type: str | None = None,
+    timestamp_minute: int | None = None,
 ) -> None:
     day = selected_day().isoformat()
     if kind == "bottle":
         raise ValueError("Bottle cells must be saved through the combined bottle action.")
     # Refresh an expired snapshot before determining and replacing this cell.
     day_events_snapshot(day)
-    event_ts = event_timestamp_for_hour(hour)
+    event_ts = event_timestamp_for_hour(hour, timestamp_minute)
     selection = None if value is None else {"amount_ml": value, "note": ""}
     canonical = baby_log_store.replace_feed_cell(
         day,
@@ -1306,7 +1316,12 @@ def choose_feed_value(
 
 
 @reliable_log_action
-def choose_bottle_combo(baby: str, hour: int, payload: dict) -> bool | None:
+def choose_bottle_combo(
+    baby: str,
+    hour: int,
+    payload: dict,
+    timestamp_minute: int | None = None,
+) -> bool | None:
     desired: dict[str, dict | None] = {}
     for milk_type in MILK_TYPES:
         entry = payload.get(milk_type)
@@ -1326,7 +1341,7 @@ def choose_bottle_combo(baby: str, hour: int, payload: dict) -> bool | None:
 
     day = selected_day().isoformat()
     day_events_snapshot(day)
-    event_ts = event_timestamp_for_hour(hour)
+    event_ts = event_timestamp_for_hour(hour, timestamp_minute)
     selections = {
         milk_type: (
             None
@@ -1371,7 +1386,11 @@ def feed_picker_config(baby: str, kind: str, hour: int) -> dict:
         and parse_dt(event.get("event_ts")).hour == hour
     ]
     current_value = None
+    timestamp_minute = datetime.now(MEL).minute
     bottle_entries: dict[str, dict] = {}
+    if feed_events:
+        latest_event = max(feed_events, key=lambda event: event.get("event_ts") or "")
+        timestamp_minute = parse_dt(latest_event.get("event_ts")).minute
     if kind == "bottle":
         for event in feed_events:
             bottle_entries[bottle_milk_type(event)] = {
@@ -1395,6 +1414,8 @@ def feed_picker_config(baby: str, kind: str, hour: int) -> dict:
         "duration_values": list(BREASTFEED_MINUTES),
         "milk_types": list(MILK_TYPES),
         "bottle_entries": bottle_entries,
+        "time_values": list(range(60)),
+        "time_minute": timestamp_minute,
     }
 
 
@@ -1421,14 +1442,26 @@ def breastfeed_picker_dialog(baby: str, kind: str, hour: int) -> None:
         close_feed_picker()
         st.rerun()
     value = None
+    timestamp_minute = None
     if action == "save":
         try:
-            value = int((result.get("payload") or {}).get("value"))
+            payload = result.get("payload") or {}
+            value = int(payload.get("value"))
+            timestamp_minute = int(payload.get("minute"))
         except (TypeError, ValueError):
-            st.error("Choose a valid feed duration.")
+            st.error("Choose a valid feed duration and time.")
+            return
+        if timestamp_minute not in range(60):
+            st.error("Choose a valid time.")
             return
     if action in {"save", "clear"}:
-        saved = choose_feed_value(baby, kind, hour, value)
+        saved = choose_feed_value(
+            baby,
+            kind,
+            hour,
+            value,
+            timestamp_minute=timestamp_minute,
+        )
         if saved:
             st.rerun()
         if error := st.session_state.get("bl_action_error"):
@@ -1448,11 +1481,25 @@ def bottle_picker_dialog(baby: str, hour: int) -> None:
         close_feed_picker()
         st.rerun()
     if action == "save":
-        feeds = (result.get("payload") or {}).get("feeds")
+        payload = result.get("payload") or {}
+        feeds = payload.get("feeds")
         if not isinstance(feeds, dict):
             st.error("The bottle values could not be read. Please try again.")
             return
-        saved = choose_bottle_combo(baby, hour, feeds)
+        try:
+            timestamp_minute = int(payload.get("minute"))
+        except (TypeError, ValueError):
+            st.error("Choose a valid time.")
+            return
+        if timestamp_minute not in range(60):
+            st.error("Choose a valid time.")
+            return
+        saved = choose_bottle_combo(
+            baby,
+            hour,
+            feeds,
+            timestamp_minute=timestamp_minute,
+        )
         if saved:
             st.rerun()
         if error := st.session_state.get("bl_action_error"):
