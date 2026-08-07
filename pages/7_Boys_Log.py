@@ -3124,7 +3124,7 @@ def render_baby_panel(baby_id: str, baby_label: str, day: date) -> None:
             unsafe_allow_html=True,
         )
         st.button(
-            f"{'Collapse' if is_open else 'Open'} {baby_label}",
+            " ",
             key=f"bl_toggle_{baby_id}",
             help=f"{'Collapse' if is_open else 'Open'} {baby_label}",
             on_click=toggle_baby_panel,
@@ -3201,13 +3201,8 @@ def render_baby_panel(baby_id: str, baby_label: str, day: date) -> None:
                             else:
                                 on_click = toggle_cell_event
                                 action_args = (baby_id, kind, hour)
-                            action_label = (
-                                f"View {baby_label} sleep details at {hour_label(hour)}"
-                                if show_sleep_detail
-                                else f"{KIND_LABELS.get(kind, kind)} for {baby_label} at {hour_label(hour)}"
-                            )
                             st.button(
-                                action_label,
+                                " ",
                                 key=f"blcell_{baby_id}_{hour}_{kind}",
                                 on_click=on_click,
                                 args=action_args,
