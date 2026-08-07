@@ -2176,7 +2176,7 @@ html,body,[data-testid="stAppViewContainer"],[data-testid="stApp"],.stApp{backgr
 .bl-metric-total{text-align:center;}
 .bl-metric-total b{display:inline-block;color:#112f62;font-size:30px;font-weight:950;line-height:1;font-variant-numeric:tabular-nums;margin:0;}
 .bl-metric-total small{display:block;color:#63779c;font-size:11px;font-weight:850;line-height:1.1;margin:0 0 4px;white-space:nowrap;}
-.bl-toolbar .stButton>button,[class*="st-key-bl_"]:not(.st-key-bl_nav_log):not(.st-key-bl_nav_analytics) .stButton>button{height:46px;border-radius:12px!important;border:1px solid #dce6f3!important;background:#fff!important;color:#173664!important;font-weight:900!important;font-size:13px!important;box-shadow:0 10px 24px rgba(61,95,140,.07)!important;}
+.bl-toolbar .stButton>button{height:46px;border-radius:12px!important;border:1px solid #dce6f3!important;background:#fff!important;color:#173664!important;font-weight:900!important;font-size:13px!important;box-shadow:0 10px 24px rgba(61,95,140,.07)!important;}
 .bl-toolbar .stButton>button:active,[class*="st-key-bl_"]:not(.st-key-bl_nav_log):not(.st-key-bl_nav_analytics) .stButton>button:active{transform:scale(.98);}
 .st-key-bl_panel_a [class*="st-key-bl_toggle_"],.st-key-bl_panel_b [class*="st-key-bl_toggle_"]{margin:0!important;}
 .st-key-bl_panel_a [class*="st-key-bl_toggle_"],.st-key-bl_panel_a [class*="st-key-bl_toggle_"] *,.st-key-bl_panel_b [class*="st-key-bl_toggle_"],.st-key-bl_panel_b [class*="st-key-bl_toggle_"] *{-webkit-tap-highlight-color:transparent!important;box-shadow:none!important;filter:none!important;outline:0!important;}
@@ -2508,7 +2508,7 @@ body:has(.bl-theme-state.dark) .st-key-boys_log_theme [role="radiogroup"]{border
 body:has(.bl-theme-state.dark) .st-key-boys_log_theme [role="radiogroup"] label p{color:#8fa3bd!important}
 body:has(.bl-theme-state.dark) .st-key-boys_log_theme [role="radiogroup"] label:has(input:checked){background:linear-gradient(135deg,#4d7fe6,#7767d8)!important;box-shadow:0 5px 15px rgba(82,118,224,.30)!important}
 body:has(.bl-theme-state.dark) .st-key-boys_log_theme [role="radiogroup"] label:has(input:checked) p{color:#fff!important}
-body:has(.bl-theme-state.dark) .bl-date-display,body:has(.bl-theme-state.dark) .bl-sync,body:has(.bl-theme-state.dark) .bl-toolbar .stButton>button,body:has(.bl-theme-state.dark) [class*="st-key-bl_"]:not(.st-key-bl_nav_log):not(.st-key-bl_nav_analytics) .stButton>button{border-color:#29425f!important;background:#0d1d33!important;color:#e8eef8!important;box-shadow:0 10px 24px rgba(0,0,0,.18)!important}
+body:has(.bl-theme-state.dark) .bl-date-display,body:has(.bl-theme-state.dark) .bl-sync,body:has(.bl-theme-state.dark) .bl-toolbar .stButton>button{border-color:#29425f!important;background:#0d1d33!important;color:#e8eef8!important;box-shadow:0 10px 24px rgba(0,0,0,.18)!important}
 body:has(.bl-theme-state.dark) .bl-date-display{color:#f5f7fb!important}
 body:has(.bl-theme-state.dark) .bl-sync{color:#9fb0c6!important}
 body:has(.bl-theme-state.dark) .st-key-bl_prev .stButton>button:before,body:has(.bl-theme-state.dark) .st-key-bl_next .stButton>button:before{color:#dce7f6!important}
@@ -2668,27 +2668,6 @@ body:has(.bl-theme-state.dark) .st-key-bl_back_to_log button:before{background:#
 [class*="st-key-bl_feed_wheel_host_"]{position:absolute!important;inset:0!important;width:1px!important;height:1px!important;min-height:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important}
 [class*="st-key-bl_feed_wheel_actions_"]{display:none!important}
 [class*="st-key-bl_feed_wheel_host_"] iframe{width:1px!important;height:1px!important;min-height:0!important;border:0!important}
-/* Keep the transparent cell hit target in normal flow. Streamlit 1.50 wraps
-   help-enabled buttons in tooltip elements; an absolute button inside those
-   wrappers can collapse to 0×0 and become untappable. */
-[class*="st-key-blslot_"] [class*="st-key-blcell_"] button{
-  position:relative!important;
-  inset:auto!important;
-  display:flex!important;
-}
-[class*="st-key-blslot_"] [class*="st-key-blcell_"] .stTooltipIcon,
-[class*="st-key-blslot_"] [class*="st-key-blcell_"] .stTooltipHoverTarget{
-  width:100%!important;
-  height:inherit!important;
-  min-height:44px!important;
-}
-[class*="st-key-blslot_"] [class*="st-key-blcell_"] .stButton>div,
-[class*="st-key-blslot_"] [class*="st-key-blcell_"] .stButton>div>div{
-  width:100%!important;
-  min-width:100%!important;
-  height:44px!important;
-  min-height:44px!important;
-}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-group.sleep_kpi .bl-metric-line b,body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-group.sleep_kpi .bl-metric-line small,body:has(.bl-theme-state.dark) .st-key-bl_panel_b .bl-metric-group.sleep_kpi .bl-metric-line b,body:has(.bl-theme-state.dark) .st-key-bl_panel_b .bl-metric-group.sleep_kpi .bl-metric-line small{color:#f5f7fb!important}
 /* Start and end caps follow the recorded minute within each hourly cell. */
 .bl-sleep-implied.sleep-start .bl-sleep-fill{top:var(--bl-sleep-start)!important}
