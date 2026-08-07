@@ -3078,11 +3078,9 @@ def render_baby_panel(baby_id: str, baby_label: str, day: date) -> None:
             bottle_picker_dialog(baby_id, picker_hour)
         else:
             breastfeed_picker_dialog(baby_id, picker_kind, picker_hour)
-        return
     sleep_detail = st.session_state.get("bl_sleep_detail")
     if sleep_detail and sleep_detail.get("baby") == baby_id:
         sleep_detail_dialog(sleep_detail)
-        return
 
     st.markdown(
         f"<div id='bl-baby-{baby_id}' class='bl-scroll-anchor'></div>",
