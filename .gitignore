@@ -22,6 +22,7 @@ alerts.json
 calc_prefs.json
 journal_config.json
 runtime/
+static/buggins-assets/
 watchlist_engine/state/
 binance_breakout_radar_cloud/data/
 binance_breakout_radar_cloud/outputs/

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from collections import defaultdict
 from datetime import date, datetime, timedelta
-import base64
 from functools import wraps
 import html
 import json
@@ -337,21 +336,16 @@ def end_active_sleep(baby: str, event_ts: datetime, ended_by: str) -> datetime |
     return active_start
 
 
-@st.cache_data(show_spinner=False)
 def _cached_icon_data_uri(kind: str, asset_version: str) -> str:
-    _ = asset_version
     filename = ICON_FILES.get(kind)
     if not filename:
         return ""
-    path = os.path.join(ROOT_DIR, "assets", filename)
-    try:
-        with open(path, "rb") as f:
-            encoded = base64.b64encode(f.read()).decode("ascii")
-    except OSError:
+    if not os.path.isfile(os.path.join(ROOT_DIR, "assets", filename)):
         return ""
-    ext = os.path.splitext(filename)[1].lower()
-    mime = "image/png" if ext == ".png" else "image/svg+xml"
-    return f"data:{mime};base64,{encoded}"
+    # Serve artwork as ordinary browser-cacheable files. Embedding PNGs as
+    # base64 made every Streamlit rerun resend several megabytes through the
+    # WebSocket before newly rendered buttons became interactive.
+    return f"/app/static/buggins-assets/{filename}?v={asset_version}"
 
 
 def icon_data_uri(kind: str) -> str:
@@ -1036,6 +1030,24 @@ def day_events_snapshot(day: str) -> list[dict]:
     return baby_log_store.load_events(day)
 
 
+def event_timestamp_for_hour(hour: int) -> datetime:
+    """Use the real current time only for the current hourly cell.
+
+    A retrospective entry in a past or future cell represents that displayed
+    hour, so default it to the exact hour instead of borrowing the current
+    clock's unrelated minute and second.
+    """
+    now = datetime.now(MEL)
+    selected = selected_day()
+    is_current_hour = selected == now.date() and hour == now.hour
+    return datetime.combine(selected, datetime.min.time(), tzinfo=MEL).replace(
+        hour=hour,
+        minute=now.minute if is_current_hour else 0,
+        second=now.second if is_current_hour else 0,
+        microsecond=0,
+    )
+
+
 def care_details_snapshot(day: str, baby: str) -> dict:
     snapshots = st.session_state.setdefault("bl_care_snapshots", {})
     key = f"{day}:{baby}"
@@ -1094,13 +1106,7 @@ def toggle_cell_event(baby: str, kind: str, hour: int, amount_ml: int | None = N
         st.toast(f"Cleared {KIND_LABELS.get(kind, kind)} at {hour_label(hour)}")
         return
 
-    now = datetime.now(MEL)
-    event_ts = datetime.combine(selected_day(), datetime.min.time(), tzinfo=MEL).replace(
-        hour=hour,
-        minute=now.minute,
-        second=now.second,
-        microsecond=0,
-    )
+    event_ts = event_timestamp_for_hour(hour)
     baby_log_store.add_event(baby, kind, amount_ml=amount_ml, event_ts=event_ts)
     sleep_interrupted = kind in SLEEP_INTERRUPT_KINDS and end_active_sleep(baby, event_ts, kind)
     st.toast(f"Logged {KIND_LABELS.get(kind, kind)} at {event_ts.strftime('%H:%M')}")
@@ -1110,12 +1116,7 @@ def toggle_cell_event(baby: str, kind: str, hour: int, amount_ml: int | None = N
 
 def toggle_sleep_tracking(baby: str, hour: int) -> None:
     now = datetime.now(MEL)
-    event_ts = datetime.combine(selected_day(), datetime.min.time(), tzinfo=MEL).replace(
-        hour=hour,
-        minute=now.minute,
-        second=now.second,
-        microsecond=0,
-    )
+    event_ts = event_timestamp_for_hour(hour)
     active_cutoff = max(event_ts, now)
     history = sleep_history_for(baby, active_cutoff)
     cancelled_start = cancel_sleep_starts_for_hour(history, baby, selected_day(), hour)
@@ -1151,43 +1152,48 @@ def choose_feed_value(
 ) -> None:
     day = selected_day().isoformat()
     selected_milk_type = milk_type.upper() if milk_type and milk_type.upper() in MILK_TYPES else "FOR"
-    if kind == "bottle":
-        existing = [
-            event
-            for event in day_events_snapshot(day)
-            if event.get("baby") == baby
-            and event.get("kind") == kind
-            and parse_dt(event.get("event_ts")).hour == hour
-            and bottle_milk_type(event) == selected_milk_type
-        ]
-        for event in existing:
-            baby_log_store.delete_event(event.get("id"))
-    else:
-        baby_log_store.delete_events_for_hour(day, baby, kind, hour)
-    st.session_state.boys_log_feed_picker = None
+    existing = [
+        event
+        for event in day_events_snapshot(day)
+        if event.get("baby") == baby
+        and event.get("kind") == kind
+        and parse_dt(event.get("event_ts")).hour == hour
+        and (kind != "bottle" or bottle_milk_type(event) == selected_milk_type)
+    ]
     if value is None:
+        if kind == "bottle":
+            for event in existing:
+                baby_log_store.delete_event(event.get("id"))
+        else:
+            baby_log_store.delete_events_for_hour(day, baby, kind, hour)
+        st.session_state.boys_log_feed_picker = None
         cleared_label = f"{selected_milk_type} bottle" if kind == "bottle" else KIND_LABELS.get(kind, kind)
         st.toast(f"Cleared {cleared_label} at {hour_label(hour)}")
         return
-    now = datetime.now(MEL)
-    event_ts = datetime.combine(selected_day(), datetime.min.time(), tzinfo=MEL).replace(
-        hour=hour,
-        minute=now.minute,
-        second=now.second,
-        microsecond=0,
-    )
+    event_ts = event_timestamp_for_hour(hour)
     note_parts = []
     if kind == "bottle":
         note_parts.append(f"milk_type={selected_milk_type}")
         if duration_minutes:
             note_parts.append(f"duration_minutes={duration_minutes}")
     note = ";".join(note_parts)
+    # Save the replacement before removing the previous record. If the insert
+    # fails, the established feed remains untouched instead of being lost.
     baby_log_store.add_event(baby, kind, amount_ml=value, note=note, event_ts=event_ts)
+    cleanup_failed = False
+    for event in existing:
+        try:
+            baby_log_store.delete_event(event.get("id"))
+        except baby_log_store.StorageError:
+            cleanup_failed = True
+    st.session_state.boys_log_feed_picker = None
     sleep_interrupted = end_active_sleep(baby, event_ts, kind)
     unit = "ml" if kind == "bottle" else "minutes"
     duration_text = f" · {duration_minutes} minutes" if kind == "bottle" and duration_minutes else ""
     milk_text = f"{selected_milk_type} · " if kind == "bottle" else ""
     st.toast(f"Logged {milk_text}{value} {unit}{duration_text} at {event_ts.strftime('%H:%M')}")
+    if cleanup_failed:
+        st.toast("The new feed was saved, but the previous entry could not be cleared. Please review this hour.", icon="⚠️")
     if sleep_interrupted:
         st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
 
@@ -1229,50 +1235,75 @@ def choose_bottle_combo(baby: str, hour: int, payload_key: str) -> None:
         milk_type: [event for event in existing if bottle_milk_type(event) == milk_type]
         for milk_type in MILK_TYPES
     }
-    now = datetime.now(MEL)
-    event_ts = datetime.combine(selected_day(), datetime.min.time(), tzinfo=MEL).replace(
-        hour=hour,
-        minute=now.minute,
-        second=now.second,
-        microsecond=0,
-    )
-    added = []
+    event_ts = event_timestamp_for_hour(hour)
+    changed_types = []
+    staged_events = []
     for milk_type in MILK_TYPES:
         current_events = existing_by_type[milk_type]
         target = desired[milk_type]
         latest = current_events[-1] if current_events else None
         unchanged = (
-            latest is not None
-            and target is not None
-            and int(latest.get("amount_ml") or 0) == target["amount"]
-            and event_duration_minutes(latest) == target["duration"]
-        )
-        if unchanged:
-            continue
-        for event in current_events:
-            baby_log_store.delete_event(event.get("id"))
-        if target is not None:
-            baby_log_store.add_event(
-                baby,
-                "bottle",
-                amount_ml=target["amount"],
-                note=f"milk_type={milk_type};duration_minutes={target['duration']}",
-                event_ts=event_ts,
+            (not current_events and target is None)
+            or (
+                latest is not None
+                and target is not None
+                and int(latest.get("amount_ml") or 0) == target["amount"]
+                and event_duration_minutes(latest) == target["duration"]
+                and len(current_events) == 1
             )
-            added.append(milk_type)
+        )
+        if not unchanged:
+            changed_types.append(milk_type)
+
+    # Stage every replacement first. No established record is removed unless
+    # every required insert has succeeded.
+    try:
+        for milk_type in changed_types:
+            target = desired[milk_type]
+            if target is None:
+                continue
+            staged_events.append(
+                baby_log_store.add_event(
+                    baby,
+                    "bottle",
+                    amount_ml=target["amount"],
+                    note=f"milk_type={milk_type};duration_minutes={target['duration']}",
+                    event_ts=event_ts,
+                )
+            )
+    except baby_log_store.StorageError:
+        for staged_event in staged_events:
+            try:
+                baby_log_store.delete_event(staged_event.get("id"))
+            except baby_log_store.StorageError:
+                pass
+        raise
+
+    cleanup_failed = False
+    for milk_type in changed_types:
+        for event in existing_by_type[milk_type]:
+            try:
+                baby_log_store.delete_event(event.get("id"))
+            except baby_log_store.StorageError:
+                cleanup_failed = True
 
     st.session_state.boys_log_feed_picker = None
     st.session_state[payload_key] = ""
+    added = [milk_type for milk_type in changed_types if desired[milk_type] is not None]
     if added:
         sleep_interrupted = end_active_sleep(baby, event_ts, "bottle")
         feed_text = " and ".join(added)
         st.toast(f"Saved {feed_text} in the {hour_label(hour)} bottle cell")
         if sleep_interrupted:
             st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
+    elif changed_types and any(desired.values()):
+        st.toast(f"Updated bottle feeds at {hour_label(hour)}")
     elif any(desired.values()):
         st.toast(f"Bottle feeds unchanged at {hour_label(hour)}")
     else:
         st.toast(f"Cleared bottle feeds at {hour_label(hour)}")
+    if cleanup_failed:
+        st.toast("The new bottle feed was saved, but an older entry could not be cleared. Please review this hour.", icon="⚠️")
 
 
 @reliable_log_action

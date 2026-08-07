@@ -4,14 +4,24 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import re
+import shutil
 
 import streamlit
 
 
-MARKER = "<!-- buggins-shell-v7 -->"
+MARKER = "<!-- buggins-shell-v8 -->"
 
 
 def main() -> None:
+    project_root = Path(__file__).resolve().parents[1]
+    # Streamlit serves the project's static directory as browser-cacheable
+    # files. Copy the established artwork there once when the container
+    # starts instead of embedding it in every Streamlit delta.
+    shutil.copytree(
+        project_root / "assets",
+        project_root / "static" / "buggins-assets",
+        dirs_exist_ok=True,
+    )
     configured_path = os.getenv("BUGGINS_STREAMLIT_INDEX", "").strip()
     index_path = (
         Path(configured_path)
@@ -22,7 +32,7 @@ def main() -> None:
     if MARKER in source:
         return
     startup_script = (
-        Path(__file__).resolve().parents[1] / "static" / "buggins-startup.js"
+        project_root / "static" / "buggins-startup.js"
     ).read_text(encoding="utf-8")
 
     head = f"""{MARKER}
@@ -32,8 +42,8 @@ def main() -> None:
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Buggins" />
-    <link rel="manifest" href="/app/static/manifest.webmanifest?v=7" />
-    <link rel="apple-touch-icon" href="/app/static/apple-touch-icon.png?v=7" />
+    <link rel="manifest" href="/app/static/manifest.webmanifest?v=8" />
+    <link rel="apple-touch-icon" href="/app/static/apple-touch-icon.png?v=8" />
     <style id="buggins-startup-style">
       html, body {{ margin: 0; background: #061326 !important; }}
       body.buggins-loading {{ overflow: hidden !important; }}

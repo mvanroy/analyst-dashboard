@@ -2,19 +2,27 @@
   "use strict";
 
   const body = document.body;
-  const hiddenKey = "buggins-hidden-at-v7";
-  const recoveryKey = "buggins-recovery-at-v7";
-  const reloadingKey = "buggins-reloading-v7";
+  const hiddenKey = "buggins-hidden-at-v8";
+  const recoveryKey = "buggins-recovery-at-v8";
+  const reloadingKey = "buggins-reloading-v8";
   let initialLoad = true;
   let tapWatchdog = 0;
+  let tapStartGuard = 0;
   let markerAtTap = null;
+  let sawRunAfterTap = false;
   let statusTimer = 0;
   let jumpScrollHost = null;
 
   sessionStorage.removeItem(reloadingKey);
 
+  const streamlitRunState = () =>
+    document.querySelector('[data-testid="stApp"]')?.dataset.testScriptState || "";
+
+  const streamlitConnectionState = () =>
+    document.querySelector('[data-testid="stApp"]')?.dataset.testConnectionState || "";
+
   const appIsReady = () => Boolean(
-    document.querySelector("#bl-app-ready") ||
+    streamlitRunState() === "notRunning" ||
     document.querySelector(".buggins-login-title") ||
     document.querySelector('[data-testid="stAlert"]')
   );
@@ -36,15 +44,21 @@
     window.clearInterval(readyPoll);
     window.requestAnimationFrame(hideStartup);
   }, 40);
+  // Never expose Streamlit's half-built grid. If a run cannot finish, recover
+  // behind the navy shell instead of showing buttons with no live callbacks.
   window.setTimeout(() => {
+    if (appIsReady()) return;
     window.clearInterval(readyPoll);
-    hideStartup();
-  }, 15000);
+    recover();
+  }, 30000);
 
   const clearTapWatchdog = () => {
     if (tapWatchdog) window.clearTimeout(tapWatchdog);
+    if (tapStartGuard) window.clearTimeout(tapStartGuard);
     tapWatchdog = 0;
+    tapStartGuard = 0;
     markerAtTap = null;
+    sawRunAfterTap = false;
   };
 
   const showStatus = (message, blocking = false) => {
@@ -105,6 +119,7 @@
     if (!target) return;
     clearTapWatchdog();
     markerAtTap = document.querySelector("#bl-app-ready");
+    sawRunAfterTap = false;
     const isCell = Boolean(target.closest('[class*="st-key-blcell_"]'));
     const isNav = Boolean(target.closest(".st-key-bl_nav_log, .st-key-bl_nav_analytics"));
     showStatus(isCell ? "Working…" : "Opening…");
@@ -112,7 +127,14 @@
       scrollTop();
       window.setTimeout(scrollTop, 100);
     }
-    tapWatchdog = window.setTimeout(recover, 6000);
+    // A healthy Streamlit button begins a rerun almost immediately. Recover
+    // quickly only when no rerun starts at all; once a save has started, allow
+    // the database request to finish without reloading underneath it.
+    tapStartGuard = window.setTimeout(() => {
+      if (!tapWatchdog || sawRunAfterTap) return;
+      recover();
+    }, 3000);
+    tapWatchdog = window.setTimeout(recover, 30000);
   };
 
   const root = document.getElementById("root");
@@ -120,11 +142,27 @@
     const responseObserver = new MutationObserver(() => {
       if (!tapWatchdog) return;
       const markerNow = document.querySelector("#bl-app-ready");
-      if ((markerAtTap && !markerAtTap.isConnected) || markerNow !== markerAtTap) {
+      const runState = streamlitRunState();
+      if (runState === "running") sawRunAfterTap = true;
+      const pickerOpened = Boolean(
+        document.querySelector("#bl-feed-wheel-overlay") ||
+        document.querySelector('[class*="st-key-bl_feed_wheel_host_"]')
+      );
+      if (
+        pickerOpened ||
+        (sawRunAfterTap && runState === "notRunning") ||
+        (markerAtTap && !markerAtTap.isConnected) ||
+        markerNow !== markerAtTap
+      ) {
         clearTapWatchdog();
       }
     });
-    responseObserver.observe(root, {childList: true, subtree: true});
+    responseObserver.observe(root, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["data-test-script-state", "data-test-connection-state"]
+    });
   }
 
   const markHidden = () => {
@@ -136,9 +174,20 @@
 
   const resume = (fromCache = false) => {
     if (initialLoad) return;
-    const hiddenAt = Number(sessionStorage.getItem(hiddenKey) || 0);
     sessionStorage.removeItem(hiddenKey);
-    if (fromCache || (hiddenAt && Date.now() - hiddenAt > 15000)) recover();
+    if (!navigator.onLine) {
+      showStatus("Connection lost", true);
+      return;
+    }
+    document.querySelector('#bl-interaction-status[data-blocking="true"]')?.remove();
+    // Time spent in the background is not itself a failure. Preserve the open
+    // profile, scroll position and picker whenever Streamlit still reports a
+    // live connection. The tap guard remains the fallback for a stale socket.
+    window.setTimeout(() => {
+      const connectionState = streamlitConnectionState();
+      if (connectionState && connectionState !== "CONNECTED") recover();
+      else if (fromCache && !connectionState) recover();
+    }, 250);
   };
 
   const onVisibility = () => {
