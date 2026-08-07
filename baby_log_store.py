@@ -13,6 +13,8 @@ import httpx
 
 TABLE = "baby_log_events"
 CARE_TABLE = "baby_care_details"
+FEED_KINDS = {"left", "right", "bottle"}
+MILK_TYPES = ("FOR", "EBM")
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 LOCAL_PATH = os.path.join(ROOT_DIR, "baby_log_events.json")
 LOCAL_DETAILS_PATH = os.path.join(ROOT_DIR, "baby_care_details.json")
@@ -91,7 +93,7 @@ def load_events_range(start_day: str, end_day: str) -> list[dict]:
                     ("order", "event_ts.asc"),
                 ],
             )
-            return [_row_to_event(row) for row in rows]
+            return _effective_events([_row_to_event(row) for row in rows])
         except Exception:
             _set_storage_warning("load events")
     return [
@@ -99,6 +101,85 @@ def load_events_range(start_day: str, end_day: str) -> list[dict]:
         for event in _load_local(None)
         if start_day <= str(event.get("day") or "") <= end_day
     ]
+
+
+def replace_feed_cell(
+    day: str,
+    baby: str,
+    kind: str,
+    hour: int,
+    selections: dict[str, dict | None],
+    *,
+    event_ts: datetime,
+) -> list[dict]:
+    """Atomically replace the effective values for one feed cell.
+
+    Canonical records use deterministic IDs, so a retry updates the same rows
+    instead of creating duplicates. A cleared selection is represented by a
+    tombstone. Older event rows are retained as history but are superseded by
+    the canonical row when events are loaded.
+    """
+    if kind not in FEED_KINDS:
+        raise ValueError(f"Unsupported feed kind: {kind}")
+    expected = set(MILK_TYPES if kind == "bottle" else ("",))
+    if set(selections) != expected:
+        raise ValueError("Feed-cell selections do not match the requested kind.")
+
+    now = datetime.now(MEL)
+    canonical: list[dict] = []
+    for milk_type in sorted(expected):
+        selection = selections[milk_type]
+        state = "active" if selection is not None else "cleared"
+        note_parts = [f"feed_state={state}"]
+        if kind == "bottle":
+            note_parts.append(f"milk_type={milk_type}")
+        amount_ml = None
+        if selection is not None:
+            amount_ml = selection.get("amount_ml")
+            extra_note = str(selection.get("note") or "").strip()
+            if extra_note:
+                note_parts.extend(
+                    part for part in extra_note.split(";") if part and not part.startswith("feed_state=")
+                )
+        canonical.append(
+            {
+                "id": feed_cell_record_id(day, baby, hour, kind, milk_type),
+                "baby": baby,
+                "kind": kind,
+                "amount_ml": amount_ml,
+                "note": ";".join(note_parts),
+                "event_ts": event_ts.isoformat(timespec="seconds"),
+                "day": day,
+                "created_at": now.isoformat(timespec="seconds"),
+            }
+        )
+
+    if is_supabase_configured():
+        try:
+            rows = _request(
+                "POST",
+                f"/rest/v1/{TABLE}",
+                params={"on_conflict": "id"},
+                json=[_event_to_row(event) for event in canonical],
+                headers={"Prefer": "resolution=merge-duplicates,return=representation"},
+            )
+            saved = [_row_to_event(row) for row in rows]
+            return saved or canonical
+        except Exception as exc:
+            raise _shared_store_error("save this feed", exc) from exc
+
+    events = _load_local_raw()
+    replacements = {event["id"]: event for event in canonical}
+    events = [event for event in events if event.get("id") not in replacements]
+    events.extend(replacements.values())
+    _save_local(events)
+    return canonical
+
+
+def feed_cell_record_id(day: str, baby: str, hour: int, kind: str, milk_type: str = "") -> str:
+    """Return the stable ID used for an editable feed-cell value."""
+    identity = f"igby-baby-log:{day}:{baby}:{hour:02d}:{kind}:{milk_type.upper()}"
+    return uuid.uuid5(uuid.NAMESPACE_URL, identity).hex
 
 
 def add_event(
@@ -127,7 +208,7 @@ def add_event(
             return event
         except Exception as exc:
             raise _shared_store_error("save this event", exc) from exc
-    events = _load_local(None)
+    events = _load_local_raw()
     events.append(event)
     _save_local(events)
     return event
@@ -146,7 +227,7 @@ def delete_event(event_id: str) -> bool:
                 return True
         except Exception as exc:
             raise _shared_store_error("delete this event", exc) from exc
-    events = _load_local(None)
+    events = _load_local_raw()
     kept = [event for event in events if event.get("id") != event_id]
     if len(kept) == len(events):
         return False
@@ -273,10 +354,17 @@ def _load_supabase(day: str | None) -> list[dict]:
     if day:
         params["day"] = f"eq.{day}"
     rows = _request("GET", f"/rest/v1/{TABLE}", params=params)
-    return [_row_to_event(row) for row in rows]
+    return _effective_events([_row_to_event(row) for row in rows])
 
 
 def _load_local(day: str | None) -> list[dict]:
+    cleaned = _effective_events(_load_local_raw())
+    if day:
+        cleaned = [event for event in cleaned if event.get("day") == day]
+    return sorted(cleaned, key=lambda event: event.get("event_ts") or "")
+
+
+def _load_local_raw() -> list[dict]:
     if not os.path.exists(LOCAL_PATH):
         return []
     try:
@@ -286,10 +374,62 @@ def _load_local(day: str | None) -> list[dict]:
         return []
     if not isinstance(events, list):
         return []
-    cleaned = [_normalise_event(event) for event in events if isinstance(event, dict)]
-    if day:
-        cleaned = [event for event in cleaned if event.get("day") == day]
-    return sorted(cleaned, key=lambda event: event.get("event_ts") or "")
+    return [_normalise_event(event) for event in events if isinstance(event, dict)]
+
+
+def _note_value(event: dict, key: str) -> str:
+    prefix = f"{key}="
+    for part in str(event.get("note") or "").split(";"):
+        if part.startswith(prefix):
+            return part[len(prefix):].strip()
+    return ""
+
+
+def _feed_cell_key(event: dict) -> tuple[str, str, int, str, str] | None:
+    kind = str(event.get("kind") or "")
+    if kind not in FEED_KINDS:
+        return None
+    try:
+        hour = datetime.fromisoformat(str(event.get("event_ts") or "").replace("Z", "+00:00")).astimezone(MEL).hour
+    except ValueError:
+        return None
+    milk_type = _note_value(event, "milk_type").upper() if kind == "bottle" else ""
+    if kind == "bottle" and milk_type not in MILK_TYPES:
+        milk_type = "FOR"
+    return (
+        str(event.get("day") or ""),
+        str(event.get("baby") or ""),
+        hour,
+        kind,
+        milk_type,
+    )
+
+
+def _effective_events(events: list[dict]) -> list[dict]:
+    """Resolve canonical feed rows while leaving all legacy records intact."""
+    canonical_by_key: dict[tuple[str, str, int, str, str], dict] = {}
+    for event in events:
+        key = _feed_cell_key(event)
+        if key is None:
+            continue
+        day, baby, hour, kind, milk_type = key
+        if event.get("id") == feed_cell_record_id(day, baby, hour, kind, milk_type):
+            canonical_by_key[key] = event
+
+    resolved: list[dict] = []
+    emitted: set[tuple[str, str, int, str, str]] = set()
+    for event in sorted(events, key=lambda item: item.get("event_ts") or ""):
+        key = _feed_cell_key(event)
+        canonical = canonical_by_key.get(key) if key is not None else None
+        if canonical is None:
+            resolved.append(event)
+            continue
+        if key in emitted:
+            continue
+        emitted.add(key)
+        if _note_value(canonical, "feed_state") != "cleared":
+            resolved.append(canonical)
+    return resolved
 
 
 def _save_local(events: list[dict]) -> None:

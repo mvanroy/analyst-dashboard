@@ -9,7 +9,7 @@ import shutil
 import streamlit
 
 
-MARKER = "<!-- buggins-shell-v8 -->"
+MARKER = "<!-- buggins-shell-v9 -->"
 
 
 def main() -> None:
@@ -42,8 +42,8 @@ def main() -> None:
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Buggins" />
-    <link rel="manifest" href="/app/static/manifest.webmanifest?v=8" />
-    <link rel="apple-touch-icon" href="/app/static/apple-touch-icon.png?v=8" />
+    <link rel="manifest" href="/app/static/manifest.webmanifest?v=9" />
+    <link rel="apple-touch-icon" href="/app/static/apple-touch-icon.png?v=9" />
     <style id="buggins-startup-style">
       html, body {{ margin: 0; background: #061326 !important; }}
       body.buggins-loading {{ overflow: hidden !important; }}

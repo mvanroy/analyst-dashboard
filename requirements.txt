@@ -1,8 +1,8 @@
-streamlit>=1.30
-httpx>=0.24
-pandas>=2.0
-numpy>=1.26
-ccxt>=4.3
-streamlit-aggrid>=1.0.5
-PyYAML>=6.0
-streamlit-autorefresh>=1.0.1
+streamlit==1.61.1
+httpx==0.28.1
+pandas==3.0.5
+numpy==2.5.1
+ccxt==4.5.71
+streamlit-aggrid==1.2.1.post2
+PyYAML==6.0.3
+streamlit-autorefresh==1.0.1

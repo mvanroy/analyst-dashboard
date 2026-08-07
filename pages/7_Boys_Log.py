@@ -10,10 +10,10 @@ import time
 from zoneinfo import ZoneInfo
 
 import streamlit as st
-import streamlit.components.v1 as components
 
 import baby_log_store
 import buggins_auth
+from buggins_feed_picker import render_feed_picker
 
 
 STANDALONE = (os.getenv("BUGGINS_STANDALONE") or "1").strip().lower() in {"1", "true", "yes", "on"}
@@ -55,6 +55,7 @@ FEED_KINDS = {"left", "right", "bottle"}
 CHANGE_KINDS = {"pee", "poop"}
 SLEEP_INTERRUPT_KINDS = FEED_KINDS | CHANGE_KINDS
 SLEEP_LOOKBACK_DAYS = 14
+LOG_SNAPSHOT_TTL_SECONDS = 20
 ANALYTICS_START_DAY = date(2026, 7, 24)
 ANALYTICS_RANGES = ("1D", "1W", "1M", "ALL")
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -180,14 +181,16 @@ def sleep_history_for(baby: str, at_time: datetime) -> list[dict]:
     start_day = (at_time.date() - timedelta(days=SLEEP_LOOKBACK_DAYS)).isoformat()
     snapshot_start = st.session_state.get("bl_sleep_snapshot_start")
     snapshot_end = st.session_state.get("bl_sleep_snapshot_end")
+    loaded_at = float(st.session_state.get("bl_events_snapshot_loaded_at") or 0)
     if (
         snapshot_start
         and snapshot_end
         and str(snapshot_start) <= start_day
         and str(snapshot_end) >= at_time.date().isoformat()
+        and time.monotonic() - loaded_at < LOG_SNAPSHOT_TTL_SECONDS
     ):
         return list(st.session_state.get("bl_sleep_snapshot") or [])
-    return baby_log_store.load_events_range(start_day, at_time.date().isoformat())
+    return log_events_snapshot(at_time.date(), force=True)
 
 
 def active_sleep_start_event(events: list[dict], baby: str, cutoff: datetime) -> dict | None:
@@ -226,6 +229,7 @@ def cancel_sleep_starts_for_hour(events: list[dict], baby: str, day: date, hour:
     ]
     for event in starts + linked_ends:
         baby_log_store.delete_event(event.get("id"))
+    remove_events_from_snapshot({event.get("id") for event in starts + linked_ends})
     return min(start_times)
 
 
@@ -319,7 +323,7 @@ def merged_sleep_periods(
     return sessions
 
 
-def end_active_sleep(baby: str, event_ts: datetime, ended_by: str) -> datetime | None:
+def end_active_sleep(baby: str, event_ts: datetime, ended_by: str) -> dict | None:
     _, active_start = sleep_sessions(sleep_history_for(baby, event_ts), baby, event_ts)
     if not active_start or event_ts <= active_start:
         return None
@@ -332,8 +336,9 @@ def end_active_sleep(baby: str, event_ts: datetime, ended_by: str) -> datetime |
             f"ended_by={ended_by}",
         )
     )
-    baby_log_store.add_event(baby, "sleep", note=note, event_ts=event_ts)
-    return active_start
+    saved = baby_log_store.add_event(baby, "sleep", note=note, event_ts=event_ts)
+    add_events_to_snapshot([saved])
+    return saved
 
 
 def _cached_icon_data_uri(kind: str, asset_version: str) -> str:
@@ -1025,9 +1030,106 @@ def sync_day_from_picker() -> None:
 
 
 def day_events_snapshot(day: str) -> list[dict]:
-    if st.session_state.get("bl_events_snapshot_day") == day:
-        return list(st.session_state.get("bl_events_snapshot") or [])
-    return baby_log_store.load_events(day)
+    return [
+        event
+        for event in log_events_snapshot(date.fromisoformat(day))
+        if event.get("day") == day
+    ]
+
+
+def log_events_snapshot(day: date, *, force: bool = False) -> list[dict]:
+    """Load the sleep window once and reuse it across fragment reruns."""
+    start_day = (day - timedelta(days=SLEEP_LOOKBACK_DAYS)).isoformat()
+    end_day = day.isoformat()
+    loaded_at = float(st.session_state.get("bl_events_snapshot_loaded_at") or 0)
+    snapshot_matches = (
+        st.session_state.get("bl_sleep_snapshot_start") == start_day
+        and st.session_state.get("bl_sleep_snapshot_end") == end_day
+    )
+    if (
+        not force
+        and snapshot_matches
+        and time.monotonic() - loaded_at < LOG_SNAPSHOT_TTL_SECONDS
+    ):
+        return list(st.session_state.get("bl_sleep_snapshot") or [])
+
+    events = baby_log_store.load_events_range(start_day, end_day)
+    st.session_state["bl_events_snapshot_day"] = end_day
+    st.session_state["bl_events_snapshot"] = [
+        event for event in events if event.get("day") == end_day
+    ]
+    st.session_state["bl_sleep_snapshot_start"] = start_day
+    st.session_state["bl_sleep_snapshot_end"] = end_day
+    st.session_state["bl_sleep_snapshot"] = list(events)
+    st.session_state["bl_events_snapshot_loaded_at"] = time.monotonic()
+    return list(events)
+
+
+def set_log_events_snapshot(events: list[dict]) -> None:
+    end_day = str(st.session_state.get("bl_sleep_snapshot_end") or "")
+    st.session_state["bl_sleep_snapshot"] = list(events)
+    st.session_state["bl_events_snapshot"] = [
+        event for event in events if event.get("day") == end_day
+    ]
+    st.session_state["bl_events_snapshot_day"] = end_day
+    st.session_state["bl_events_snapshot_loaded_at"] = time.monotonic()
+
+
+def add_events_to_snapshot(events: list[dict]) -> None:
+    if not events or "bl_sleep_snapshot" not in st.session_state:
+        return
+    current = list(st.session_state.get("bl_sleep_snapshot") or [])
+    ids = {event.get("id") for event in events}
+    current = [event for event in current if event.get("id") not in ids]
+    current.extend(events)
+    current.sort(key=lambda event: event.get("event_ts") or "")
+    set_log_events_snapshot(current)
+
+
+def remove_events_from_snapshot(event_ids: set[str]) -> None:
+    if not event_ids or "bl_sleep_snapshot" not in st.session_state:
+        return
+    set_log_events_snapshot([
+        event
+        for event in st.session_state.get("bl_sleep_snapshot") or []
+        if event.get("id") not in event_ids
+    ])
+
+
+def replace_feed_cell_in_snapshot(
+    day: str,
+    baby: str,
+    kind: str,
+    hour: int,
+    canonical: list[dict],
+) -> None:
+    """Apply an atomic feed-cell result without another database read."""
+    if "bl_sleep_snapshot" not in st.session_state:
+        return
+    target_types = set(MILK_TYPES if kind == "bottle" else ("",))
+
+    def is_target(event: dict) -> bool:
+        if (
+            event.get("day") != day
+            or event.get("baby") != baby
+            or event.get("kind") != kind
+            or parse_dt(event.get("event_ts")).hour != hour
+        ):
+            return False
+        milk_type = bottle_milk_type(event) if kind == "bottle" else ""
+        return milk_type in target_types
+
+    current = [
+        event for event in st.session_state.get("bl_sleep_snapshot") or []
+        if not is_target(event)
+    ]
+    current.extend(
+        event
+        for event in canonical
+        if event_note_value(event, "feed_state") != "cleared"
+    )
+    current.sort(key=lambda event: event.get("event_ts") or "")
+    set_log_events_snapshot(current)
 
 
 def event_timestamp_for_hour(hour: int) -> datetime:
@@ -1067,6 +1169,20 @@ def set_care_details_snapshot(day: str, baby: str, details: dict) -> None:
     }
 
 
+def queue_toast(message: str, icon: str | None = None) -> None:
+    """Queue user feedback so callbacks remain side-effect-only."""
+    notices = st.session_state.setdefault("bl_pending_toasts", [])
+    notices.append({"message": message, "icon": icon})
+
+
+def show_queued_toasts() -> None:
+    # The updated cell is the success acknowledgement. Rendering a toast from
+    # a widget callback forces unsupported fragment output and can displace the
+    # profile on mobile. Errors are still rendered explicitly via
+    # ``bl_action_error``.
+    st.session_state.pop("bl_pending_toasts", None)
+
+
 def reliable_log_action(action):
     @wraps(action)
     def wrapped(*args, **kwargs):
@@ -1075,7 +1191,7 @@ def reliable_log_action(action):
             return action(*args, **kwargs)
         except baby_log_store.StorageError as exc:
             st.session_state["bl_action_error"] = str(exc)
-            st.toast("That entry was not saved. Please try again.", icon="⚠️")
+            queue_toast("That entry was not saved. Please try again.", icon="⚠️")
             return None
 
     return wrapped
@@ -1083,8 +1199,9 @@ def reliable_log_action(action):
 
 @reliable_log_action
 def log_event(baby: str, kind: str, amount_ml: int | None = None, note: str = "") -> None:
-    baby_log_store.add_event(baby, kind, amount_ml=amount_ml, note=note)
-    st.toast(f"Logged {KIND_LABELS.get(kind, kind)} for {dict(BABIES).get(baby, baby)}")
+    saved = baby_log_store.add_event(baby, kind, amount_ml=amount_ml, note=note)
+    add_events_to_snapshot([saved])
+    queue_toast(f"Logged {KIND_LABELS.get(kind, kind)} for {dict(BABIES).get(baby, baby)}")
 
 
 @reliable_log_action
@@ -1103,15 +1220,17 @@ def toggle_cell_event(baby: str, kind: str, hour: int, amount_ml: int | None = N
     ]
     if existing:
         baby_log_store.delete_events_for_hour(day, baby, kind, hour)
-        st.toast(f"Cleared {KIND_LABELS.get(kind, kind)} at {hour_label(hour)}")
+        remove_events_from_snapshot({event.get("id") for event in existing})
+        queue_toast(f"Cleared {KIND_LABELS.get(kind, kind)} at {hour_label(hour)}")
         return
 
     event_ts = event_timestamp_for_hour(hour)
-    baby_log_store.add_event(baby, kind, amount_ml=amount_ml, event_ts=event_ts)
+    saved = baby_log_store.add_event(baby, kind, amount_ml=amount_ml, event_ts=event_ts)
+    add_events_to_snapshot([saved])
     sleep_interrupted = kind in SLEEP_INTERRUPT_KINDS and end_active_sleep(baby, event_ts, kind)
-    st.toast(f"Logged {KIND_LABELS.get(kind, kind)} at {event_ts.strftime('%H:%M')}")
+    queue_toast(f"Logged {KIND_LABELS.get(kind, kind)} at {event_ts.strftime('%H:%M')}")
     if sleep_interrupted:
-        st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
+        queue_toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
 
 
 def toggle_sleep_tracking(baby: str, hour: int) -> None:
@@ -1121,19 +1240,22 @@ def toggle_sleep_tracking(baby: str, hour: int) -> None:
     history = sleep_history_for(baby, active_cutoff)
     cancelled_start = cancel_sleep_starts_for_hour(history, baby, selected_day(), hour)
     if cancelled_start:
-        st.toast("Sleep start cancelled")
+        queue_toast("Sleep start cancelled")
         return
     active_event = active_sleep_start_event(history, baby, active_cutoff)
     if active_event:
         baby_log_store.delete_event(active_event.get("id"))
-        st.toast("Sleep start cancelled")
+        remove_events_from_snapshot({active_event.get("id")})
+        queue_toast("Sleep start cancelled")
         return
 
-    baby_log_store.add_event(baby, "sleep", note="sleep_state=start", event_ts=event_ts)
-    st.toast(f"Sleep started at {event_ts.strftime('%H:%M')}")
+    saved = baby_log_store.add_event(baby, "sleep", note="sleep_state=start", event_ts=event_ts)
+    add_events_to_snapshot([saved])
+    queue_toast(f"Sleep started at {event_ts.strftime('%H:%M')}")
 
 
 def open_feed_picker(baby: str, kind: str, hour: int) -> None:
+    st.session_state.pop("bl_sleep_detail", None)
     st.session_state.boys_log_feed_picker = (baby, kind, hour)
 
 
@@ -1151,61 +1273,34 @@ def choose_feed_value(
     milk_type: str | None = None,
 ) -> None:
     day = selected_day().isoformat()
-    selected_milk_type = milk_type.upper() if milk_type and milk_type.upper() in MILK_TYPES else "FOR"
-    existing = [
-        event
-        for event in day_events_snapshot(day)
-        if event.get("baby") == baby
-        and event.get("kind") == kind
-        and parse_dt(event.get("event_ts")).hour == hour
-        and (kind != "bottle" or bottle_milk_type(event) == selected_milk_type)
-    ]
-    if value is None:
-        if kind == "bottle":
-            for event in existing:
-                baby_log_store.delete_event(event.get("id"))
-        else:
-            baby_log_store.delete_events_for_hour(day, baby, kind, hour)
-        st.session_state.boys_log_feed_picker = None
-        cleared_label = f"{selected_milk_type} bottle" if kind == "bottle" else KIND_LABELS.get(kind, kind)
-        st.toast(f"Cleared {cleared_label} at {hour_label(hour)}")
-        return
-    event_ts = event_timestamp_for_hour(hour)
-    note_parts = []
     if kind == "bottle":
-        note_parts.append(f"milk_type={selected_milk_type}")
-        if duration_minutes:
-            note_parts.append(f"duration_minutes={duration_minutes}")
-    note = ";".join(note_parts)
-    # Save the replacement before removing the previous record. If the insert
-    # fails, the established feed remains untouched instead of being lost.
-    baby_log_store.add_event(baby, kind, amount_ml=value, note=note, event_ts=event_ts)
-    cleanup_failed = False
-    for event in existing:
-        try:
-            baby_log_store.delete_event(event.get("id"))
-        except baby_log_store.StorageError:
-            cleanup_failed = True
+        raise ValueError("Bottle cells must be saved through the combined bottle action.")
+    # Refresh an expired snapshot before determining and replacing this cell.
+    day_events_snapshot(day)
+    event_ts = event_timestamp_for_hour(hour)
+    selection = None if value is None else {"amount_ml": value, "note": ""}
+    canonical = baby_log_store.replace_feed_cell(
+        day,
+        baby,
+        kind,
+        hour,
+        {"": selection},
+        event_ts=event_ts,
+    )
+    replace_feed_cell_in_snapshot(day, baby, kind, hour, canonical)
     st.session_state.boys_log_feed_picker = None
+    if value is None:
+        queue_toast(f"Cleared {KIND_LABELS.get(kind, kind)} at {hour_label(hour)}")
+        return True
     sleep_interrupted = end_active_sleep(baby, event_ts, kind)
-    unit = "ml" if kind == "bottle" else "minutes"
-    duration_text = f" · {duration_minutes} minutes" if kind == "bottle" and duration_minutes else ""
-    milk_text = f"{selected_milk_type} · " if kind == "bottle" else ""
-    st.toast(f"Logged {milk_text}{value} {unit}{duration_text} at {event_ts.strftime('%H:%M')}")
-    if cleanup_failed:
-        st.toast("The new feed was saved, but the previous entry could not be cleared. Please review this hour.", icon="⚠️")
+    queue_toast(f"Logged {value} minutes at {event_ts.strftime('%H:%M')}")
     if sleep_interrupted:
-        st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
+        queue_toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
+    return True
 
 
 @reliable_log_action
-def choose_bottle_combo(baby: str, hour: int, payload_key: str) -> None:
-    try:
-        payload = json.loads(st.session_state.get(payload_key) or "{}")
-    except (TypeError, json.JSONDecodeError):
-        st.toast("Could not read the bottle feeds. Please try again.")
-        return
-
+def choose_bottle_combo(baby: str, hour: int, payload: dict) -> bool | None:
     desired: dict[str, dict | None] = {}
     for milk_type in MILK_TYPES:
         entry = payload.get(milk_type)
@@ -1216,94 +1311,183 @@ def choose_bottle_combo(baby: str, hour: int, payload_key: str) -> None:
             amount = int(entry.get("amount"))
             duration = int(entry.get("duration"))
         except (AttributeError, TypeError, ValueError):
-            st.toast(f"Choose both amount and duration for {milk_type}.")
-            return
+            queue_toast(f"Choose both amount and duration for {milk_type}.")
+            return None
         if amount not in BOTTLE_AMOUNTS or duration not in BREASTFEED_MINUTES:
-            st.toast(f"Choose a valid amount and duration for {milk_type}.")
-            return
+            queue_toast(f"Choose a valid amount and duration for {milk_type}.")
+            return None
         desired[milk_type] = {"amount": amount, "duration": duration}
 
     day = selected_day().isoformat()
-    existing = [
-        event
-        for event in day_events_snapshot(day)
-        if event.get("baby") == baby
-        and event.get("kind") == "bottle"
-        and parse_dt(event.get("event_ts")).hour == hour
-    ]
-    existing_by_type = {
-        milk_type: [event for event in existing if bottle_milk_type(event) == milk_type]
+    day_events_snapshot(day)
+    event_ts = event_timestamp_for_hour(hour)
+    selections = {
+        milk_type: (
+            None
+            if desired[milk_type] is None
+            else {
+                "amount_ml": desired[milk_type]["amount"],
+                "note": f"duration_minutes={desired[milk_type]['duration']}",
+            }
+        )
         for milk_type in MILK_TYPES
     }
-    event_ts = event_timestamp_for_hour(hour)
-    changed_types = []
-    staged_events = []
-    for milk_type in MILK_TYPES:
-        current_events = existing_by_type[milk_type]
-        target = desired[milk_type]
-        latest = current_events[-1] if current_events else None
-        unchanged = (
-            (not current_events and target is None)
-            or (
-                latest is not None
-                and target is not None
-                and int(latest.get("amount_ml") or 0) == target["amount"]
-                and event_duration_minutes(latest) == target["duration"]
-                and len(current_events) == 1
-            )
-        )
-        if not unchanged:
-            changed_types.append(milk_type)
-
-    # Stage every replacement first. No established record is removed unless
-    # every required insert has succeeded.
-    try:
-        for milk_type in changed_types:
-            target = desired[milk_type]
-            if target is None:
-                continue
-            staged_events.append(
-                baby_log_store.add_event(
-                    baby,
-                    "bottle",
-                    amount_ml=target["amount"],
-                    note=f"milk_type={milk_type};duration_minutes={target['duration']}",
-                    event_ts=event_ts,
-                )
-            )
-    except baby_log_store.StorageError:
-        for staged_event in staged_events:
-            try:
-                baby_log_store.delete_event(staged_event.get("id"))
-            except baby_log_store.StorageError:
-                pass
-        raise
-
-    cleanup_failed = False
-    for milk_type in changed_types:
-        for event in existing_by_type[milk_type]:
-            try:
-                baby_log_store.delete_event(event.get("id"))
-            except baby_log_store.StorageError:
-                cleanup_failed = True
+    canonical = baby_log_store.replace_feed_cell(
+        day,
+        baby,
+        "bottle",
+        hour,
+        selections,
+        event_ts=event_ts,
+    )
+    replace_feed_cell_in_snapshot(day, baby, "bottle", hour, canonical)
 
     st.session_state.boys_log_feed_picker = None
-    st.session_state[payload_key] = ""
-    added = [milk_type for milk_type in changed_types if desired[milk_type] is not None]
+    added = [milk_type for milk_type in MILK_TYPES if desired[milk_type] is not None]
     if added:
         sleep_interrupted = end_active_sleep(baby, event_ts, "bottle")
         feed_text = " and ".join(added)
-        st.toast(f"Saved {feed_text} in the {hour_label(hour)} bottle cell")
+        queue_toast(f"Saved {feed_text} in the {hour_label(hour)} bottle cell")
         if sleep_interrupted:
-            st.toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
-    elif changed_types and any(desired.values()):
-        st.toast(f"Updated bottle feeds at {hour_label(hour)}")
-    elif any(desired.values()):
-        st.toast(f"Bottle feeds unchanged at {hour_label(hour)}")
+            queue_toast(f"Sleep ended at {event_ts.strftime('%H:%M')}")
     else:
-        st.toast(f"Cleared bottle feeds at {hour_label(hour)}")
-    if cleanup_failed:
-        st.toast("The new bottle feed was saved, but an older entry could not be cleared. Please review this hour.", icon="⚠️")
+        queue_toast(f"Cleared bottle feeds at {hour_label(hour)}")
+    return True
+
+
+def feed_picker_config(baby: str, kind: str, hour: int) -> dict:
+    day = selected_day().isoformat()
+    feed_events = [
+        event
+        for event in day_events_snapshot(day)
+        if event.get("baby") == baby
+        and event.get("kind") == kind
+        and parse_dt(event.get("event_ts")).hour == hour
+    ]
+    current_value = None
+    bottle_entries: dict[str, dict] = {}
+    if kind == "bottle":
+        for event in feed_events:
+            bottle_entries[bottle_milk_type(event)] = {
+                "value": event.get("amount_ml"),
+                "duration": event_duration_minutes(event),
+            }
+    elif feed_events:
+        try:
+            current_value = int(feed_events[-1].get("amount_ml"))
+        except (TypeError, ValueError):
+            current_value = None
+    side = "Left" if kind == "left" else "Right"
+    return {
+        "baby": baby,
+        "kind": kind,
+        "hour": hour,
+        "is_bottle": kind == "bottle",
+        "help": (
+            "Add FOR, EBM, or both. Both feeds are saved together in this hourly cell."
+            if kind == "bottle"
+            else "Tap the duration field and roll to the correct time."
+        ),
+        "field_label": f"{side} feed duration",
+        "values": list(BOTTLE_AMOUNTS if kind == "bottle" else BREASTFEED_MINUTES),
+        "current": current_value,
+        "duration_values": list(BREASTFEED_MINUTES),
+        "milk_types": list(MILK_TYPES),
+        "bottle_entries": bottle_entries,
+    }
+
+
+def picker_event_is_new(result) -> bool:
+    if not isinstance(result, dict):
+        return False
+    nonce = str(result.get("nonce") or "")
+    if not nonce or nonce == st.session_state.get("bl_feed_picker_last_nonce"):
+        return False
+    st.session_state["bl_feed_picker_last_nonce"] = nonce
+    return True
+
+
+@st.dialog("Breastfeed duration", width="small", dismissible=False)
+def breastfeed_picker_dialog(baby: str, kind: str, hour: int) -> None:
+    st.caption(f"{dict(BABIES).get(baby, baby)} · {hour_label(hour)}")
+    result = render_feed_picker(
+        feed_picker_config(baby, kind, hour),
+        key=f"bl_native_feed_picker_{baby}_{kind}_{hour}",
+    )
+    if not picker_event_is_new(result):
+        return
+    action = result.get("action")
+    if action == "cancel":
+        close_feed_picker()
+        st.rerun()
+    value = None
+    if action == "save":
+        try:
+            value = int((result.get("payload") or {}).get("value"))
+        except (TypeError, ValueError):
+            st.error("Choose a valid feed duration.")
+            return
+    if action in {"save", "clear"}:
+        saved = choose_feed_value(baby, kind, hour, value)
+        if saved:
+            st.rerun()
+        if error := st.session_state.get("bl_action_error"):
+            st.error(error)
+
+
+@st.dialog("Bottle feed", width="small", dismissible=False)
+def bottle_picker_dialog(baby: str, hour: int) -> None:
+    st.caption(f"{dict(BABIES).get(baby, baby)} · {hour_label(hour)}")
+    result = render_feed_picker(
+        feed_picker_config(baby, "bottle", hour),
+        key=f"bl_native_feed_picker_{baby}_bottle_{hour}",
+    )
+    if not picker_event_is_new(result):
+        return
+    action = result.get("action")
+    if action == "cancel":
+        close_feed_picker()
+        st.rerun()
+    if action == "save":
+        feeds = (result.get("payload") or {}).get("feeds")
+        if not isinstance(feeds, dict):
+            st.error("The bottle values could not be read. Please try again.")
+            return
+        saved = choose_bottle_combo(baby, hour, feeds)
+        if saved:
+            st.rerun()
+        if error := st.session_state.get("bl_action_error"):
+            st.error(error)
+
+
+def open_sleep_detail(baby: str, baby_label: str, hour: int, cycles: list[dict]) -> None:
+    st.session_state.boys_log_feed_picker = None
+    st.session_state["bl_sleep_detail"] = {
+        "baby": baby,
+        "baby_label": baby_label,
+        "hour": hour,
+        "cycles": cycles,
+    }
+
+
+def close_sleep_detail() -> None:
+    st.session_state.pop("bl_sleep_detail", None)
+
+
+@st.dialog("Sleep details", width="small", on_dismiss=close_sleep_detail)
+def sleep_detail_dialog(detail: dict) -> None:
+    st.markdown(f"### {esc(detail.get('baby_label'))}")
+    for cycle in detail.get("cycles") or []:
+        start_col, end_col, duration_col = st.columns(3)
+        start_col.caption("START")
+        start_col.markdown(f"**{esc(cycle.get('start'))}**")
+        end_col.caption("END")
+        end_col.markdown(f"**{esc(cycle.get('end'))}**")
+        duration_col.caption("DURATION")
+        duration_col.markdown(f"**{esc(cycle.get('duration'))}**")
+    if st.button("Close", key="bl_sleep_detail_close", use_container_width=True):
+        close_sleep_detail()
+        st.rerun()
 
 
 @reliable_log_action
@@ -1313,10 +1497,11 @@ def log_bath_time(baby: str) -> None:
     if existing:
         for event in existing:
             baby_log_store.delete_event(event.get("id"))
+        remove_events_from_snapshot({event.get("id") for event in existing})
         details = baby_log_store.save_care_details(day, baby, {"bath_time": ""})
         set_care_details_snapshot(day, baby, details)
         st.session_state[f"bl_care_bath_time_{baby}"] = ""
-        st.toast("Cleared bath time")
+        queue_toast("Cleared bath time")
         return
 
     now = datetime.now(MEL)
@@ -1326,12 +1511,13 @@ def log_bath_time(baby: str) -> None:
         second=now.second,
         microsecond=0,
     )
-    baby_log_store.add_event(baby, "bath", event_ts=event_ts)
+    saved = baby_log_store.add_event(baby, "bath", event_ts=event_ts)
+    add_events_to_snapshot([saved])
     bath_time = fmt_sheet_time(event_ts.isoformat())
     details = baby_log_store.save_care_details(day, baby, {"bath_time": bath_time})
     set_care_details_snapshot(day, baby, details)
     st.session_state[f"bl_care_bath_time_{baby}"] = bath_time
-    st.toast(f"Logged bath time at {event_ts.strftime('%H:%M')}")
+    queue_toast(f"Logged bath time at {event_ts.strftime('%H:%M')}")
 
 
 def strip_care_unit(value: str, unit: str) -> str:
@@ -2482,6 +2668,27 @@ body:has(.bl-theme-state.dark) .st-key-bl_back_to_log button:before{background:#
 [class*="st-key-bl_feed_wheel_host_"]{position:absolute!important;inset:0!important;width:1px!important;height:1px!important;min-height:0!important;overflow:hidden!important;opacity:0!important;pointer-events:none!important;z-index:-1!important}
 [class*="st-key-bl_feed_wheel_actions_"]{display:none!important}
 [class*="st-key-bl_feed_wheel_host_"] iframe{width:1px!important;height:1px!important;min-height:0!important;border:0!important}
+/* Keep the transparent cell hit target in normal flow. Streamlit 1.50 wraps
+   help-enabled buttons in tooltip elements; an absolute button inside those
+   wrappers can collapse to 0×0 and become untappable. */
+[class*="st-key-blslot_"] [class*="st-key-blcell_"] button{
+  position:relative!important;
+  inset:auto!important;
+  display:flex!important;
+}
+[class*="st-key-blslot_"] [class*="st-key-blcell_"] .stTooltipIcon,
+[class*="st-key-blslot_"] [class*="st-key-blcell_"] .stTooltipHoverTarget{
+  width:100%!important;
+  height:inherit!important;
+  min-height:44px!important;
+}
+[class*="st-key-blslot_"] [class*="st-key-blcell_"] .stButton>div,
+[class*="st-key-blslot_"] [class*="st-key-blcell_"] .stButton>div>div{
+  width:100%!important;
+  min-width:100%!important;
+  height:44px!important;
+  min-height:44px!important;
+}
 body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-group.sleep_kpi .bl-metric-line b,body:has(.bl-theme-state.dark) .st-key-bl_panel_a .bl-metric-group.sleep_kpi .bl-metric-line small,body:has(.bl-theme-state.dark) .st-key-bl_panel_b .bl-metric-group.sleep_kpi .bl-metric-line b,body:has(.bl-theme-state.dark) .st-key-bl_panel_b .bl-metric-group.sleep_kpi .bl-metric-line small{color:#f5f7fb!important}
 /* Start and end caps follow the recorded minute within each hourly cell. */
 .bl-sleep-implied.sleep-start .bl-sleep-fill{top:var(--bl-sleep-start)!important}
@@ -2782,7 +2989,6 @@ if analytics_view:
                 "Theme",
                 ("Light", "Dark"),
                 horizontal=True,
-                index=1,
                 key="bl_theme_choice",
                 on_change=sync_theme_query,
                 label_visibility="collapsed",
@@ -2820,6 +3026,344 @@ if analytics_view:
     st.markdown("</div>", unsafe_allow_html=True)
     st.markdown("<div id='bl-app-ready'></div>", unsafe_allow_html=True)
     st.stop()
+
+
+@st.fragment
+def render_baby_panel(baby_id: str, baby_label: str, day: date) -> None:
+    """Render one independently-rerunnable baby profile."""
+    if action_error := st.session_state.pop("bl_action_error", None):
+        st.error(action_error)
+    show_queued_toasts()
+    sleep_context_events = log_events_snapshot(day)
+    day_text = day.isoformat()
+    events = [event for event in sleep_context_events if event.get("day") == day_text]
+    events_by_hour_kind: dict[tuple[int, str], list[dict]] = defaultdict(list)
+    events_by_hour: dict[int, list[dict]] = defaultdict(list)
+    for event in events:
+        if event.get("baby") != baby_id or sleep_event_state(event) == "awake":
+            continue
+        event_hour = parse_dt(event.get("event_ts")).hour
+        events_by_hour_kind[(event_hour, event.get("kind"))].append(event)
+        events_by_hour[event_hour].append(event)
+
+    active_picker = st.session_state.get("boys_log_feed_picker")
+    if active_picker and active_picker[0] == baby_id:
+        _, picker_kind, picker_hour = active_picker
+        if picker_kind == "bottle":
+            bottle_picker_dialog(baby_id, picker_hour)
+        else:
+            breastfeed_picker_dialog(baby_id, picker_kind, picker_hour)
+        return
+    sleep_detail = st.session_state.get("bl_sleep_detail")
+    if sleep_detail and sleep_detail.get("baby") == baby_id:
+        sleep_detail_dialog(sleep_detail)
+        return
+
+    st.markdown(
+        f"<div id='bl-baby-{baby_id}' class='bl-scroll-anchor'></div>",
+        unsafe_allow_html=True,
+    )
+    with st.container(key=f"bl_panel_{baby_id}"):
+        is_open = st.session_state.get(f"bl_panel_open_{baby_id}", False)
+        panel_state = "open" if is_open else "collapsed"
+        baby_totals = totals(events, baby_id)
+        sleep_seconds, sleep_hour_classes = sleep_block_summary(
+            sleep_context_events,
+            baby_id,
+            day,
+        )
+        sleep_cycles = completed_sleep_cycles(sleep_context_events, baby_id, day)
+        active_sleep_marker = (
+            active_sleep_start_event(sleep_context_events, baby_id, datetime.now(MEL))
+            if day == datetime.now(MEL).date()
+            else None
+        )
+        if active_sleep_marker:
+            active_hour = parse_dt(active_sleep_marker.get("event_ts")).hour
+            sleep_hour_classes[active_hour] = [
+                (sleep_class, "", end_time, duration_text, duration_percent, start_percent, end_percent)
+                for sleep_class, _, end_time, duration_text, duration_percent, start_percent, end_percent
+                in sleep_hour_classes.get(active_hour, [])
+            ]
+        sleep_value, sleep_unit = format_sleep_duration(sleep_seconds)
+        last = baby_totals["last"].strftime("%H:%M") if baby_totals["last"] else "None yet"
+        metric_cards = "".join(
+            [
+                metric_group_card(
+                    "feed_kpi",
+                    "Feeds",
+                    [
+                        ("Feed count", str(baby_totals["feeds"]), ""),
+                        ("mL", str(baby_totals["bottle"]), ""),
+                    ],
+                ),
+                metric_group_card(
+                    "nappy",
+                    "Nappy Changes",
+                    [
+                        ("Pee", str(baby_totals["pee"]), ""),
+                        ("Poop", str(baby_totals["poop"]), ""),
+                    ],
+                ),
+                metric_group_card(
+                    "sleep_kpi",
+                    "Sleep",
+                    [("Total Sleep", sleep_value, sleep_unit)],
+                ),
+            ]
+        )
+        st.markdown(
+            f"""
+<div class='bl-panel-state {panel_state}'></div>
+<div class='bl-toggle-pill'>{'Close' if is_open else 'Tap to log'}</div>
+<div class='bl-head'>
+  <div class='bl-title'>{esc(baby_label)}<span>{esc(day.strftime('%A %d %b'))}</span></div>
+</div>
+<div class='bl-summary'>{metric_cards}</div>
+""",
+            unsafe_allow_html=True,
+        )
+        st.button(
+            f"{'Collapse' if is_open else 'Open'} {baby_label}",
+            key=f"bl_toggle_{baby_id}",
+            help=f"{'Collapse' if is_open else 'Open'} {baby_label}",
+            on_click=toggle_baby_panel,
+            args=(baby_id,),
+            use_container_width=True,
+        )
+        if not is_open:
+            return
+
+        header_cells = [
+            f"<div class='bl-grid'><div class='bl-grid-baby'>{esc(baby_label)}</div><div class='bl-grid-head'><div>{time_header_label()}</div>"
+        ]
+        header_cells.extend(f"<div>{header_label(kind, label)}</div>" for kind, label in KINDS)
+        header_cells.append("</div>")
+        st.markdown("".join(header_cells), unsafe_allow_html=True)
+
+        for hour in range(24):
+            now_hour = datetime.now(MEL).hour if day == datetime.now(MEL).date() else None
+            current_cls = " current" if hour == now_hour else ""
+            with st.container(key=f"blrow_{baby_id}_{hour}"):
+                st.markdown(f"<div class='bl-row-wrap{current_cls}'></div>", unsafe_allow_html=True)
+                row_cols = st.columns([1.12, 1, 1, 1, 1, 1, 1, 1], gap=None)
+                with row_cols[0]:
+                    st.markdown(
+                        time_cell_label(hour, bool(events_by_hour.get(hour))),
+                        unsafe_allow_html=True,
+                    )
+                for cell_col, (kind, _) in zip(row_cols[1:], KINDS):
+                    chips: list[str] = []
+                    cell_events = events_by_hour_kind.get((hour, kind), [])
+                    visible_cell_events = (
+                        [
+                            event
+                            for event in cell_events
+                            if active_sleep_marker
+                            and event.get("id") == active_sleep_marker.get("id")
+                        ]
+                        if kind == "sleep"
+                        else cell_events
+                    )
+                    if kind == "bottle" and visible_cell_events:
+                        chips.append(bottle_cell_summary(visible_cell_events))
+                    else:
+                        for event in visible_cell_events:
+                            chips.append(
+                                f"<span class='bl-chip {event_class(kind)}'>"
+                                f"{cell_event_label(event)}"
+                                f"<small class='bl-chip-time'>{esc(fmt_time(event.get('event_ts')))}</small>"
+                                "</span>"
+                            )
+                    with cell_col:
+                        with st.container(key=f"blslot_{baby_id}_{hour}_{kind}"):
+                            hour_sleep_cycles = (
+                                sleep_cycles_for_hour(sleep_cycles, day, hour)
+                                if kind == "sleep"
+                                else []
+                            )
+                            active_sleep_hour = (
+                                parse_dt(active_sleep_marker.get("event_ts")).hour
+                                if active_sleep_marker
+                                else None
+                            )
+                            show_sleep_detail = (
+                                kind == "sleep"
+                                and bool(hour_sleep_cycles)
+                                and active_sleep_hour != hour
+                            )
+                            if kind in FEED_KINDS:
+                                on_click = open_feed_picker
+                                action_args = (baby_id, kind, hour)
+                            elif show_sleep_detail:
+                                on_click = open_sleep_detail
+                                action_args = (baby_id, baby_label, hour, hour_sleep_cycles)
+                            else:
+                                on_click = toggle_cell_event
+                                action_args = (baby_id, kind, hour)
+                            action_label = (
+                                f"View {baby_label} sleep details at {hour_label(hour)}"
+                                if show_sleep_detail
+                                else f"{KIND_LABELS.get(kind, kind)} for {baby_label} at {hour_label(hour)}"
+                            )
+                            st.button(
+                                action_label,
+                                key=f"blcell_{baby_id}_{hour}_{kind}",
+                                on_click=on_click,
+                                args=action_args,
+                                use_container_width=True,
+                            )
+                            if chips:
+                                st.markdown("".join(chips), unsafe_allow_html=True)
+                            if kind == "sleep" and sleep_hour_classes.get(hour):
+                                st.markdown(
+                                    sleep_cell_fill(sleep_hour_classes[hour]),
+                                    unsafe_allow_html=True,
+                                )
+
+        st.markdown("</div>", unsafe_allow_html=True)
+        baby_events = [event for event in events if event.get("baby") == baby_id]
+        log_events = sorted(baby_events, key=lambda event: event.get("event_ts") or "")
+        bath_events = sorted(
+            [event for event in baby_events if event.get("kind") == "bath"],
+            key=lambda event: event.get("event_ts") or "",
+        )
+        care_details = care_details_snapshot(day_text, baby_id)
+        bath_time = care_details.get("bath_time") or (
+            fmt_sheet_time(bath_events[-1].get("event_ts")) if bath_events else ""
+        )
+        if bath_time and not care_details.get("bath_time"):
+            care_details = baby_log_store.save_care_details(
+                day_text,
+                baby_id,
+                {"bath_time": bath_time},
+            )
+            set_care_details_snapshot(day_text, baby_id, care_details)
+        for field in ("length", "weight", "notes"):
+            input_key = f"bl_care_{field}_{baby_id}"
+            if input_key not in st.session_state:
+                value = care_details.get(field, "")
+                if field == "length":
+                    value = strip_care_unit(value, "cm")
+                elif field == "weight":
+                    value = strip_care_unit(value, "kg")
+                st.session_state[input_key] = value
+            elif field == "length":
+                st.session_state[input_key] = strip_care_unit(
+                    st.session_state.get(input_key, ""),
+                    "cm",
+                )
+            elif field == "weight":
+                st.session_state[input_key] = strip_care_unit(
+                    st.session_state.get(input_key, ""),
+                    "kg",
+                )
+        with st.container(key=f"bl_care_{baby_id}"):
+            st.markdown(care_details_card(bath_time), unsafe_allow_html=True)
+            st.text_input(
+                "Length",
+                key=f"bl_care_length_{baby_id}",
+                label_visibility="collapsed",
+                placeholder="",
+                on_change=save_care_field,
+                args=(baby_id, "length"),
+            )
+            st.text_input(
+                "Weight",
+                key=f"bl_care_weight_{baby_id}",
+                label_visibility="collapsed",
+                placeholder="",
+                on_change=save_care_field,
+                args=(baby_id, "weight"),
+            )
+            st.text_input(
+                "Notes",
+                key=f"bl_care_notes_{baby_id}",
+                label_visibility="collapsed",
+                placeholder="Add note",
+                on_change=save_care_field,
+                args=(baby_id, "notes"),
+            )
+            with st.container(key=f"bl_bath_btn_{baby_id}"):
+                st.button(
+                    "Log bath time",
+                    key=f"bl_bath_time_{baby_id}",
+                    help=f"Log bath time for {baby_label}",
+                    on_click=log_bath_time,
+                    args=(baby_id,),
+                    use_container_width=True,
+                )
+        st.markdown(
+            f"<div class='bl-care-updated'>Last updated {esc(last)}</div>",
+            unsafe_allow_html=True,
+        )
+        with st.container(key=f"bl_daily_log_{baby_id}"):
+            with st.expander("Daily Log", expanded=False):
+                st.markdown(
+                    f"<div class='bl-log'><div class='bl-log-date'>{esc(day.strftime('%A %d %B %Y'))}</div>",
+                    unsafe_allow_html=True,
+                )
+                if not log_events:
+                    st.markdown(
+                        "<div class='bl-empty'>No logs for this day yet.</div>",
+                        unsafe_allow_html=True,
+                    )
+                for event in log_events:
+                    detail = event_label(event)
+                    note = event.get("note") or KIND_LABELS.get(event.get("kind"), "Other")
+                    if event.get("kind") in ("left", "right", "bottle", "pee", "poop", "bath"):
+                        note = ""
+                    show_note = note and note != detail
+                    st.markdown(
+                        "<div class='bl-event'>"
+                        f"<time>{esc(fmt_time(event.get('event_ts')))}</time>"
+                        f"<div><b>{esc(detail)}</b>"
+                        + (f"<span>{esc(note)}</span>" if show_note else "")
+                        + "</div></div>",
+                        unsafe_allow_html=True,
+                    )
+                st.markdown("</div>", unsafe_allow_html=True)
+
+
+try:
+    log_events_snapshot(day)
+except baby_log_store.StorageError as exc:
+    st.error(str(exc))
+    st.stop()
+if action_error := st.session_state.pop("bl_action_error", None):
+    st.error(action_error)
+show_queued_toasts()
+if baby_log_store.storage_warning():
+    st.caption("Storage status: shared database unavailable — viewing the local cache read-only.")
+initialise_baby_panels()
+profile_columns = st.columns(2)
+for profile_index, (profile_baby, profile_label) in enumerate(BABIES):
+    with profile_columns[profile_index]:
+        render_baby_panel(profile_baby, profile_label, day)
+
+st.markdown("</div>", unsafe_allow_html=True)
+st.markdown(
+    """
+<nav class="bl-mobile-jump-nav" aria-label="Quick page navigation">
+  <a href="#bl-top-anchor" aria-label="Back to top">↑ Top</a>
+  <a href="#bl-baby-a">Zander</a>
+  <a href="#bl-baby-b">Phoenix</a>
+</nav>
+""",
+    unsafe_allow_html=True,
+)
+with st.container(key="boys_log_view_nav"):
+    with st.container(key="boys_log_theme"):
+        st.radio(
+            "Theme",
+            ("Light", "Dark"),
+            horizontal=True,
+            key="bl_theme_choice",
+            on_change=sync_theme_query,
+            label_visibility="collapsed",
+        )
+st.markdown("<div id='bl-app-ready'></div>", unsafe_allow_html=True)
+st.stop()
 
 try:
     sleep_context_start = (day - timedelta(days=SLEEP_LOOKBACK_DAYS)).isoformat()
@@ -3023,18 +3567,8 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                                             key=f"bl_feed_cancel_{baby_id}_{kind}_{hour}",
                                             on_click=close_feed_picker,
                                         )
-                                    components.html(
-                                        feed_wheel_picker_html(
-                                            baby_id,
-                                            kind,
-                                            hour,
-                                            current_value,
-                                            current_duration,
-                                            bottle_entries,
-                                        ),
-                                        height=1,
-                                        width=1,
-                                    )
+                                    # Replaced by the supported native picker dialog above.
+                                    st.empty()
                             else:
                                 hour_sleep_cycles = (
                                     sleep_cycles_for_hour(sleep_cycles, day, hour)
@@ -3190,11 +3724,8 @@ for idx, (baby_id, baby_label) in enumerate(BABIES):
                 st.markdown("</div>", unsafe_allow_html=True)
 
 if sleep_detail_entries:
-    components.html(
-        sleep_detail_registry_html(sleep_detail_entries),
-        height=1,
-        width=1,
-    )
+    # Replaced by the supported Streamlit sleep-details dialog above.
+    pass
 st.markdown("</div>", unsafe_allow_html=True)
 st.markdown(
     """
@@ -3212,7 +3743,6 @@ with st.container(key="boys_log_view_nav"):
             "Theme",
             ("Light", "Dark"),
             horizontal=True,
-            index=1,
             key="bl_theme_choice",
             on_change=sync_theme_query,
             label_visibility="collapsed",

@@ -2,9 +2,9 @@
   "use strict";
 
   const body = document.body;
-  const hiddenKey = "buggins-hidden-at-v8";
-  const recoveryKey = "buggins-recovery-at-v8";
-  const reloadingKey = "buggins-reloading-v8";
+  const hiddenKey = "buggins-hidden-at-v9";
+  const recoveryKey = "buggins-recovery-at-v9";
+  const reloadingKey = "buggins-reloading-v9";
   let initialLoad = true;
   let tapWatchdog = 0;
   let tapStartGuard = 0;
@@ -146,7 +146,9 @@
       if (runState === "running") sawRunAfterTap = true;
       const pickerOpened = Boolean(
         document.querySelector("#bl-feed-wheel-overlay") ||
-        document.querySelector('[class*="st-key-bl_feed_wheel_host_"]')
+        document.querySelector('[class*="st-key-bl_feed_wheel_host_"]') ||
+        document.querySelector('[data-testid="stDialog"]') ||
+        document.querySelector('[role="dialog"]')
       );
       if (
         pickerOpened ||
