@@ -47,9 +47,6 @@ export default function({ data: config, parentElement, setTriggerValue }) {
   };
 
   const renderBreast = () => {
-    const help = document.createElement("p");
-    help.className = "help";
-    help.textContent = config.help;
     const picker = makeSelect(
       config.field_label,
       config.values,
@@ -69,13 +66,10 @@ export default function({ data: config, parentElement, setTriggerValue }) {
     actions.querySelector('[data-action="cancel"]').addEventListener("click", () => send("cancel"));
     const error = document.createElement("p");
     error.className = "error";
-    app.append(help, picker.field, error, actions);
+    app.append(picker.field, error, actions);
   };
 
   const renderBottle = () => {
-    const help = document.createElement("p");
-    help.className = "help";
-    help.textContent = config.help;
     const grid = document.createElement("div");
     grid.className = "milk-grid";
     config.milk_types.forEach((type) => {
@@ -85,7 +79,7 @@ export default function({ data: config, parentElement, setTriggerValue }) {
       card.dataset.milkType = type;
       const title = document.createElement("div");
       title.className = "milk-title";
-      title.innerHTML = `<b>${type}</b><span>${type === "FOR" ? "Formula" : "Expressed breast milk"}</span>`;
+      title.innerHTML = `<b>${type === "FOR" ? "FORM" : type}</b>`;
       const fields = document.createElement("div");
       fields.className = "milk-fields";
       const amount = makeSelect("Amount", config.values, "ml", entry.value, "None");
@@ -124,7 +118,7 @@ export default function({ data: config, parentElement, setTriggerValue }) {
       app.querySelector(".error").style.display = "none";
     });
     actions.querySelector('[data-action="cancel"]').addEventListener("click", () => send("cancel"));
-    app.append(help, grid, error, actions);
+    app.append(grid, error, actions);
   };
 
   app.replaceChildren();

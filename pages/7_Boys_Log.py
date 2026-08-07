@@ -134,6 +134,12 @@ def bottle_milk_type(event: dict) -> str:
     return milk_type if milk_type in MILK_TYPES else "FOR"
 
 
+def bottle_milk_label(event: dict) -> str:
+    """Return the concise display label without changing stored feed data."""
+    milk_type = bottle_milk_type(event)
+    return "FORM" if milk_type == "FOR" else milk_type
+
+
 def sleep_event_state(event: dict) -> str:
     if event.get("kind") != "sleep":
         return ""
@@ -416,7 +422,6 @@ def feed_wheel_picker_html(
             "hour": hour,
             "is_bottle": is_bottle,
             "title": f"{'Bottle feed' if is_bottle else f'{side} feed duration'} · {hour_label(hour)}",
-            "help": "Add FOR, EBM, or both. Both feeds will be saved in this same hourly cell." if is_bottle else "Tap the duration field and roll to the correct time.",
             "field_label": "Bottle amount" if is_bottle else f"{side} feed duration",
             "unit": "ml" if is_bottle else "minutes",
             "values": list(values),
@@ -442,7 +447,7 @@ def feed_wheel_picker_html(
       #bl-feed-wheel-overlay *{{box-sizing:border-box}}
       #bl-feed-wheel-panel{{width:min(100%,380px);max-height:calc(100dvh - 32px);overflow-y:auto;padding:20px;border:1px solid #456487;border-radius:18px;background:#10243d;box-shadow:0 24px 80px rgba(0,0,0,.62);color:#f5f7fb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}}
       #bl-feed-wheel-title{{margin:0 0 7px;font-size:20px;font-weight:850;text-align:center}}
-      #bl-feed-wheel-help{{margin:0 0 16px;color:#b9c8dc;font-size:13px;font-weight:650;line-height:1.35;text-align:center}}
+      #bl-feed-wheel-help{{display:none;margin:0 0 12px;color:#ffd1d5;font-size:13px;font-weight:750;text-align:center}}
       .bl-feed-wheel-field{{margin-top:13px}}
       .bl-feed-wheel-field label{{display:block;margin:0 0 6px;color:#d9e4f2;font-size:13px;font-weight:750}}
       .bl-feed-wheel-field select{{display:block;width:100%;height:58px;padding:0 14px;border:1px solid #6687ad;border-radius:12px;background:#f7fbff;color:#173664;font-size:18px;font-weight:800;text-align:center;text-align-last:center}}
@@ -487,7 +492,6 @@ def feed_wheel_picker_html(
   const durationSelect = overlay.querySelector("#bl-feed-wheel-duration");
   const bottleFields = overlay.querySelector("#bl-feed-wheel-bottle-fields");
   overlay.querySelector("#bl-feed-wheel-title").textContent = config.title;
-  overlay.querySelector("#bl-feed-wheel-help").textContent = config.help;
   overlay.querySelector("#bl-feed-wheel-primary-label").textContent = config.field_label;
   select.setAttribute("aria-label", config.field_label);
   select.options[0].textContent = `Select ${{config.unit}}`;
@@ -515,7 +519,7 @@ def feed_wheel_picker_html(
       card.className = "bl-feed-wheel-milk-card";
       card.dataset.milkType = type;
       card.innerHTML = `
-        <div class="bl-feed-wheel-milk-title"><b>${{type}}</b><span>${{type === "FOR" ? "Formula" : "Expressed breast milk"}}</span></div>
+        <div class="bl-feed-wheel-milk-title"><b>${{type === "FOR" ? "FORM" : type}}</b></div>
         <div class="bl-feed-wheel-milk-grid">
           <div><label for="bl-feed-${{type}}-amount">Amount</label><select id="bl-feed-${{type}}-amount" data-role="amount"><option value="">None</option></select></div>
           <div><label for="bl-feed-${{type}}-duration">Duration</label><select id="bl-feed-${{type}}-duration" data-role="duration"><option value="">None</option></select></div>
@@ -563,12 +567,14 @@ def feed_wheel_picker_html(
     }});
     if (invalid) {{
       overlay.querySelector("#bl-feed-wheel-help").textContent = "Choose both amount and duration for each feed.";
+      overlay.querySelector("#bl-feed-wheel-help").style.display = "block";
       return;
     }}
     const payloadInput = doc.querySelector(`[class*="st-key-bl_bottle_combo_payload_${{config.baby}}_${{config.hour}}"] input`);
     const submit = doc.querySelector(`[class*="st-key-bl_bottle_combo_submit_${{config.baby}}_${{config.hour}}"] button`);
     if (!payloadInput || !submit) {{
       overlay.querySelector("#bl-feed-wheel-help").textContent = "The save control is not ready. Close and reopen this bottle cell.";
+      overlay.querySelector("#bl-feed-wheel-help").style.display = "block";
       return;
     }}
     const setter = Object.getOwnPropertyDescriptor(doc.defaultView.HTMLInputElement.prototype, "value").set;
@@ -848,7 +854,7 @@ def event_label(event: dict) -> str:
     if event.get("kind") == "bottle" and event.get("amount_ml"):
         duration = event_duration_minutes(event)
         duration_text = f", {duration} minutes" if duration else ""
-        return f"{bottle_milk_type(event)} bottle, {event['amount_ml']} ml{duration_text}"
+        return f"{bottle_milk_label(event)} bottle, {event['amount_ml']} ml{duration_text}"
     if event.get("kind") == "bottle":
         return "Bottle fed"
     if event.get("kind") == "pee":
@@ -863,7 +869,7 @@ def cell_event_label(event: dict) -> str:
         duration = event_duration_minutes(event)
         duration_text = f"<span class='bl-chip-duration'>{esc(duration)} min</span>" if duration else ""
         return (
-            f"<b class='bl-chip-amount'><em class='bl-bottle-type'>{esc(bottle_milk_type(event))}</em> "
+            f"<b class='bl-chip-amount'><em class='bl-bottle-type'>{esc(bottle_milk_label(event))}</em> "
             f"{esc(event.get('amount_ml'))} ml</b>{duration_text}"
         )
     if event.get("kind") in {"left", "right"} and event.get("amount_ml"):
@@ -891,7 +897,7 @@ def bottle_cell_summary(events: list[dict]) -> str:
         duration = event_duration_minutes(event)
         entries.append(
             "<span class='bl-bottle-entry'>"
-            f"<b><em>{esc(bottle_milk_type(event))}</em></b>"
+            f"<b><em>{esc(bottle_milk_label(event))}</em></b>"
             f"<span class='bl-bottle-entry-amount'>{amount}</span>"
             f"<span class='bl-bottle-entry-duration'>{esc(f'{duration} min' if duration else '—')}</span>"
             f"<small>{esc(fmt_time(event.get('event_ts')))}</small>"
@@ -1383,11 +1389,6 @@ def feed_picker_config(baby: str, kind: str, hour: int) -> dict:
         "kind": kind,
         "hour": hour,
         "is_bottle": kind == "bottle",
-        "help": (
-            "Add FOR, EBM, or both. Both feeds are saved together in this hourly cell."
-            if kind == "bottle"
-            else "Tap the duration field and roll to the correct time."
-        ),
         "field_label": f"{side} feed duration",
         "values": list(BOTTLE_AMOUNTS if kind == "bottle" else BREASTFEED_MINUTES),
         "current": current_value,
@@ -1409,7 +1410,6 @@ def picker_event_is_new(result) -> bool:
 
 @st.dialog("Breastfeed duration", width="small", dismissible=False)
 def breastfeed_picker_dialog(baby: str, kind: str, hour: int) -> None:
-    st.caption(f"{dict(BABIES).get(baby, baby)} · {hour_label(hour)}")
     result = render_feed_picker(
         feed_picker_config(baby, kind, hour),
         key=f"bl_native_feed_picker_{baby}_{kind}_{hour}",
@@ -1437,7 +1437,6 @@ def breastfeed_picker_dialog(baby: str, kind: str, hour: int) -> None:
 
 @st.dialog("Bottle feed", width="small", dismissible=False)
 def bottle_picker_dialog(baby: str, hour: int) -> None:
-    st.caption(f"{dict(BABIES).get(baby, baby)} · {hour_label(hour)}")
     result = render_feed_picker(
         feed_picker_config(baby, "bottle", hour),
         key=f"bl_native_feed_picker_{baby}_bottle_{hour}",
